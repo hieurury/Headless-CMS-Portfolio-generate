@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { PagesModule } from './pages/pages.module';
 import { ComponentsModule } from './components/components.module';
+import { AiModule } from './ai/ai.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { ComponentsModule } from './components/components.module';
     PortfoliosModule,
     PagesModule,
     ComponentsModule,
+    AiModule,
+    PublicModule,
   ],
 })
 export class AppModule {}

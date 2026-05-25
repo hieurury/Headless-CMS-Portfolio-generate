@@ -10,6 +10,11 @@ import { Portfolio, PortfolioDocument } from './schemas/portfolio.schema';
 import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 
+/**
+ * IMPORTANT: All queries that match against MongoDB ObjectId fields (_id, owner, portfolio, etc.)
+ * MUST use `new Types.ObjectId(id)` — never pass a raw string.
+ * MongoDB stores these fields as ObjectId, not string. String comparison silently returns 0 results.
+ */
 @Injectable()
 export class PortfoliosService {
   constructor(
@@ -21,8 +26,10 @@ export class PortfoliosService {
     ownerId: string,
     dto: CreatePortfolioDto,
   ): Promise<PortfolioDocument> {
+    const ownerOid = new Types.ObjectId(ownerId);
+
     const existing = await this.portfolioModel
-      .findOne({ owner: ownerId, slug: dto.slug })
+      .findOne({ owner: ownerOid, slug: dto.slug })
       .exec();
     if (existing) {
       throw new ConflictException(
@@ -32,14 +39,14 @@ export class PortfoliosService {
 
     const portfolio = new this.portfolioModel({
       ...dto,
-      owner: new Types.ObjectId(ownerId),
+      owner: ownerOid,
     });
     return portfolio.save();
   }
 
   async findAllByOwner(ownerId: string): Promise<PortfolioDocument[]> {
     return this.portfolioModel
-      .find({ owner: ownerId })
+      .find({ owner: new Types.ObjectId(ownerId) })
       .populate('pages', 'title slug order isPublished')
       .sort({ createdAt: -1 })
       .exec();
@@ -47,7 +54,7 @@ export class PortfoliosService {
 
   async findOne(id: string, ownerId: string): Promise<PortfolioDocument> {
     const portfolio = await this.portfolioModel
-      .findById(id)
+      .findById(new Types.ObjectId(id))
       .populate('pages')
       .exec();
 
@@ -55,7 +62,8 @@ export class PortfoliosService {
       throw new NotFoundException(`Portfolio with ID "${id}" not found`);
     }
 
-    if (portfolio.owner.toString() !== ownerId) {
+    // Compare as strings — both sides are ObjectId after cast
+    if (portfolio.owner.toString() !== new Types.ObjectId(ownerId).toString()) {
       throw new ForbiddenException('You do not have access to this portfolio');
     }
 
@@ -68,11 +76,16 @@ export class PortfoliosService {
     dto: UpdatePortfolioDto,
   ): Promise<PortfolioDocument> {
     const portfolio = await this.findOne(id, ownerId);
+    const ownerOid = new Types.ObjectId(ownerId);
 
     // Check slug conflict if slug is being changed
     if (dto.slug && dto.slug !== portfolio.slug) {
       const conflict = await this.portfolioModel
-        .findOne({ owner: ownerId, slug: dto.slug, _id: { $ne: id } })
+        .findOne({
+          owner: ownerOid,
+          slug: dto.slug,
+          _id: { $ne: new Types.ObjectId(id) },
+        })
         .exec();
       if (conflict) {
         throw new ConflictException(
@@ -87,7 +100,7 @@ export class PortfoliosService {
 
   async remove(id: string, ownerId: string): Promise<{ deleted: boolean }> {
     await this.findOne(id, ownerId); // ownership check
-    await this.portfolioModel.findByIdAndDelete(id).exec();
+    await this.portfolioModel.findByIdAndDelete(new Types.ObjectId(id)).exec();
     return { deleted: true };
   }
 }

@@ -18,12 +18,20 @@ export class PagesService {
     private readonly portfolioModel: Model<PortfolioDocument>,
   ) {}
 
+  /**
+   * Verify the portfolio exists and belongs to the owner.
+   * Always cast both IDs to ObjectId — MongoDB stores them as ObjectId,
+   * string comparison silently returns no results.
+   */
   private async getPortfolio(
     portfolioId: string,
     ownerId: string,
   ): Promise<PortfolioDocument> {
     const portfolio = await this.portfolioModel
-      .findOne({ _id: portfolioId, owner: ownerId })
+      .findOne({
+        _id: new Types.ObjectId(portfolioId),
+        owner: new Types.ObjectId(ownerId),
+      })
       .exec();
     if (!portfolio) {
       throw new NotFoundException(
@@ -40,8 +48,10 @@ export class PagesService {
   ): Promise<PageDocument> {
     const portfolio = await this.getPortfolio(portfolioId, ownerId);
 
+    const portfolioOid = new Types.ObjectId(portfolioId);
+
     const existing = await this.pageModel
-      .findOne({ portfolio: portfolioId, slug: dto.slug })
+      .findOne({ portfolio: portfolioOid, slug: dto.slug })
       .exec();
     if (existing) {
       throw new ConflictException(
@@ -52,7 +62,7 @@ export class PagesService {
     const page = await new this.pageModel({
       ...dto,
       layout: dto.layout ?? { sections: [] },
-      portfolio: new Types.ObjectId(portfolioId),
+      portfolio: portfolioOid,
     }).save();
 
     // Register page reference in portfolio
@@ -68,7 +78,7 @@ export class PagesService {
   ): Promise<PageDocument[]> {
     await this.getPortfolio(portfolioId, ownerId);
     return this.pageModel
-      .find({ portfolio: portfolioId })
+      .find({ portfolio: new Types.ObjectId(portfolioId) })
       .sort({ order: 1, createdAt: 1 })
       .exec();
   }
@@ -80,7 +90,10 @@ export class PagesService {
   ): Promise<PageDocument> {
     await this.getPortfolio(portfolioId, ownerId);
     const page = await this.pageModel
-      .findOne({ _id: pageId, portfolio: portfolioId })
+      .findOne({
+        _id: new Types.ObjectId(pageId),
+        portfolio: new Types.ObjectId(portfolioId),
+      })
       .exec();
     if (!page) {
       throw new NotFoundException(`Page "${pageId}" not found`);
@@ -100,9 +113,9 @@ export class PagesService {
     if (dto.slug && dto.slug !== page.slug) {
       const conflict = await this.pageModel
         .findOne({
-          portfolio: portfolioId,
+          portfolio: new Types.ObjectId(portfolioId),
           slug: dto.slug,
-          _id: { $ne: pageId },
+          _id: { $ne: new Types.ObjectId(pageId) },
         })
         .exec();
       if (conflict) {
