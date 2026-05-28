@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Portfolio, PortfolioDocument } from '../portfolios/schemas/portfolio.schema';
 import { Page, PageDocument } from '../pages/schemas/page.schema';
 
@@ -23,6 +23,16 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
+/**
+ * Normalize a page slug for use in URLs.
+ * Strips leading slashes and converts "/" (root) to "home".
+ * Examples: "/about" → "about", "/" → "home", "projects" → "projects"
+ */
+export function normalizeSlug(slug: string): string {
+  const stripped = slug.replace(/^\/+/, '');
+  return stripped.length > 0 ? stripped : 'home';
+}
+
 @Injectable()
 export class PublicService {
   constructor(
@@ -41,13 +51,24 @@ export class PublicService {
     query?: string,
     page = 1,
     limit = 12,
+    excludeOwnerId?: string,
   ): Promise<PaginatedResult<PublicPortfolioCard>> {
     const skip = (page - 1) * limit;
     const trimmedQuery = query?.trim() ?? '';
 
     // ── Stage 1: Filter only published portfolios ──────────────────
+    // Optionally exclude the requesting user's own portfolios
+    const initialMatch: Record<string, unknown> = { isPublished: true };
+    if (excludeOwnerId) {
+      try {
+        initialMatch.owner = { $ne: new Types.ObjectId(excludeOwnerId) };
+      } catch {
+        // Invalid ObjectId — ignore exclusion
+      }
+    }
+
     const pipeline: object[] = [
-      { $match: { isPublished: true } },
+      { $match: initialMatch },
 
       // ── Stage 2: Join owner info from users collection ─────────────
       {
@@ -181,7 +202,8 @@ export class PublicService {
       description: portfolio.description,
       ownerName: (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
       meta: portfolio.meta,
-      pages,
+      // Return normalized slugs so the frontend can build correct URLs
+      pages: pages.map((p) => ({ ...p, urlSlug: normalizeSlug(p.slug) })),
     };
   }
 
@@ -202,7 +224,7 @@ export class PublicService {
       );
     }
 
-    // Also fetch all published pages for in-page navigation
+    // Fetch all published pages for in-page navigation
     const allPages = await this.pageModel
       .find({ portfolio: portfolio._id, isPublished: true })
       .select('_id title slug order')
@@ -210,7 +232,13 @@ export class PublicService {
       .lean()
       .exec();
 
-    const page = allPages.find((p) => p.slug === pageSlug);
+    // Normalize both sides of comparison:
+    // stored slug "/about" → "about", URL param "about" → "about" ✓
+    // stored slug "/" → "home", URL param "home" → "home" ✓
+    const normalizedPageSlug = normalizeSlug(pageSlug);
+    const page = allPages.find(
+      (p) => normalizeSlug(p.slug) === normalizedPageSlug,
+    );
     if (!page) {
       throw new NotFoundException(
         `Page "${pageSlug}" not found or is not published`,
@@ -235,8 +263,12 @@ export class PublicService {
         slug: fullPage!.slug,
         layout: fullPage!.layout,
       },
-      // Navigation: all published pages in this portfolio
-      allPages: allPages.map((p) => ({ title: p.title, slug: p.slug })),
+      // Navigation: normalized slugs for correct URL building
+      allPages: allPages.map((p) => ({
+        title: p.title,
+        slug: p.slug,
+        urlSlug: normalizeSlug(p.slug),
+      })),
     };
   }
 }

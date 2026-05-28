@@ -7,21 +7,48 @@ interface Job {
   startDate: string;
   endDate?: string;
   description?: string;
-  highlights?: string[];
+  highlights?: unknown[];
   logo?: string;
   location?: string;
 }
 
 interface ExperienceProps {
   title?: string;
-  jobs?: Job[];
+  jobs?: unknown[];
   [key: string]: unknown;
+}
+
+/**
+ * Normalizes arrays that may contain either strings or {value: string} objects.
+ * The editor stores array items as objects with a `value` key due to itemSchema format.
+ */
+function normalizeStringArray(arr: unknown[]): string[] {
+  return arr
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object' && 'value' in item) {
+        return String((item as Record<string, unknown>).value ?? '');
+      }
+      return '';
+    })
+    .filter(Boolean);
 }
 
 export const Experience: React.FC<ExperienceProps> = ({
   title = 'Work Experience',
   jobs = [],
 }) => {
+  // Normalize jobs array — each job may have highlights as [{value: '...'}]
+  const normalizedJobs = (jobs as unknown[]).map((j) => {
+    const job = j as Job;
+    return {
+      ...job,
+      highlights: Array.isArray(job.highlights)
+        ? normalizeStringArray(job.highlights)
+        : [],
+    };
+  });
+
   return (
     <section className="section-padding bg-[#0d0d14]">
       <div className="container-max mx-auto">
@@ -35,7 +62,7 @@ export const Experience: React.FC<ExperienceProps> = ({
           <div className="absolute left-8 top-0 bottom-0 w-px bg-gradient-to-b from-indigo-500/50 via-violet-500/30 to-transparent hidden md:block" />
 
           <div className="space-y-8">
-            {jobs.map((job, i) => (
+            {normalizedJobs.map((job, i) => (
               <div key={i} className="md:pl-20 relative">
                 {/* Timeline dot */}
                 <div className="absolute left-6 top-6 w-4 h-4 rounded-full bg-indigo-500 border-2 border-indigo-300/50 shadow-lg shadow-indigo-500/50 hidden md:block" />
@@ -64,7 +91,7 @@ export const Experience: React.FC<ExperienceProps> = ({
                     <p className="text-slate-400 text-sm leading-relaxed">{job.description}</p>
                   )}
 
-                  {job.highlights && job.highlights.length > 0 && (
+                  {job.highlights.length > 0 && (
                     <ul className="space-y-2">
                       {job.highlights.map((h, hi) => (
                         <li key={hi} className="flex items-start gap-2 text-sm text-slate-400">

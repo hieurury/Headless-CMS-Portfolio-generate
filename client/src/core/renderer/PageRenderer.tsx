@@ -1,6 +1,24 @@
 import React from 'react';
 import type { PageLayout } from '../types/layout.types';
-import { SectionRenderer } from './SectionRenderer';
+import { SectionRenderer, isDropId, fromDropId } from './SectionRenderer';
+import { useEditorContext } from '../context/EditorContext';
+import {
+  DndContext,
+  closestCenter,
+  pointerWithin,
+  type DragEndEvent,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  KeyboardSensor,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { findParent } from '../utils/layoutUtils';
 
 interface PageRendererProps {
   layout: PageLayout;
@@ -8,45 +26,132 @@ interface PageRendererProps {
 }
 
 /**
- * PageRenderer — iterates over layout.sections[] and renders each via SectionRenderer.
+ * Custom collision detection: prefer drop zones (container drops) over sort items.
+ * This ensures dragging over a container highlights it as a drop target.
+ */
+function customCollisionDetection(args: Parameters<typeof pointerWithin>[0]) {
+  // First: try to find pointer collisions with droppable containers
+  const pointerCollisions = pointerWithin(args);
+  const dropZoneCollisions = pointerCollisions.filter(
+    (c) => typeof c.id === 'string' && isDropId(c.id as string),
+  );
+  if (dropZoneCollisions.length > 0) return dropZoneCollisions;
+
+  // Fallback: closest center for sortable reordering
+  return closestCenter(args);
+}
+
+/**
+ * PageRenderer — renders layout sections in editor or production mode.
  *
- * This is the top-level renderer entry point.
- * Used by PortfolioPreviewPage to render a full portfolio page from JSON.
- *
- * Runtime flow:
- *   MongoDB layout JSON
- *     → PageRenderer (sections loop)
- *       → SectionRenderer (type resolution)
- *         → React Component
+ * In editor mode: wraps in a single DndContext that handles:
+ * - Top-level section reorder
+ * - Child reorder within a container
+ * - Cross-container moves (drag from anywhere → drop into a container)
  */
 export const PageRenderer: React.FC<PageRendererProps> = ({
   layout,
   className = '',
 }) => {
-  if (!layout?.sections || layout.sections.length === 0) {
+  const {
+    isEditorMode,
+    sections,
+    onSectionReorder,
+    onMoveToContainer,
+    onReorderChildren,
+  } = useEditorContext();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  if (!layout?.sections?.length && !isEditorMode) return null;
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // ── Case 1: Dropped INTO a container drop zone ────────────────────
+    if (isDropId(overId)) {
+      const containerId = fromDropId(overId);
+      if (activeId !== containerId) {
+        onMoveToContainer(activeId, containerId);
+      }
+      return;
+    }
+
+    // ── Case 2: Dropped onto another item — find parent context ───────
+    const activeParentInfo = findParent(sections, activeId);
+    const overParentInfo = findParent(sections, overId);
+
+    if (!activeParentInfo || !overParentInfo) return;
+
+    const activeParentId = activeParentInfo.parent?.id ?? null;
+    const overParentId = overParentInfo.parent?.id ?? null;
+
+    // Same parent (top level or same container) → reorder
+    if (activeParentId === overParentId) {
+      if (activeParentId === null) {
+        // Top-level reorder
+        const oldIdx = sections.findIndex((s) => s.id === activeId);
+        const newIdx = sections.findIndex((s) => s.id === overId);
+        if (oldIdx !== -1 && newIdx !== -1) {
+          onSectionReorder(oldIdx, newIdx);
+        }
+      } else {
+        // Reorder within same container
+        const parent = activeParentInfo.parent!;
+        const oldIdx = parent.children?.findIndex((c) => c.id === activeId) ?? -1;
+        const newIdx = parent.children?.findIndex((c) => c.id === overId) ?? -1;
+        if (oldIdx !== -1 && newIdx !== -1) {
+          onReorderChildren(activeParentId!, oldIdx, newIdx);
+        }
+      }
+    } else {
+      // Different parent → move to the over item's container
+      onMoveToContainer(activeId, overParentId ?? '', overParentInfo.index);
+    }
+  };
+
+  if (!isEditorMode) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-center px-4">
-        <div className="max-w-md">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">Empty Page</h3>
-          <p className="text-slate-500 text-sm">
-            This page has no sections yet. Add components through the CMS to see them rendered here.
-          </p>
-        </div>
+      <div className={`page-renderer ${className}`}>
+        {layout.sections.map((section) => (
+          <SectionRenderer key={section.id} section={section} />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className={`page-renderer ${className}`}>
-      {layout.sections.map((section) => (
-        <SectionRenderer key={section.id} section={section} />
-      ))}
-    </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={customCollisionDetection}
+      onDragEnd={handleDragEnd}
+    >
+      {/* Top-level sortable context */}
+      <SortableContext
+        items={layout.sections.map((s) => s.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className={`page-renderer ${className}`}>
+          {layout.sections.map((section) => (
+            <SectionRenderer key={section.id} section={section} isRoot={true} />
+          ))}
+        </div>
+      </SortableContext>
+
+      {/* Ghost overlay while dragging */}
+      <DragOverlay dropAnimation={null}>
+        <div className="bg-indigo-600/15 border-2 border-indigo-500/60 rounded-xl h-12 flex items-center justify-center px-4 gap-2 text-indigo-400 text-sm font-medium backdrop-blur-sm shadow-lg shadow-indigo-500/20">
+          <span className="text-base">✦</span>
+          Moving block...
+        </div>
+      </DragOverlay>
+    </DndContext>
   );
 };

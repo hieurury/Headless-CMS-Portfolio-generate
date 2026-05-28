@@ -1,5 +1,7 @@
 import React from 'react';
-import { ArrowUp, ArrowDown, Trash2, ChevronRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import clsx from 'clsx';
@@ -10,6 +12,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   content: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
   form: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   media: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
+  block: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
 };
 
 interface SectionCardProps {
@@ -37,47 +40,79 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   const colorClass =
     CATEGORY_COLORS[entry?.category ?? 'content'] ?? CATEGORY_COLORS.content;
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={clsx(
-        'group flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200',
+        'group flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all duration-200',
         isSelected
           ? 'border-indigo-500/50 bg-indigo-500/10'
           : 'border-white/5 bg-white/2 hover:border-white/10 hover:bg-white/5',
+        isDragging && 'shadow-2xl shadow-black/50',
       )}
       onClick={onSelect}
     >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1 text-slate-700 hover:text-slate-400 cursor-grab active:cursor-grabbing shrink-0 touch-none"
+        onClick={(e) => e.stopPropagation()}
+        title="Drag to reorder"
+      >
+        <GripVertical size={14} />
+      </button>
+
       {/* Index */}
-      <span className="w-5 text-xs text-slate-600 font-mono text-center shrink-0">
+      <span className="w-4 text-xs text-slate-600 font-mono text-center shrink-0">
         {index + 1}
       </span>
 
-      {/* Type badge */}
-      <span
-        className={clsx(
-          'px-2 py-0.5 rounded-md text-xs font-mono font-semibold border',
-          colorClass,
-        )}
-      >
-        {section.type}
-      </span>
+      {/* Icon + type badge */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {entry?.icon && <span className="text-sm leading-none">{entry.icon}</span>}
+        <span
+          className={clsx(
+            'px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold border',
+            colorClass,
+          )}
+        >
+          {section.type}
+        </span>
+      </div>
 
-      {/* Display name */}
-      <span className="flex-1 text-sm text-slate-300 truncate min-w-0">
-        {entry?.displayName ?? section.type}
-      </span>
-
-      <ChevronRight
-        size={14}
-        className={clsx(
-          'transition-colors shrink-0',
-          isSelected ? 'text-indigo-400' : 'text-slate-600',
+      {/* Display name + anchor name */}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-slate-300 truncate">
+          {entry?.displayName ?? section.type}
+        </p>
+        {section.name && (
+          <p className="text-[10px] text-indigo-400 font-mono mt-0.5 truncate">
+            #{section.name}
+          </p>
         )}
-      />
+      </div>
 
       {/* Actions — shown on hover */}
       <div
-        className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+        className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -86,7 +121,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           className="p-1 rounded text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           title="Move up"
         >
-          <ArrowUp size={13} />
+          <ArrowUp size={12} />
         </button>
         <button
           onClick={onMoveDown}
@@ -94,7 +129,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           className="p-1 rounded text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           title="Move down"
         >
-          <ArrowDown size={13} />
+          <ArrowDown size={12} />
         </button>
         <button
           onClick={() => {
@@ -103,7 +138,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
           title="Delete section"
         >
-          <Trash2 size={13} />
+          <Trash2 size={12} />
         </button>
       </div>
     </div>

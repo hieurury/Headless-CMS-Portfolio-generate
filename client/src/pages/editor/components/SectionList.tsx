@@ -1,5 +1,19 @@
 import React from 'react';
 import { Plus, Layers } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { SectionCard } from './SectionCard';
 import type { LayoutSection } from '../../../core/types/layout.types';
 
@@ -11,6 +25,7 @@ interface SectionListProps {
   onMoveDown: (index: number) => void;
   onDelete: (index: number) => void;
   onAddClick: () => void;
+  onReorder: (oldIndex: number, newIndex: number) => void;
 }
 
 export const SectionList: React.FC<SectionListProps> = ({
@@ -21,7 +36,24 @@ export const SectionList: React.FC<SectionListProps> = ({
   onMoveDown,
   onDelete,
   onAddClick,
+  onReorder,
 }) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sections.findIndex((s) => s.id === active.id);
+    const newIndex = sections.findIndex((s) => s.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      onReorder(oldIndex, newIndex);
+    }
+  };
+
   return (
     <div className="space-y-2">
       {/* Header */}
@@ -50,20 +82,31 @@ export const SectionList: React.FC<SectionListProps> = ({
         </div>
       )}
 
-      {/* Section cards */}
-      {sections.map((section, index) => (
-        <SectionCard
-          key={section.id}
-          section={section}
-          index={index}
-          total={sections.length}
-          isSelected={selectedIndex === index}
-          onSelect={() => onSelect(index)}
-          onMoveUp={() => onMoveUp(index)}
-          onMoveDown={() => onMoveDown(index)}
-          onDelete={() => onDelete(index)}
-        />
-      ))}
+      {/* Drag-and-drop section cards */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sections.map((s) => s.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {sections.map((section, index) => (
+            <SectionCard
+              key={section.id}
+              section={section}
+              index={index}
+              total={sections.length}
+              isSelected={selectedIndex === index}
+              onSelect={() => onSelect(index)}
+              onMoveUp={() => onMoveUp(index)}
+              onMoveDown={() => onMoveDown(index)}
+              onDelete={() => onDelete(index)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
     </div>
   );
 };

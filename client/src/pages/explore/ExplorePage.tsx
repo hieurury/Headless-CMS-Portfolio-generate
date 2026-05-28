@@ -12,7 +12,7 @@ const LIMIT = 12;
 export const ExplorePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, logout, user } = useAuthStore();
 
   const initialQuery = searchParams.get('q') ?? '';
   const initialPage = parseInt(searchParams.get('page') ?? '1', 10);
@@ -29,7 +29,13 @@ export const ExplorePage: React.FC = () => {
   const load = useCallback(async (q: string, pg: number) => {
     setIsLoading(true);
     try {
-      const res = await publicService.listAll(q, pg, LIMIT);
+      // Exclude own portfolios if authenticated
+      const res = await publicService.listAll(
+        q,
+        pg,
+        LIMIT,
+        isAuthenticated && user?._id ? user._id : undefined,
+      );
       setPortfolios(res.data);
       setTotal(res.total);
       setTotalPages(res.totalPages);
@@ -38,7 +44,7 @@ export const ExplorePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, user?._id]);
 
   useEffect(() => {
     void load(query, page);

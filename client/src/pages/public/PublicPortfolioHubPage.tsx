@@ -117,9 +117,9 @@ export const PublicPortfolioHubPage: React.FC = () => {
             </h2>
             {data.pages.map((page, i) => (
               <Link
-                key={page.slug}
-                to={`/p/${portfolioSlug}/${page.slug}`}
-                id={`hub-page-link-${page.slug}`}
+                key={page.urlSlug}
+                to={`/p/${portfolioSlug}/${page.urlSlug}`}
+                id={`hub-page-link-${page.urlSlug}`}
                 className="group flex items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-indigo-500/30 transition-all duration-200"
               >
                 <div className="flex items-center gap-4">
@@ -137,7 +137,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
                     <p className="text-white font-semibold group-hover:text-indigo-300 transition-colors">
                       {page.title}
                     </p>
-                    <p className="text-xs text-slate-600 font-mono">{page.slug}</p>
+                    <p className="text-xs text-slate-600 font-mono">/{page.urlSlug}</p>
                   </div>
                 </div>
                 <ArrowRight

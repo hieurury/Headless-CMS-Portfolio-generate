@@ -6,6 +6,7 @@
 export interface LayoutSection {
   id: string;
   type: string; // Maps to ComponentRegistry key (e.g. 'hero', 'navbar')
+  name?: string; // Anchor/class name for scroll-link targeting (e.g. 'hero', 'about')
   props: Record<string, unknown>;
   children?: LayoutSection[]; // Nested sections support
 }

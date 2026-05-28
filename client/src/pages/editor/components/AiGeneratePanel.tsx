@@ -10,10 +10,11 @@ interface AiGeneratePanelProps {
 }
 
 const EXAMPLE_PROMPTS = [
-  'Full stack developer portfolio with hero, about, skills (React, Node.js, Python), projects grid, and contact form',
-  'UX/UI designer portfolio with creative hero section, about me, design skills, portfolio showcase, and contact',
-  'Data scientist portfolio with professional hero, technical skills (Python, TensorFlow, SQL), projects with GitHub links, and contact',
-  'Freelance developer with experience timeline, education, projects, and social links',
+  'Full stack developer named Alex with hero, about, skills (React, Node.js, Python, Docker), 4 projects with GitHub links, experience timeline, and contact form',
+  'UX/UI designer portfolio for Sarah — projects-first layout with creative hero, 5 design projects, about me with design philosophy, tools (Figma, Adobe XD), and contact',
+  'Data scientist and ML engineer portfolio with technical skills (Python, TensorFlow, PyTorch, SQL), research projects with GitHub links, academic experience, and publications',
+  'Freelance web consultant with corporate layout: professional hero, 10 years of experience, education in Computer Science, key clients, services offered, and contact',
+  'Academic researcher and professor portfolio with about, publications as projects, teaching experience, education (PhD), speaking engagements, and academic contact',
 ];
 
 export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({

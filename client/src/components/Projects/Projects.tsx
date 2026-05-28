@@ -5,7 +5,7 @@ interface Project {
   name: string;
   description: string;
   image?: string;
-  tags?: string[];
+  tags?: unknown[];
   demoUrl?: string;
   githubUrl?: string;
   featured?: boolean;
@@ -14,9 +14,25 @@ interface Project {
 interface ProjectsProps {
   title?: string;
   subtitle?: string;
-  projects?: Project[];
-  columns?: 2 | 3 | 4;
+  projects?: unknown[];
+  columns?: 2 | 3 | 4 | string;
   [key: string]: unknown;
+}
+
+/**
+ * Normalizes arrays that may contain either strings or {value: string} objects.
+ * The editor stores array items as objects with a `value` key due to itemSchema format.
+ */
+function normalizeStringArray(arr: unknown[]): string[] {
+  return arr
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object' && 'value' in item) {
+        return String((item as Record<string, unknown>).value ?? '');
+      }
+      return '';
+    })
+    .filter(Boolean);
 }
 
 export const Projects: React.FC<ProjectsProps> = ({
@@ -25,11 +41,23 @@ export const Projects: React.FC<ProjectsProps> = ({
   projects = [],
   columns = 3,
 }) => {
-  const gridCols = {
+  // columns may come as string '3' from select field
+  const colNum = Number(columns) as 2 | 3 | 4;
+  const gridCols: Record<number, string> = {
     2: 'md:grid-cols-2',
     3: 'md:grid-cols-2 lg:grid-cols-3',
     4: 'md:grid-cols-2 lg:grid-cols-4',
-  }[columns];
+  };
+  const gridClass = gridCols[colNum] ?? 'md:grid-cols-2 lg:grid-cols-3';
+
+  // Normalize projects array
+  const normalizedProjects = (projects as unknown[]).map((p) => {
+    const proj = p as Project;
+    return {
+      ...proj,
+      tags: Array.isArray(proj.tags) ? normalizeStringArray(proj.tags) : [],
+    };
+  });
 
   return (
     <section className="section-padding">
@@ -40,10 +68,10 @@ export const Projects: React.FC<ProjectsProps> = ({
           {subtitle && <p className="text-slate-400 text-lg">{subtitle}</p>}
         </div>
 
-        <div className={`grid gap-6 ${gridCols}`}>
-          {projects.map((project) => (
+        <div className={`grid gap-6 ${gridClass}`}>
+          {normalizedProjects.map((project, idx) => (
             <article
-              key={project.name}
+              key={project.name ?? idx}
               className="glass glass-hover rounded-2xl overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10"
             >
               {/* Image / Placeholder */}
@@ -71,7 +99,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                 </p>
 
                 {/* Tags */}
-                {project.tags && project.tags.length > 0 && (
+                {project.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {project.tags.map((tag) => (
                       <span

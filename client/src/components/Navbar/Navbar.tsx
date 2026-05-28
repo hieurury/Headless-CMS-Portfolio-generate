@@ -13,6 +13,22 @@ interface NavbarProps {
   [key: string]: unknown;
 }
 
+/**
+ * Handles anchor link clicks with smooth scrolling.
+ * For `#section-id` hrefs, scrolls smoothly to the target element.
+ * For external/page links, follows normally.
+ */
+function handleSmoothScroll(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+  if (href.startsWith('#')) {
+    const targetId = href.slice(1);
+    const el = document.getElementById(targetId);
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+
 export const Navbar: React.FC<NavbarProps> = ({
   logo = 'Portfolio',
   links = [],
@@ -42,7 +58,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="container-max px-6 mx-auto">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="/" className="text-xl font-bold gradient-text">
+          <a
+            href="/"
+            className="text-xl font-bold gradient-text"
+            onClick={(e) => handleSmoothScroll(e, '/')}
+          >
             {logo}
           </a>
 
@@ -52,6 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <a
                 key={link.href}
                 href={link.href}
+                onClick={(e) => handleSmoothScroll(e, link.href)}
                 className="text-sm text-slate-400 hover:text-white transition-colors duration-200 relative group"
               >
                 {link.label}
@@ -61,6 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {ctaLabel && (
               <a
                 href={ctaHref}
+                onClick={(e) => handleSmoothScroll(e, ctaHref ?? '')}
                 className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/25"
               >
                 {ctaLabel}
@@ -86,7 +108,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={link.href}
                 href={link.href}
                 className="block text-slate-400 hover:text-white py-2 transition-colors"
-                onClick={() => setIsOpen(false)}
+                onClick={(e) => {
+                  handleSmoothScroll(e, link.href);
+                  setIsOpen(false);
+                }}
               >
                 {link.label}
               </a>
@@ -95,7 +120,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <a
                 href={ctaHref}
                 className="block w-full text-center px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium"
-                onClick={() => setIsOpen(false)}
+                onClick={(e) => {
+                  handleSmoothScroll(e, ctaHref ?? '');
+                  setIsOpen(false);
+                }}
               >
                 {ctaLabel}
               </a>
