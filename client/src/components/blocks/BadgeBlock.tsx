@@ -38,8 +38,9 @@ export const BadgeBlock: React.FC<BadgeBlockProps> = ({
   return (
     <div className={`w-full py-1 flex ${alignClass}`} id={sectionId}>
       <span
+        data-cms-field="label"
         className={`
-          inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border
+          inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border cursor-text
           ${styles.bg} ${styles.text} ${styles.border}
         `}
       >

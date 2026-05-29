@@ -1,10 +1,24 @@
 import React, { useState } from 'react';
 import { GripVertical, ChevronRight, Plus, Trash2, Eye, Settings } from 'lucide-react';
-import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import clsx from 'clsx';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
 
 // ─── Colour palette per category ─────────────────────────────────────────────
 
@@ -19,7 +33,91 @@ const CAT_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
 
 const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
 
-// ─── Tree node ────────────────────────────────────────────────────────────────
+// ─── Shared interface for child-related props ─────────────────────────────────
+
+interface ChildNodeSharedProps {
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+  onAddChild: (parentId: string) => void;
+  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
+}
+
+// ─── SortableChildrenList — owns the DndContext for its children ──────────────
+/**
+ * Separate component so that hooks (useSensors) are called at component
+ * top level — not inside conditionals or render loops.
+ */
+const SortableChildrenList: React.FC<{
+  parentId: string;
+  children: LayoutSection[];
+  depth: number;
+  indent: number;
+} & ChildNodeSharedProps> = ({
+  parentId,
+  children,
+  depth,
+  indent,
+  selectedId,
+  onSelect,
+  onDelete,
+  onAddChild,
+  onReorderChildren,
+}) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = children.findIndex((c) => c.id === active.id);
+    const newIndex = children.findIndex((c) => c.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      onReorderChildren(parentId, oldIndex, newIndex);
+    }
+  };
+
+  return (
+    <div className="relative">
+      {/* Vertical guide line */}
+      <div
+        className="absolute top-0 bottom-0 w-px bg-white/6"
+        style={{ left: `${Math.max(6, indent) + 16}px` }}
+      />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={children.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-0.5 mt-0.5">
+            {children.map((child) => (
+              <LayerNode
+                key={child.id}
+                section={child}
+                depth={depth + 1}
+                selectedId={selectedId}
+                onSelect={onSelect}
+                onDelete={onDelete}
+                onAddChild={onAddChild}
+                onReorderChildren={onReorderChildren}
+                isSortable
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+};
+
+// ─── Individual draggable node ────────────────────────────────────────────────
+
 
 interface LayerNodeProps {
   section: LayoutSection;
@@ -28,7 +126,8 @@ interface LayerNodeProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
-  // optional: only top-level nodes are sortable via the sidebar DnD
+  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
+  /** If set, this node is sortable within its parent */
   isSortable?: boolean;
 }
 
@@ -39,6 +138,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   onSelect,
   onDelete,
   onAddChild,
+  onReorderChildren,
   isSortable = false,
 }) => {
   const entry = componentRegistry.getEntry(section.type);
@@ -61,7 +161,8 @@ const LayerNode: React.FC<LayerNodeProps> = ({
     ? { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
     : undefined;
 
-  const indent = depth * 14; // px per level
+  const indent = depth * 14;
+
 
   return (
     <div ref={isSortable ? setNodeRef : undefined} style={style} className="w-full">
@@ -77,7 +178,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
         style={{ paddingLeft: `${Math.max(6, indent)}px` }}
         onClick={() => onSelect(section.id)}
       >
-        {/* Drag handle — only top-level */}
+        {/* Drag handle */}
         {isSortable && (
           <button
             {...attributes}
@@ -89,14 +190,14 @@ const LayerNode: React.FC<LayerNodeProps> = ({
           </button>
         )}
 
-        {/* Tree connector line placeholder for children */}
+        {/* Tree connector for non-sortable children */}
         {!isSortable && depth > 0 && (
           <div className="w-3 shrink-0 flex items-center justify-center">
             <div className="w-2 h-px bg-white/10" />
           </div>
         )}
 
-        {/* Expand chevron (for containers with children) */}
+        {/* Expand chevron */}
         {isContainer || hasChildren ? (
           <button
             className={clsx(
@@ -160,50 +261,25 @@ const LayerNode: React.FC<LayerNodeProps> = ({
         </div>
       </div>
 
-      {/* ── Children (tree) ─────────────────────────────────────── */}
+      {/* ── Children (sortable tree) ──────────────────────────────── */}
       {expanded && hasChildren && (
-        <div className="relative">
-          {/* Vertical guide line */}
-          <div
-            className="absolute top-0 bottom-0 w-px bg-white/6"
-            style={{ left: `${Math.max(6, indent) + 16}px` }}
-          />
-          <div className="space-y-0.5 mt-0.5">
-            {section.children!.map((child) => (
-              <LayerNode
-                key={child.id}
-                section={child}
-                depth={depth + 1}
-                selectedId={selectedId}
-                onSelect={onSelect}
-                onDelete={onDelete}
-                onAddChild={onAddChild}
-                isSortable={false}
-              />
-            ))}
-          </div>
-        </div>
+        <SortableChildrenList
+          parentId={section.id}
+          children={section.children!}
+          depth={depth}
+          indent={indent}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          onDelete={onDelete}
+          onAddChild={onAddChild}
+          onReorderChildren={onReorderChildren}
+        />
       )}
     </div>
   );
 };
 
-// ─── LayersPanel (replaces SectionList) ──────────────────────────────────────
-
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+// ─── LayersPanel ──────────────────────────────────────────────────────────────
 
 interface LayersPanelProps {
   sections: LayoutSection[];
@@ -213,6 +289,7 @@ interface LayersPanelProps {
   onAddClick: () => void;
   onAddChild: (parentId: string) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
+  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
 }
 
 export const LayersPanel: React.FC<LayersPanelProps> = ({
@@ -223,6 +300,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   onAddClick,
   onAddChild,
   onReorder,
+  onReorderChildren,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -261,7 +339,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         </div>
       )}
 
-      {/* Tree */}
+      {/* Tree (top-level sortable) */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -281,6 +359,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                 onSelect={onSelect}
                 onDelete={onDelete}
                 onAddChild={onAddChild}
+                onReorderChildren={onReorderChildren}
                 isSortable
               />
             ))}

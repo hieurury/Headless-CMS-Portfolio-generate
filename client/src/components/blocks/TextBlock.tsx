@@ -38,7 +38,8 @@ export const TextBlock: React.FC<TextBlockProps> = ({
   return (
     <div className={`w-full py-1 ${alignClass}`} id={sectionId}>
       <p
-        className={`${sizeClass} ${colorClass} leading-relaxed whitespace-pre-line`}
+        data-cms-field="content"
+        className={`${sizeClass} ${colorClass} leading-relaxed whitespace-pre-line cursor-text`}
         style={color ? { color } : undefined}
       >
         {content}

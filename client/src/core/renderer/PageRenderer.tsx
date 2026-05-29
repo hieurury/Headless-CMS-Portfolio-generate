@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PageLayout } from '../types/layout.types';
-import { SectionRenderer, isDropId, fromDropId } from './SectionRenderer';
+import { SectionRenderer, isDropId, fromDropId, EMPTY_SLOT_TYPE } from './SectionRenderer';
 import { useEditorContext } from '../context/EditorContext';
 import {
   DndContext,
@@ -18,7 +18,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { findParent } from '../utils/layoutUtils';
+import { findParent, findSectionById } from '../utils/layoutUtils';
 
 interface PageRendererProps {
   layout: PageLayout;
@@ -26,18 +26,29 @@ interface PageRendererProps {
 }
 
 /**
- * Custom collision detection: prefer drop zones (container drops) over sort items.
- * This ensures dragging over a container highlights it as a drop target.
+ * Custom collision detection.
+ *
+ * Priority:
+ *   1. _empty slot droppables (innermost, most specific) — so dragging over an
+ *      empty slot highlights IT, not its ancestor container.
+ *   2. Regular container droppables.
+ *   3. Fallback: closestCenter for sortable reordering.
  */
 function customCollisionDetection(args: Parameters<typeof pointerWithin>[0]) {
-  // First: try to find pointer collisions with droppable containers
   const pointerCollisions = pointerWithin(args);
-  const dropZoneCollisions = pointerCollisions.filter(
+
+  // Split drop-id collisions into _empty-slot vs regular container
+  const emptySlotCollisions = pointerCollisions.filter(
+    (c) => typeof c.id === 'string' && isDropId(c.id as string) &&
+      fromDropId(c.id as string).startsWith('_empty'),
+  );
+  if (emptySlotCollisions.length > 0) return emptySlotCollisions;
+
+  const containerCollisions = pointerCollisions.filter(
     (c) => typeof c.id === 'string' && isDropId(c.id as string),
   );
-  if (dropZoneCollisions.length > 0) return dropZoneCollisions;
+  if (containerCollisions.length > 0) return containerCollisions;
 
-  // Fallback: closest center for sortable reordering
   return closestCenter(args);
 }
 
@@ -48,6 +59,7 @@ function customCollisionDetection(args: Parameters<typeof pointerWithin>[0]) {
  * - Top-level section reorder
  * - Child reorder within a container
  * - Cross-container moves (drag from anywhere → drop into a container)
+ * - Replace _empty slot when something is dragged onto it
  */
 export const PageRenderer: React.FC<PageRendererProps> = ({
   layout,
@@ -59,6 +71,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
     onSectionReorder,
     onMoveToContainer,
     onReorderChildren,
+    onReplaceEmptySlot,
   } = useEditorContext();
 
   const sensors = useSensors(
@@ -75,45 +88,69 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // ── Case 1: Dropped INTO a container drop zone ────────────────────
+    // ── Case 1: Dropped onto a droppable zone ─────────────────────────
     if (isDropId(overId)) {
-      const containerId = fromDropId(overId);
-      if (activeId !== containerId) {
-        onMoveToContainer(activeId, containerId);
+      const targetId = fromDropId(overId);
+
+      // Sub-case A: Dropped onto an _empty slot → REPLACE the slot
+      // (not move-to-container, since _empty is not a real container)
+      if (targetId.startsWith('_empty')) {
+        if (activeId !== targetId) {
+          onReplaceEmptySlot(activeId, targetId);
+        }
+        return;
+      }
+
+      // Sub-case B: Dropped into a real container → move inside it
+      if (activeId !== targetId) {
+        onMoveToContainer(activeId, targetId);
       }
       return;
     }
 
-    // ── Case 2: Dropped onto another item — find parent context ───────
+    // ── Case 2: Dropped onto a sortable item (not a droppable zone) ───
     const activeParentInfo = findParent(sections, activeId);
-    const overParentInfo = findParent(sections, overId);
+    const overParentInfo   = findParent(sections, overId);
 
     if (!activeParentInfo || !overParentInfo) return;
 
     const activeParentId = activeParentInfo.parent?.id ?? null;
-    const overParentId = overParentInfo.parent?.id ?? null;
+    const overParentId   = overParentInfo.parent?.id ?? null;
 
-    // Same parent (top level or same container) → reorder
     if (activeParentId === overParentId) {
+      // Same parent → reorder (top-level or within a container)
       if (activeParentId === null) {
-        // Top-level reorder
+        // Top-level
         const oldIdx = sections.findIndex((s) => s.id === activeId);
         const newIdx = sections.findIndex((s) => s.id === overId);
-        if (oldIdx !== -1 && newIdx !== -1) {
-          onSectionReorder(oldIdx, newIdx);
-        }
+        if (oldIdx !== -1 && newIdx !== -1) onSectionReorder(oldIdx, newIdx);
       } else {
-        // Reorder within same container
+        // Within a container — skip if the target is an _empty slot
+        // (that case is handled by Case 1; if we reach here it means the
+        //  _empty slot was the nearest sortable item, not its droppable zone)
+        const targetSection = findSectionById(sections, overId);
+        if (targetSection?.type === EMPTY_SLOT_TYPE) {
+          // Treat as replace
+          onReplaceEmptySlot(activeId, overId);
+          return;
+        }
         const parent = activeParentInfo.parent!;
         const oldIdx = parent.children?.findIndex((c) => c.id === activeId) ?? -1;
         const newIdx = parent.children?.findIndex((c) => c.id === overId) ?? -1;
-        if (oldIdx !== -1 && newIdx !== -1) {
-          onReorderChildren(activeParentId!, oldIdx, newIdx);
-        }
+        if (oldIdx !== -1 && newIdx !== -1) onReorderChildren(activeParentId!, oldIdx, newIdx);
       }
     } else {
-      // Different parent → move to the over item's container
-      onMoveToContainer(activeId, overParentId ?? '', overParentInfo.index);
+      // Different parent case.
+      // Only valid cross-container move is via an explicit _empty slot (Case 1).
+      // If we reach here, the target is a regular block in a different container
+      // (or at a different level). Do nothing — block stays in original position.
+      // This prevents blocks from being accidentally ejected from their group.
+      const targetSection = findSectionById(sections, overId);
+      if (targetSection?.type === EMPTY_SLOT_TYPE) {
+        // Edge case: _empty slot reached as a sortable item rather than droppable
+        onReplaceEmptySlot(activeId, overId);
+      }
+      // All other cross-container drops: silently ignore.
     }
   };
 

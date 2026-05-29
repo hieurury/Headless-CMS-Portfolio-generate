@@ -50,7 +50,8 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   return (
     <div className={`w-full py-2 ${alignClass}`} id={sectionId}>
       <Tag
-        className={`font-bold leading-tight ${sizeClass} ${textClass}`}
+        data-cms-field="text"
+        className={`font-bold leading-tight ${sizeClass} ${textClass} cursor-text`}
         style={color && !gradient ? { color } : undefined}
       >
         {text}

@@ -84,7 +84,7 @@ export const SectionWrapperBlock: React.FC<SectionWrapperProps> = ({
         {hasHeader && (
           <div className={`mb-12 ${alignClass}`}>
             {label && (
-              <p className="text-sm font-semibold text-indigo-400 tracking-widest uppercase mb-3">
+              <p data-cms-field="label" className="text-sm font-semibold text-indigo-400 tracking-widest uppercase mb-3 cursor-text">
                 {label}
               </p>
             )}

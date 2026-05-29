@@ -142,4 +142,34 @@
   .editor-canvas-top-pad > .page-renderer {
     padding-top: 28px;
   }
+
+  /* ─── Editor block hover isolation ───────────────────────────────── */
+  /*
+    cms-block           = every block wrapper
+    cms-container-block = layout container blocks (Row, Section, Card…)
+    cms-control         = the control label pill
+    cms-hover-ring      = the inset ring shown on hover
+
+    All controls are hidden by default (opacity-0 in JSX).
+    CSS shows them ONLY on direct hover; hides again when a child is hovered.
+    Container blocks obey the same rule — no persistent dim labels.
+  */
+
+  /* 1. Show on direct hover — all blocks */
+  .cms-block:hover > .cms-control {
+    opacity: 1 !important;
+  }
+
+  /* 2. Hide when any descendant cms-block is hovered — all blocks */
+  .cms-block:has(.cms-block:hover) > .cms-control {
+    opacity: 0 !important;
+  }
+
+  /* 3. Hover ring */
+  .cms-block:hover > .cms-hover-ring {
+    opacity: 1 !important;
+  }
+  .cms-block:has(.cms-block:hover) > .cms-hover-ring {
+    opacity: 0 !important;
+  }
 }

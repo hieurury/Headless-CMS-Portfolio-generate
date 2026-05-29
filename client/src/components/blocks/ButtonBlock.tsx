@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useEditorContext } from '../../core/context/EditorContext';
 
 interface ButtonBlockProps {
   label?: string;
@@ -53,7 +54,11 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   const isExternalHref = href?.startsWith('http');
   const isAnchor = href?.startsWith('#');
 
+  const { isEditorMode, previewMode } = useEditorContext();
+
   const handleClick = (e: React.MouseEvent) => {
+    // Disable all click behaviors in editor mode
+    if (isEditorMode && !previewMode) return;
     if (isAnchor && href) {
       e.preventDefault();
       const target = document.getElementById(href.slice(1));
@@ -65,6 +70,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
     <div className={`w-full py-2 flex ${alignClass}`} id={sectionId}>
       <a
         href={href}
+        data-cms-field="label"
         target={isExternalHref ? '_blank' : undefined}
         rel={isExternalHref ? 'noopener noreferrer' : undefined}
         onClick={handleClick}

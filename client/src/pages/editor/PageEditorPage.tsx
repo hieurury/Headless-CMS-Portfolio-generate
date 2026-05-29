@@ -14,7 +14,7 @@ import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import {
   Save, ArrowLeft, Sparkles, Layers,
   Loader2, Check, ChevronRight, Plus, X,
-  PanelLeft, PanelRight, Settings,
+  PanelLeft, PanelRight, Settings, Eye, PenLine,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -24,10 +24,12 @@ import {
   removeSection,
   findSectionById,
   addChildToSection,
+  replaceSection,
   updateSectionProps,
   updateSectionName,
   findParent,
 } from '../../core/utils/layoutUtils';
+import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
 type LeftTab = 'ai' | 'sections';
 
@@ -69,16 +71,22 @@ export const PageEditorPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
 
+  // ── Preview / Edit mode ────────────────────────────────────────────
+  const [previewMode, setPreviewMode] = useState(false);
+
   // ── Panel state ────────────────────────────────────────────────────
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [addChildParentId, setAddChildParentId] = useState<string | null>(null);
+  // When non-null, the AddPanel is in "fill slot" mode:
+  // the chosen block REPLACES the _empty slot with this id
+  const [fillSlotId, setFillSlotId] = useState<string | null>(null);
   const [leftTab, setLeftTab] = useState<LeftTab>('ai');
 
   const rightScrollRef = useRef<HTMLDivElement>(null);
 
-  // ── Load ───────────────────────────────────────────────────────────
+  // -- Load ------------------------------------------------------------------
   useEffect(() => {
     if (portfolioId && pageId) {
       fetchOne(portfolioId, pageId);
@@ -86,6 +94,7 @@ export const PageEditorPage: React.FC = () => {
     }
   }, [portfolioId, pageId, fetchOne, fetchPortfolio]);
 
+  // -- Sync draft when page loads ---------------------------------------------
   useEffect(() => {
     if (page) {
       setDraftLayout(page.layout ?? { sections: [] });
@@ -93,22 +102,40 @@ export const PageEditorPage: React.FC = () => {
     }
   }, [page]);
 
-  // ── Listen for cms:addChild events from ContainerDropZone ──────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { parentId } = (e as CustomEvent<{ parentId: string }>).detail;
-      setAddChildParentId(parentId);
-      setShowAddPanel(true);
-    };
-    window.addEventListener('cms:addChild', handler);
-    return () => window.removeEventListener('cms:addChild', handler);
-  }, []);
-
-  // ── Immutable layout updater ───────────────────────────────────────
+  // -- Immutable layout updater -----------------------------------------------
   const updateLayout = useCallback((updater: (prev: PageLayout) => PageLayout) => {
     setDraftLayout((prev) => updater(prev));
     setIsDirty(true);
   }, []);
+
+  // ── Listen for cms:addEmptySlot — "+" button on container control ──
+  // Adds an _empty placeholder child WITHOUT opening AddPanel.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { parentId } = (e as CustomEvent<{ parentId: string }>).detail;
+      const slot = makeEmptySlot();
+      updateLayout((layout) => ({
+        ...layout,
+        sections: addChildToSection(layout.sections, parentId, slot),
+      }));
+    };
+    window.addEventListener('cms:addEmptySlot', handler);
+    return () => window.removeEventListener('cms:addEmptySlot', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:fillEmptySlot — click on an empty slot ─────────
+  // Opens AddPanel; the chosen block REPLACES the _empty slot.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { slotId } = (e as CustomEvent<{ slotId: string }>).detail;
+      setFillSlotId(slotId);
+      setAddChildParentId(null);
+      setShowAddPanel(true);
+    };
+    window.addEventListener('cms:fillEmptySlot', handler);
+    return () => window.removeEventListener('cms:fillEmptySlot', handler);
+  }, []);
+
 
   // ── Add section / block ────────────────────────────────────────────
   const handleAddSection = useCallback((type: string) => {
@@ -122,8 +149,16 @@ export const PageEditorPage: React.FC = () => {
       children,
     };
 
-    if (addChildParentId) {
-      // Add as a child of a container
+    if (fillSlotId) {
+      // Replace the _empty placeholder with the real block
+      updateLayout((layout) => ({
+        ...layout,
+        sections: replaceSection(layout.sections, fillSlotId, newSection),
+      }));
+      setSelectedId(newSection.id);
+      setFillSlotId(null);
+    } else if (addChildParentId) {
+      // Append as a child of a container
       updateLayout((layout) => ({
         ...layout,
         sections: addChildToSection(layout.sections, addChildParentId, newSection),
@@ -143,7 +178,37 @@ export const PageEditorPage: React.FC = () => {
     setSelectedFieldKey(null);
     setShowRightPanel(true);
     setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [addChildParentId, updateLayout]);
+  }, [fillSlotId, addChildParentId, updateLayout]);
+
+  // ── Add template (inject full tree) ───────────────────────────────
+  const handleAddTemplate = useCallback((tree: LayoutSection) => {
+    if (fillSlotId) {
+      // Replace _empty placeholder with the template root
+      updateLayout((layout) => ({
+        ...layout,
+        sections: replaceSection(layout.sections, fillSlotId, tree),
+      }));
+      setSelectedId(tree.id);
+      setFillSlotId(null);
+    } else if (addChildParentId) {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: addChildToSection(layout.sections, addChildParentId, tree),
+      }));
+      setSelectedId(tree.id);
+    } else {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: [...layout.sections, tree],
+      }));
+      setSelectedId(tree.id);
+      setLeftTab('sections');
+    }
+    setAddChildParentId(null);
+    setSelectedFieldKey(null);
+    setShowRightPanel(true);
+    setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  }, [fillSlotId, addChildParentId, updateLayout]);
 
   // ── Top-level reorder ──────────────────────────────────────────────
   const handleTopLevelReorder = useCallback((oldIndex: number, newIndex: number) => {
@@ -162,8 +227,8 @@ export const PageEditorPage: React.FC = () => {
     setSelectedId((prev) => prev === sectionId ? null : prev);
   }, [updateLayout]);
 
-  // ── Move a section into a container ───────────────────────────────
-  const handleMoveToContainer = useCallback((sectionId: string, toContainerId: string, toIndex?: number) => {
+  // ── Move a section into a container (or to top level if containerId is null) ──
+  const handleMoveToContainer = useCallback((sectionId: string, toContainerId: string | null, toIndex?: number) => {
     updateLayout((layout) => ({
       ...layout,
       sections: moveSection(layout.sections, sectionId, toContainerId, toIndex),
@@ -176,6 +241,45 @@ export const PageEditorPage: React.FC = () => {
       ...layout,
       sections: reorderChildren(layout.sections, parentId, oldIndex, newIndex),
     }));
+  }, [updateLayout]);
+
+  // ── Replace an _empty slot with a dragged block ───────────────────────────
+  // Called by PageRenderer when a block is dropped onto an _empty slot.
+  //
+  // Cross-container move:
+  //   1. Find the block and note its parent.
+  //   2. Swap: put a new _empty slot where the block was.
+  //   3. Put the block where the _empty slot was.
+  //
+  // Same-container move (block and slot are siblings):
+  //   Just replace the slot with the block — no new empty slot needed.
+  const handleReplaceEmptySlot = useCallback((sectionId: string, slotId: string) => {
+    updateLayout((layout) => {
+      const movedBlock = findSectionById(layout.sections, sectionId);
+      if (!movedBlock) return layout;
+
+      const sourceParent = findParent(layout.sections, sectionId);
+      const targetParent = findParent(layout.sections, slotId);
+
+      const sourceParentId = sourceParent?.parent?.id ?? null;
+      const targetParentId = targetParent?.parent?.id ?? null;
+
+      const isCrossContainer = sourceParentId !== targetParentId;
+
+      if (isCrossContainer) {
+        // Step 1: replace block at old position with a new _empty slot
+        const newSlot = makeEmptySlot();
+        const withSlotAtSource = replaceSection(layout.sections, sectionId, newSlot);
+        // Step 2: replace target empty slot with the block
+        const final = replaceSection(withSlotAtSource, slotId, movedBlock);
+        return { ...layout, sections: final };
+      } else {
+        // Same container: simply remove slot and put block there
+        const [withoutBlock] = removeSection(layout.sections, sectionId);
+        const final = replaceSection(withoutBlock, slotId, movedBlock);
+        return { ...layout, sections: final };
+      }
+    });
   }, [updateLayout]);
 
   // ── Props change (by section id, any depth) ───────────────────────
@@ -257,11 +361,13 @@ export const PageEditorPage: React.FC = () => {
     <EditorProvider
       value={{
         isEditorMode: true,
+        previewMode,
         selectedSectionId: selectedId,
         selectedFieldKey,
         sections: draftLayout.sections,
         onSectionSelect: handleSectionSelect,
         onFieldSelect: handleFieldSelect,
+        onTogglePreviewMode: () => setPreviewMode((p) => !p),
         onSectionReorder: handleTopLevelReorder,
         onAddChild: (parentId, childType) => {
           setAddChildParentId(parentId);
@@ -271,6 +377,7 @@ export const PageEditorPage: React.FC = () => {
         onRemoveSection: handleRemoveSection,
         onMoveToContainer: handleMoveToContainer,
         onReorderChildren: handleReorderChildren,
+        onReplaceEmptySlot: handleReplaceEmptySlot,
         onPropsChange: handlePropsChange,
         onNameChange: handleNameChange,
       }}
@@ -308,6 +415,36 @@ export const PageEditorPage: React.FC = () => {
           >
             <PanelLeft size={15} />
           </button>
+
+          {/* ── Preview / Edit Mode Toggle ─────────────────────────────── */}
+          <div className="flex items-center rounded-lg border border-white/10 overflow-hidden bg-white/3">
+            <button
+              onClick={() => setPreviewMode(false)}
+              title="Edit mode — click elements to edit inline"
+              className={clsx(
+                'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
+                !previewMode
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-400 hover:text-white',
+              )}
+            >
+              <PenLine size={13} />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
+            <button
+              onClick={() => setPreviewMode(true)}
+              title="Preview mode — links and interactions work normally"
+              className={clsx(
+                'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
+                previewMode
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-400 hover:text-white',
+              )}
+            >
+              <Eye size={13} />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
+          </div>
 
           <button
             onClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
@@ -347,7 +484,7 @@ export const PageEditorPage: React.FC = () => {
         <div className="flex flex-1 min-h-0" style={{ height: `calc(100dvh - ${HEADER_H}px)` }}>
 
           {/* LEFT: AI + Layers */}
-          {showLeftPanel && (
+          {showLeftPanel && !previewMode && (
             <aside
               className="shrink-0 border-r border-white/5 bg-[#0a0a0f] flex flex-col"
               style={{ width: 240 }}
@@ -394,6 +531,7 @@ export const PageEditorPage: React.FC = () => {
                       setShowAddPanel(true);
                     }}
                     onReorder={handleTopLevelReorder}
+                    onReorderChildren={handleReorderChildren}
                   />
                 )}
               </div>
@@ -408,14 +546,21 @@ export const PageEditorPage: React.FC = () => {
           {/* CENTER: Preview */}
           <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#08080f]">
             <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5">
-              <span className="text-xs text-slate-600">Preview</span>
+              <span className="text-xs text-slate-600">{previewMode ? '👁 Preview' : '✏ Editor'}</span>
               <span className="text-xs text-slate-700 font-mono">{page?.slug}</span>
-              <span className="ml-auto text-[10px] text-indigo-400/60 hidden md:block">
-                Click to select · Drag ⠿ to reorder · Drag into containers
-              </span>
+              {!previewMode && (
+                <span className="ml-auto text-[10px] text-indigo-400/60 hidden md:block">
+                  Click text/images to edit inline · Drag ⠿ to reorder · Drag into containers
+                </span>
+              )}
+              {previewMode && (
+                <span className="ml-auto text-[10px] text-slate-500 hidden md:block">
+                  Preview mode — links and animations are live
+                </span>
+              )}
             </div>
 
-            <div className={`flex-1 overflow-y-auto overscroll-contain${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}>
+            <div className={`flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}>
               {draftLayout.sections.length === 0 ? (
                 <EmptyCanvasPrompt
                   onLayoutGenerated={(layout) => { handleAiLayout(layout); }}
@@ -430,7 +575,7 @@ export const PageEditorPage: React.FC = () => {
           </main>
 
           {/* RIGHT: Props Editor */}
-          {showRightPanel && (
+          {showRightPanel && !previewMode && (
             <aside
               className="shrink-0 border-l border-white/5 bg-[#0a0a0f] flex flex-col"
               style={{ width: 300 }}
@@ -477,7 +622,10 @@ export const PageEditorPage: React.FC = () => {
                     </div>
                     <p className="text-sm text-slate-500 font-medium">No block selected</p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Click any section or block in the preview
+                      Click any block in the preview to edit
+                    </p>
+                    <p className="text-xs text-indigo-400/50 mt-3 text-center leading-relaxed">
+                      ✏ Click text or images<br />directly in the preview
                     </p>
                   </div>
                 )}
@@ -490,8 +638,9 @@ export const PageEditorPage: React.FC = () => {
         {showAddPanel && (
           <AddSectionPanel
             onAdd={handleAddSection}
-            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); }}
-            addingToContainer={addChildParentId !== null}
+            onAddTemplate={handleAddTemplate}
+            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); setFillSlotId(null); }}
+            addingToContainer={addChildParentId !== null || fillSlotId !== null}
           />
         )}
       </div>

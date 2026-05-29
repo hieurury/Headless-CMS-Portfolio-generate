@@ -174,3 +174,21 @@ export function updateSectionName(
     return s;
   });
 }
+
+/**
+ * Immutably replace a section (by id) with a new section at the same position.
+ * Used to replace an _empty placeholder with a real block.
+ */
+export function replaceSection(
+  sections: LayoutSection[],
+  targetId: string,
+  replacement: LayoutSection,
+): LayoutSection[] {
+  return sections.map((s) => {
+    if (s.id === targetId) return replacement;
+    if (s.children?.length) {
+      return { ...s, children: replaceSection(s.children, targetId, replacement) };
+    }
+    return s;
+  });
+}

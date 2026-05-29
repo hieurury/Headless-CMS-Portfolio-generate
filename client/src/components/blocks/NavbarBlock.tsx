@@ -1,78 +1,86 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Menu, X } from 'lucide-react';
-import clsx from 'clsx';
+import { useEditorContext } from '../../core/context/EditorContext';
 
-interface NavLink { label: string; href: string; }
+interface NavLink {
+  label: string;
+  href: string;
+}
 
-interface NavbarProps {
+export interface NavbarBlockProps {
   logo?: string;
   links?: NavLink[];
   ctaLabel?: string;
   ctaHref?: string;
   sticky?: boolean;
+  transparent?: boolean;
   [key: string]: unknown;
 }
 
 /**
- * Handles anchor link clicks with smooth scrolling.
- * For `#section-id` hrefs, scrolls smoothly to the target element.
- * For external/page links, follows normally.
+ * NavbarBlock — a composable navigation block.
+ *
+ * This is an Atomic Block, not a Section template.
+ * Add it as the first block on any page for site navigation.
+ * Uses useEditorContext to disable navigation in editor mode.
  */
-function handleSmoothScroll(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
-  if (href.startsWith('#')) {
-    const targetId = href.slice(1);
-    const el = document.getElementById(targetId);
-    if (el) {
-      e.preventDefault();
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-}
-
-export const Navbar: React.FC<NavbarProps> = ({
-  logo = 'Portfolio',
+export const NavbarBlock: React.FC<NavbarBlockProps> = ({
+  logo = 'My Portfolio',
   links = [],
   ctaLabel,
   ctaHref = '#contact',
   sticky = true,
+  transparent = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
+  const { isEditorMode, previewMode } = useEditorContext();
+  const isEditing = isEditorMode && !previewMode;
 
-  useEffect(() => {
+  React.useEffect(() => {
+    if (isEditing) return; // No scroll listener in editor
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [isEditing]);
+
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (isEditing) return;
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const el = document.getElementById(href.slice(1));
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const navBg =
+    transparent && !scrolled
+      ? 'bg-transparent'
+      : 'bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/5 shadow-lg';
 
   return (
     <nav
-      className={clsx(
-        'w-full z-50 transition-all duration-300',
-        sticky && 'sticky top-0',
-        scrolled
-          ? 'bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/5 shadow-lg'
-          : 'bg-transparent',
-      )}
+      className={`w-full z-50 transition-all duration-300 ${sticky ? 'sticky top-0' : ''} ${navBg}`}
     >
       <div className="container-max px-6 mx-auto">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <a
-            href="/"
-            className="text-xl font-bold gradient-text"
-            onClick={(e) => handleSmoothScroll(e, '/')}
+            data-cms-field="logo"
+            href={isEditing ? undefined : '/'}
+            onClick={(e) => { if (!isEditing) handleAnchorClick(e, '/'); }}
+            className="text-xl font-bold gradient-text select-none"
           >
             {logo}
           </a>
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-8">
-            {links.map((link) => (
+            {(links as NavLink[]).map((link, i) => (
               <a
-                key={link.href}
-                href={link.href}
-                onClick={(e) => handleSmoothScroll(e, link.href)}
+                key={i}
+                href={isEditing ? undefined : link.href}
+                onClick={(e) => handleAnchorClick(e as React.MouseEvent<HTMLAnchorElement>, link.href)}
                 className="text-sm text-slate-400 hover:text-white transition-colors duration-200 relative group"
               >
                 {link.label}
@@ -81,8 +89,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             ))}
             {ctaLabel && (
               <a
-                href={ctaHref}
-                onClick={(e) => handleSmoothScroll(e, ctaHref ?? '')}
+                data-cms-field="ctaLabel"
+                href={isEditing ? undefined : ctaHref}
+                onClick={(e) => handleAnchorClick(e as React.MouseEvent<HTMLAnchorElement>, ctaHref ?? '')}
                 className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/25"
               >
                 {ctaLabel}
@@ -93,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Mobile Toggle */}
           <button
             className="md:hidden p-2 text-slate-400 hover:text-white transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => { if (!isEditing) setIsOpen(!isOpen); }}
             aria-label="Toggle menu"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -101,15 +110,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Menu */}
-        {isOpen && (
+        {isOpen && !isEditing && (
           <div className="md:hidden border-t border-white/5 py-4 space-y-3 animate-fade-in">
-            {links.map((link) => (
+            {(links as NavLink[]).map((link, i) => (
               <a
-                key={link.href}
+                key={i}
                 href={link.href}
                 className="block text-slate-400 hover:text-white py-2 transition-colors"
                 onClick={(e) => {
-                  handleSmoothScroll(e, link.href);
+                  handleAnchorClick(e as React.MouseEvent<HTMLAnchorElement>, link.href);
                   setIsOpen(false);
                 }}
               >
@@ -121,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 href={ctaHref}
                 className="block w-full text-center px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium"
                 onClick={(e) => {
-                  handleSmoothScroll(e, ctaHref ?? '');
+                  handleAnchorClick(e as React.MouseEvent<HTMLAnchorElement>, ctaHref ?? '');
                   setIsOpen(false);
                 }}
               >

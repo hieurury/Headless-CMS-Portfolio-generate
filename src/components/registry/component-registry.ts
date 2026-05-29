@@ -1,417 +1,381 @@
 import { ComponentCategory } from '../schemas/component.schema';
 
 /**
- * Built-in Component Registry seed data.
+ * Built-in Component Registry — Block-only architecture.
  *
- * These components are seeded into MongoDB on application startup.
- * Each entry defines the "contract" between the CMS layout JSON and
- * the frontend renderer (implemented in future phases).
+ * All old monolithic Section components (hero, about, skills, projects,
+ * experience, education, contact, footer) have been removed.
  *
- * Schema field follows JSON Schema draft-07 conventions.
- * AI generation (Phase 2+) will use these schemas to validate layouts.
+ * Portfolios are now built by composing these blocks using the Template Library.
+ * Every block is inline-editable via data-cms-field attributes.
  */
 export const BUILT_IN_COMPONENTS = [
+  // ─── Navigation ───────────────────────────────────────────────────────────
   {
     type: 'navbar',
     name: 'Navigation Bar',
-    description: 'Top navigation bar with logo, links, and optional CTA button',
+    description: 'Sticky top navigation block with logo, links, and optional CTA button',
     category: ComponentCategory.NAVIGATION,
-    version: '1.0.0',
+    version: '2.0.0',
     isBuiltIn: true,
     schema: {
       type: 'object',
       properties: {
-        logo: { type: 'string', description: 'Text or image URL for the logo' },
+        logo: { type: 'string' },
         links: {
           type: 'array',
           items: {
             type: 'object',
-            properties: {
-              label: { type: 'string' },
-              href: { type: 'string' },
-            },
+            properties: { label: { type: 'string' }, href: { type: 'string' } },
             required: ['label', 'href'],
           },
         },
-        ctaLabel: { type: 'string', description: 'Call-to-action button label' },
-        ctaHref: { type: 'string', description: 'Call-to-action button link' },
-        sticky: { type: 'boolean', description: 'Whether the navbar sticks to top' },
+        ctaLabel: { type: 'string' },
+        ctaHref: { type: 'string' },
+        sticky: { type: 'boolean' },
+        transparent: { type: 'boolean' },
       },
-      required: ['logo', 'links'],
+      required: ['logo'],
     },
     defaultProps: {
       logo: 'My Portfolio',
       links: [
-        { label: 'About', href: '/about' },
-        { label: 'Projects', href: '/projects' },
-        { label: 'Contact', href: '/contact' },
+        { label: 'About', href: '#about' },
+        { label: 'Projects', href: '#projects' },
+        { label: 'Contact', href: '#contact' },
       ],
       ctaLabel: 'Hire Me',
-      ctaHref: '/contact',
+      ctaHref: '#contact',
       sticky: true,
+      transparent: false,
     },
   },
 
+  // ─── Layout Containers ────────────────────────────────────────────────────
   {
-    type: 'hero',
-    name: 'Hero Section',
-    description: 'Full-width hero banner with heading, subtitle, and call-to-action',
+    type: 'section-wrapper',
+    name: 'Section Wrapper',
+    description: 'Full-width section container with optional title, subtitle, and background',
     category: ComponentCategory.LAYOUT,
     version: '1.0.0',
     isBuiltIn: true,
     schema: {
       type: 'object',
       properties: {
-        heading: { type: 'string', description: 'Main hero heading' },
-        subheading: { type: 'string', description: 'Supporting subtitle text' },
-        ctaLabel: { type: 'string', description: 'Primary CTA button label' },
-        ctaHref: { type: 'string', description: 'Primary CTA button link' },
-        secondaryCtaLabel: { type: 'string' },
-        secondaryCtaHref: { type: 'string' },
-        backgroundImage: { type: 'string', description: 'URL of background image' },
-        alignment: {
-          type: 'string',
-          enum: ['left', 'center', 'right'],
-          default: 'center',
-        },
+        label: { type: 'string' },
+        title: { type: 'string' },
+        subtitle: { type: 'string' },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+        padding: { type: 'string', enum: ['sm', 'md', 'lg', 'xl'] },
+        background: { type: 'string', enum: ['default', 'alternate', 'dark', 'gradient', 'none'] },
+        maxWidth: { type: 'string', enum: ['sm', 'md', 'lg', 'xl', 'full'] },
+        showDivider: { type: 'boolean' },
       },
-      required: ['heading'],
     },
-    defaultProps: {
-      heading: "Hi, I'm [Your Name]",
-      subheading: 'Full Stack Developer | Problem Solver | Creator',
-      ctaLabel: 'View My Work',
-      ctaHref: '/projects',
-      secondaryCtaLabel: 'Contact Me',
-      secondaryCtaHref: '/contact',
-      alignment: 'center',
+    defaultProps: { align: 'center', padding: 'lg', background: 'default', maxWidth: 'xl' },
+  },
+  {
+    type: 'columns',
+    name: 'Columns',
+    description: 'Side-by-side column grid layout',
+    category: ComponentCategory.LAYOUT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        columns: { type: 'string', enum: ['2', '3', '4'] },
+        gap: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl'] },
+        align: { type: 'string', enum: ['start', 'center', 'end', 'stretch'] },
+      },
     },
+    defaultProps: { columns: '3', gap: 'md', align: 'start' },
+  },
+  {
+    type: '_column',
+    name: 'Column Slot',
+    description: 'Internal column slot (used inside Columns block)',
+    category: ComponentCategory.LAYOUT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: { type: 'object', properties: { align: { type: 'string' }, gap: { type: 'string' } } },
+    defaultProps: {},
+  },
+  {
+    type: 'row',
+    name: 'Row',
+    description: 'Vertical stack of blocks',
+    category: ComponentCategory.LAYOUT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        gap: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl'] },
+        align: { type: 'string', enum: ['start', 'center', 'end', 'stretch'] },
+        padding: { type: 'string', enum: ['none', 'sm', 'md', 'lg'] },
+      },
+    },
+    defaultProps: { gap: 'md', align: 'stretch', padding: 'none' },
+  },
+  {
+    type: 'split',
+    name: 'Split Layout',
+    description: 'Two-column split layout with configurable width ratio',
+    category: ComponentCategory.LAYOUT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        leftWidth: { type: 'string', enum: ['33', '40', '50', '60', '67'] },
+        verticalAlign: { type: 'string', enum: ['start', 'center', 'end'] },
+        gap: { type: 'string', enum: ['sm', 'md', 'lg', 'xl'] },
+        reverse: { type: 'boolean' },
+      },
+    },
+    defaultProps: { leftWidth: '50', verticalAlign: 'center', gap: 'lg', reverse: false },
+  },
+  {
+    type: 'card',
+    name: 'Card',
+    description: 'Styled card container for grouped content',
+    category: ComponentCategory.LAYOUT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        variant: { type: 'string', enum: ['default', 'glass', 'outlined', 'elevated', 'gradient'] },
+        padding: { type: 'string', enum: ['none', 'sm', 'md', 'lg'] },
+        radius: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+        showHeader: { type: 'boolean' },
+        title: { type: 'string' },
+        subtitle: { type: 'string' },
+      },
+    },
+    defaultProps: { variant: 'glass', padding: 'md', radius: 'xl', showHeader: false },
+  },
+  {
+    type: 'container',
+    name: 'Container',
+    description: 'Generic box container for grouping blocks',
+    category: ComponentCategory.LAYOUT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        padding: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl'] },
+        style: { type: 'string', enum: ['card', 'glass', 'outlined', 'filled', 'none'] },
+        maxWidth: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+      },
+    },
+    defaultProps: { padding: 'md', style: 'card', maxWidth: 'none' },
   },
 
+  // ─── Atomic Blocks ────────────────────────────────────────────────────────
   {
-    type: 'about',
-    name: 'About Section',
-    description: 'Personal bio section with text content and optional profile image',
+    type: 'heading',
+    name: 'Heading',
+    description: 'Title or heading text with size and alignment options',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
     schema: {
       type: 'object',
       properties: {
+        text: { type: 'string' },
+        level: { type: 'string', enum: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+        size: { type: 'string', enum: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'] },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+        gradient: { type: 'boolean' },
+      },
+      required: ['text'],
+    },
+    defaultProps: { text: 'Heading', level: 'h2', size: 'xl', align: 'left', gradient: false },
+  },
+  {
+    type: 'text',
+    name: 'Text / Paragraph',
+    description: 'Body text or paragraph content',
+    category: ComponentCategory.CONTENT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string' },
+        size: { type: 'string', enum: ['sm', 'base', 'lg', 'xl'] },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+        muted: { type: 'boolean' },
+      },
+      required: ['content'],
+    },
+    defaultProps: { content: 'Your text here', size: 'base', align: 'left', muted: false },
+  },
+  {
+    type: 'button',
+    name: 'Button',
+    description: 'Call-to-action button with customizable style',
+    category: ComponentCategory.CONTENT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        label: { type: 'string' },
+        href: { type: 'string' },
+        variant: { type: 'string', enum: ['primary', 'secondary', 'ghost', 'danger'] },
+        size: { type: 'string', enum: ['sm', 'md', 'lg'] },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+      },
+      required: ['label'],
+    },
+    defaultProps: { label: 'Click Me', href: '#', variant: 'primary', size: 'md', align: 'left' },
+  },
+  {
+    type: 'badge',
+    name: 'Badge / Tag',
+    description: 'Small colored badge or label',
+    category: ComponentCategory.CONTENT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        label: { type: 'string' },
+        variant: { type: 'string', enum: ['indigo', 'violet', 'emerald', 'amber', 'rose', 'sky', 'slate'] },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+        dot: { type: 'boolean' },
+      },
+      required: ['label'],
+    },
+    defaultProps: { label: 'New', variant: 'indigo', align: 'left' },
+  },
+  {
+    type: 'image',
+    name: 'Image',
+    description: 'Image with optional caption and styling',
+    category: ComponentCategory.MEDIA,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        src: { type: 'string', format: 'uri' },
+        alt: { type: 'string' },
+        caption: { type: 'string' },
+        width: { type: 'string' },
+        borderRadius: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'] },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+      },
+    },
+    defaultProps: { src: '', alt: 'Image', width: '100%', borderRadius: 'lg', align: 'center' },
+  },
+  {
+    type: 'stat',
+    name: 'Stat / Counter',
+    description: 'Key metric display: value + label + icon',
+    category: ComponentCategory.CONTENT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        value: { type: 'string' },
+        label: { type: 'string' },
+        description: { type: 'string' },
+        icon: { type: 'string' },
+        variant: { type: 'string', enum: ['default', 'card', 'bordered', 'minimal'] },
+        accent: { type: 'string', enum: ['indigo', 'violet', 'emerald', 'amber', 'rose', 'sky'] },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+      },
+      required: ['value', 'label'],
+    },
+    defaultProps: { value: '5+', label: 'Years Experience', icon: '🏆', variant: 'card', accent: 'indigo', align: 'center' },
+  },
+  {
+    type: 'feature-card',
+    name: 'Feature Card',
+    description: 'Icon + title + description card for features, services, or skills',
+    category: ComponentCategory.CONTENT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        icon: { type: 'string' },
         title: { type: 'string' },
-        bio: { type: 'string', description: 'Rich text or plain text biography' },
-        profileImage: { type: 'string', description: 'URL of profile photo' },
+        description: { type: 'string' },
+        variant: { type: 'string', enum: ['default', 'glass', 'outlined', 'gradient', 'minimal'] },
+        iconPosition: { type: 'string', enum: ['top', 'left'] },
+        accent: { type: 'string', enum: ['indigo', 'violet', 'emerald', 'amber', 'rose', 'sky'] },
+        href: { type: 'string' },
+        linkLabel: { type: 'string' },
+      },
+      required: ['title'],
+    },
+    defaultProps: { icon: '✨', title: 'Feature Title', description: 'Feature description', variant: 'glass', iconPosition: 'top', accent: 'indigo' },
+  },
+  {
+    type: 'timeline-item',
+    name: 'Timeline Item',
+    description: 'Experience/education entry with role, company, dates, and achievements',
+    category: ComponentCategory.CONTENT,
+    version: '1.0.0',
+    isBuiltIn: true,
+    schema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string' },
+        company: { type: 'string' },
+        startDate: { type: 'string' },
+        endDate: { type: 'string' },
+        location: { type: 'string' },
+        description: { type: 'string' },
         highlights: {
           type: 'array',
-          items: { type: 'string' },
-          description: 'Key facts or highlights about yourself',
+          items: {
+            type: 'object',
+            properties: { value: { type: 'string' } },
+          },
         },
-        imagePosition: {
-          type: 'string',
-          enum: ['left', 'right'],
-          default: 'right',
-        },
+        variant: { type: 'string', enum: ['card', 'minimal'] },
+        accent: { type: 'string', enum: ['indigo', 'violet', 'emerald', 'amber', 'rose'] },
+        showDot: { type: 'boolean' },
       },
-      required: ['bio'],
+      required: ['role', 'company'],
     },
-    defaultProps: {
-      title: 'About Me',
-      bio: 'I am a passionate developer with experience building web applications...',
-      highlights: [
-        '5+ years of experience',
-        'Open source contributor',
-        'Remote-first',
-      ],
-      imagePosition: 'right',
-    },
+    defaultProps: { role: 'Developer', company: 'Company', startDate: '2022', endDate: 'Present', variant: 'card', accent: 'indigo', showDot: true },
   },
-
   {
-    type: 'skills',
-    name: 'Skills Grid',
-    description: 'Grid display of technical skills grouped by category',
+    type: 'divider',
+    name: 'Divider',
+    description: 'Horizontal dividing line',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
     schema: {
       type: 'object',
       properties: {
-        title: { type: 'string' },
-        subtitle: { type: 'string' },
-        categories: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              name: { type: 'string', description: 'Category name, e.g. Frontend' },
-              skills: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
-                    level: {
-                      type: 'number',
-                      minimum: 0,
-                      maximum: 100,
-                      description: 'Proficiency percentage',
-                    },
-                    icon: { type: 'string', description: 'Icon URL or slug' },
-                  },
-                  required: ['name'],
-                },
-              },
-            },
-            required: ['name', 'skills'],
-          },
-        },
+        style: { type: 'string', enum: ['solid', 'dashed', 'dotted', 'gradient'] },
+        spacing: { type: 'string', enum: ['sm', 'md', 'lg', 'xl'] },
       },
-      required: ['categories'],
     },
-    defaultProps: {
-      title: 'Skills & Technologies',
-      subtitle: 'Technologies I work with',
-      categories: [
-        {
-          name: 'Frontend',
-          skills: [
-            { name: 'React', level: 90 },
-            { name: 'TypeScript', level: 85 },
-            { name: 'CSS/TailwindCSS', level: 80 },
-          ],
-        },
-        {
-          name: 'Backend',
-          skills: [
-            { name: 'NestJS', level: 85 },
-            { name: 'Node.js', level: 80 },
-            { name: 'MongoDB', level: 75 },
-          ],
-        },
-      ],
-    },
+    defaultProps: { style: 'solid', spacing: 'md' },
   },
-
   {
-    type: 'projects',
-    name: 'Projects Grid',
-    description: 'Card grid showcasing portfolio projects with links',
+    type: 'spacer',
+    name: 'Spacer',
+    description: 'Vertical spacing block',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
     schema: {
       type: 'object',
-      properties: {
-        title: { type: 'string' },
-        subtitle: { type: 'string' },
-        projects: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              description: { type: 'string' },
-              image: { type: 'string', description: 'Cover image URL' },
-              tags: { type: 'array', items: { type: 'string' } },
-              demoUrl: { type: 'string' },
-              githubUrl: { type: 'string' },
-              featured: { type: 'boolean' },
-            },
-            required: ['name', 'description'],
-          },
-        },
-        columns: {
-          type: 'number',
-          enum: [2, 3, 4],
-          default: 3,
-          description: 'Number of columns in the grid',
-        },
-      },
-      required: ['projects'],
+      properties: { height: { type: 'string', enum: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'] } },
     },
-    defaultProps: {
-      title: 'My Projects',
-      subtitle: 'Things I have built',
-      columns: 3,
-      projects: [
-        {
-          name: 'Project Alpha',
-          description: 'A description of your awesome project',
-          tags: ['React', 'NestJS', 'MongoDB'],
-          featured: true,
-        },
-      ],
-    },
-  },
-
-  {
-    type: 'experience',
-    name: 'Work Experience Timeline',
-    description: 'Timeline of professional work experience',
-    category: ComponentCategory.CONTENT,
-    version: '1.0.0',
-    isBuiltIn: true,
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        jobs: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              company: { type: 'string' },
-              role: { type: 'string' },
-              startDate: { type: 'string', description: 'e.g. Jan 2022' },
-              endDate: { type: 'string', description: 'e.g. Present' },
-              description: { type: 'string' },
-              highlights: { type: 'array', items: { type: 'string' } },
-              logo: { type: 'string' },
-              location: { type: 'string' },
-            },
-            required: ['company', 'role', 'startDate'],
-          },
-        },
-      },
-      required: ['jobs'],
-    },
-    defaultProps: {
-      title: 'Work Experience',
-      jobs: [
-        {
-          company: 'Example Corp',
-          role: 'Senior Developer',
-          startDate: 'Jan 2022',
-          endDate: 'Present',
-          description: 'Led development of...',
-          highlights: ['Increased performance by 40%', 'Mentored junior devs'],
-          location: 'Remote',
-        },
-      ],
-    },
-  },
-
-  {
-    type: 'education',
-    name: 'Education',
-    description: 'Education history section',
-    category: ComponentCategory.CONTENT,
-    version: '1.0.0',
-    isBuiltIn: true,
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        entries: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              institution: { type: 'string' },
-              degree: { type: 'string' },
-              field: { type: 'string', description: 'Field of study' },
-              startYear: { type: 'string' },
-              endYear: { type: 'string' },
-              gpa: { type: 'string' },
-              description: { type: 'string' },
-              logo: { type: 'string' },
-            },
-            required: ['institution', 'degree'],
-          },
-        },
-      },
-      required: ['entries'],
-    },
-    defaultProps: {
-      title: 'Education',
-      entries: [
-        {
-          institution: 'University of Technology',
-          degree: "Bachelor's",
-          field: 'Computer Science',
-          startYear: '2018',
-          endYear: '2022',
-        },
-      ],
-    },
-  },
-
-  {
-    type: 'contact',
-    name: 'Contact Section',
-    description: 'Contact form and/or social media links',
-    category: ComponentCategory.FORM,
-    version: '1.0.0',
-    isBuiltIn: true,
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        subtitle: { type: 'string' },
-        email: { type: 'string', format: 'email' },
-        showForm: { type: 'boolean', description: 'Display contact form' },
-        socials: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              platform: {
-                type: 'string',
-                enum: ['github', 'linkedin', 'twitter', 'instagram', 'website', 'other'],
-              },
-              url: { type: 'string', format: 'uri' },
-              label: { type: 'string' },
-            },
-            required: ['platform', 'url'],
-          },
-        },
-      },
-      required: ['email'],
-    },
-    defaultProps: {
-      title: 'Get In Touch',
-      subtitle: "I'm always open to new opportunities",
-      showForm: true,
-      socials: [
-        { platform: 'github', url: 'https://github.com/yourusername', label: 'GitHub' },
-        { platform: 'linkedin', url: 'https://linkedin.com/in/yourusername', label: 'LinkedIn' },
-      ],
-    },
-  },
-
-  {
-    type: 'footer',
-    name: 'Footer',
-    description: 'Site footer with copyright text and optional links',
-    category: ComponentCategory.LAYOUT,
-    version: '1.0.0',
-    isBuiltIn: true,
-    schema: {
-      type: 'object',
-      properties: {
-        copyright: { type: 'string' },
-        links: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              label: { type: 'string' },
-              href: { type: 'string' },
-            },
-            required: ['label', 'href'],
-          },
-        },
-        showSocials: { type: 'boolean' },
-      },
-      required: ['copyright'],
-    },
-    defaultProps: {
-      copyright: `© ${new Date().getFullYear()} My Portfolio. All rights reserved.`,
-      links: [
-        { label: 'Privacy', href: '/privacy' },
-        { label: 'Terms', href: '/terms' },
-      ],
-      showSocials: true,
-    },
+    defaultProps: { height: 'md' },
   },
 ];

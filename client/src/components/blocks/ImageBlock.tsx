@@ -45,8 +45,9 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
         className={`w-full py-2 flex flex-col ${alignClass}`}
         id={sectionId}
       >
-        <div
-          className={`flex items-center justify-center bg-white/5 border border-dashed border-white/10 text-slate-500 text-sm ${radiusClass}`}
+      <div
+          data-cms-field="src"
+          className={`flex items-center justify-center bg-white/5 border border-dashed border-white/10 text-slate-500 text-sm ${radiusClass} cursor-pointer hover:bg-white/8 hover:border-indigo-500/30 transition-all`}
           style={{ width, minHeight: '120px' }}
         >
           📷 No image URL set
@@ -59,9 +60,10 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
     <div className={`w-full py-2 flex flex-col ${alignClass}`} id={sectionId}>
       <figure style={{ width }} className="flex flex-col gap-2">
         <img
+          data-cms-field="src"
           src={src}
           alt={alt}
-          className={`w-full object-cover ${radiusClass}`}
+          className={`w-full object-cover ${radiusClass} cursor-pointer`}
           onError={(e) => {
             (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23374151"/><text x="12" y="16" text-anchor="middle" fill="%236B7280" font-size="8">IMG</text></svg>';
           }}

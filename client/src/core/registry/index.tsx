@@ -1,38 +1,27 @@
 /**
- * Registry bootstrap — registers all built-in portfolio components and atomic blocks.
+ * Registry bootstrap — registers ONLY composable blocks (Layout + Atomic).
+ *
+ * The old monolithic Section components (Hero, About, Skills, Projects,
+ * Experience, Education, Contact, Footer, Navbar) have been removed.
+ *
+ * All page sections are now built by composing these blocks in the Template
+ * Library. Every block element has a schema and supports inline editing.
  *
  * Import this file ONCE at app startup (main.tsx) before rendering.
- * After this runs, `componentRegistry.resolve('hero')` returns the Hero component.
- *
- * To add a new component:
- *   1. Create the component in src/components/
- *   2. Add an entry here with schema + defaultProps
- *   3. Add a corresponding entry in the backend component-registry.ts
  */
 
 import React from 'react';
 import {
-  Navigation, Rocket, User, Zap, FolderOpen, Briefcase,
-  GraduationCap, Mail, ChevronsDown,
+  Navigation,
   Heading1, AlignLeft, MousePointerClick, Tag, ImageIcon,
   Minus, MoveVertical, LayoutPanelTop, Columns2, Square,
   AlignJustify, Layers, SplitSquareHorizontal, TrendingUp,
-  Star, Clock, Hash, Wand2,
+  Star, Clock,
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
-// ─── Section Components ───────────────────────────────────────────────────────
-import { Navbar } from '../../components/Navbar/Navbar';
-import { Hero } from '../../components/Hero/Hero';
-import { About } from '../../components/About/About';
-import { Skills } from '../../components/Skills/Skills';
-import { Projects } from '../../components/Projects/Projects';
-import { Experience } from '../../components/Experience/Experience';
-import { Education } from '../../components/Education/Education';
-import { Contact } from '../../components/Contact/Contact';
-import { Footer } from '../../components/Footer/Footer';
-
-// ─── Atomic Block Components ───────────────────────────────────────────────────────────
+// ─── Atomic Block Components ──────────────────────────────────────────────────
+import { NavbarBlock } from '../../components/blocks/NavbarBlock';
 import { HeadingBlock } from '../../components/blocks/HeadingBlock';
 import { TextBlock } from '../../components/blocks/TextBlock';
 import { ButtonBlock } from '../../components/blocks/ButtonBlock';
@@ -41,27 +30,28 @@ import { ImageBlock } from '../../components/blocks/ImageBlock';
 import { DividerBlock } from '../../components/blocks/DividerBlock';
 import { SpacerBlock } from '../../components/blocks/SpacerBlock';
 import { ContainerBlock } from '../../components/blocks/ContainerBlock';
-// ─── Container / Composable Block Components ───────────────────────────────────────────
+// ─── Layout / Container Block Components ─────────────────────────────────────
 import { ColumnsBlock } from '../../components/blocks/ColumnsBlock';
 import { ColumnSlotBlock } from '../../components/blocks/ColumnSlotBlock';
 import { CardBlock } from '../../components/blocks/CardBlock';
 import { RowBlock } from '../../components/blocks/RowBlock';
-// ─── Section-level Composable Blocks (New Hybrid Tier) ────────────────────────
 import { SectionWrapperBlock } from '../../components/blocks/SectionWrapperBlock';
 import { SplitBlock } from '../../components/blocks/SplitBlock';
+// ─── Content Atomic Blocks ────────────────────────────────────────────────────
 import { StatBlock } from '../../components/blocks/StatBlock';
 import { FeatureCardBlock } from '../../components/blocks/FeatureCardBlock';
 import { TimelineItemBlock } from '../../components/blocks/TimelineItemBlock';
 
-// ─── Sections ─────────────────────────────────────────────────────────────────
+// ─── Navigation ───────────────────────────────────────────────────────────────
 
 componentRegistry.register({
   type: 'navbar',
-  component: Navbar as React.ComponentType<Record<string, unknown>>,
+  component: NavbarBlock as React.ComponentType<Record<string, unknown>>,
   displayName: 'Navigation Bar',
-  description: 'Top navigation bar with logo, links, and optional CTA button',
+  description: 'Sticky top navigation with logo, links, and optional CTA button. Supports smooth scroll anchors.',
   icon: <Navigation size={16} />,
   category: 'navigation',
+  isAtom: true,
   defaultProps: {
     logo: 'My Portfolio',
     links: [
@@ -72,6 +62,7 @@ componentRegistry.register({
     ctaLabel: 'Hire Me',
     ctaHref: '#contact',
     sticky: true,
+    transparent: false,
   },
   schema: {
     logo: { type: 'string', label: 'Logo Text', placeholder: 'My Portfolio' },
@@ -87,358 +78,7 @@ componentRegistry.register({
     ctaLabel: { type: 'string', label: 'CTA Button Label', placeholder: 'Hire Me' },
     ctaHref: { type: 'link', label: 'CTA Button URL', placeholder: '#contact' },
     sticky: { type: 'boolean', label: 'Sticky on Scroll' },
-  },
-});
-
-componentRegistry.register({
-  type: 'hero',
-  component: Hero as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Hero Section',
-  description: 'Full-width hero banner — 4 layout styles × 7 color schemes',
-  icon: <Rocket size={16} />,
-  category: 'layout',
-  defaultProps: {
-    heading: "Hi, I'm [Your Name]",
-    subheading: 'Full Stack Developer | Problem Solver | Creator',
-    ctaLabel: 'View My Work',
-    ctaHref: '#projects',
-    secondaryCtaLabel: 'Get In Touch',
-    secondaryCtaHref: '#contact',
-    alignment: 'center',
-    layout: 'fullscreen',
-    badge: 'Available for opportunities',
-    colorScheme: 'indigo',
-  },
-  schema: {
-    layout: {
-      type: 'select',
-      label: '🎨 Layout Style',
-      description: 'fullscreen | split | minimal | centered-card',
-      options: ['fullscreen', 'split', 'minimal', 'centered-card'],
-    },
-    colorScheme: {
-      type: 'select',
-      label: '🌈 Color Scheme',
-      description: 'Accent color theme for this section',
-      options: ['indigo', 'violet', 'emerald', 'rose', 'amber', 'cyan', 'slate'],
-    },
-    heading: { type: 'string', label: 'Main Heading', placeholder: "Hi, I'm a Developer" },
-    subheading: { type: 'textarea', label: 'Subheading', placeholder: 'Full Stack Developer | Creator', rows: 2 },
-    badge: { type: 'string', label: 'Badge Text (above heading)', placeholder: 'Available for opportunities' },
-    ctaLabel: { type: 'string', label: 'Primary Button Label', placeholder: 'View My Work' },
-    ctaHref: { type: 'link', label: 'Primary Button URL', placeholder: '#projects' },
-    secondaryCtaLabel: { type: 'string', label: 'Secondary Button Label', placeholder: 'Get In Touch' },
-    secondaryCtaHref: { type: 'link', label: 'Secondary Button URL', placeholder: '#contact' },
-    alignment: {
-      type: 'select',
-      label: 'Text Alignment (fullscreen only)',
-      options: ['left', 'center', 'right'],
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'about',
-  component: About as React.ComponentType<Record<string, unknown>>,
-  displayName: 'About Section',
-  description: 'Personal bio section — 4 layout styles × 7 color schemes',
-  icon: <User size={16} />,
-  category: 'content',
-  defaultProps: {
-    title: 'About Me',
-    bio: 'I am a passionate developer with experience building web applications...',
-    highlights: [{ value: '5+ years of experience' }, { value: 'Open source contributor' }, { value: 'Remote-first' }],
-    imagePosition: 'right',
-    layout: 'image-side',
-    colorScheme: 'indigo',
-  },
-  schema: {
-    layout: {
-      type: 'select',
-      label: '🎨 Layout Style',
-      description: 'image-side | centered | stats | minimal',
-      options: ['image-side', 'centered', 'stats', 'minimal'],
-    },
-    colorScheme: {
-      type: 'select',
-      label: '🌈 Color Scheme',
-      options: ['indigo', 'violet', 'emerald', 'rose', 'amber', 'cyan', 'slate'],
-    },
-    title: { type: 'string', label: 'Section Title', placeholder: 'About Me' },
-    bio: { type: 'textarea', label: 'Biography', placeholder: 'Tell your story...', rows: 5 },
-    profileImage: { type: 'image', label: 'Profile Photo URL' },
-    highlights: {
-      type: 'array',
-      label: 'Key Highlights',
-      itemLabel: 'Highlight',
-      itemSchema: {
-        value: { type: 'string', label: 'Highlight text', placeholder: '5+ years of experience' },
-      },
-    },
-    imagePosition: {
-      type: 'select',
-      label: 'Image Position (image-side only)',
-      options: ['left', 'right'],
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'skills',
-  component: Skills as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Skills Grid',
-  description: 'Skills section — 4 layout styles × 7 color schemes',
-  icon: <Zap size={16} />,
-  category: 'content',
-  defaultProps: {
-    title: 'Skills & Technologies',
-    subtitle: 'Technologies I work with',
-    layout: 'progress',
-    colorScheme: 'indigo',
-    categories: [
-      { name: 'Frontend', skills: [{ name: 'React', level: 90 }, { name: 'TypeScript', level: 85 }] },
-      { name: 'Backend', skills: [{ name: 'NestJS', level: 85 }, { name: 'Node.js', level: 80 }] },
-    ],
-  },
-  schema: {
-    layout: {
-      type: 'select',
-      label: '🎨 Layout Style',
-      description: 'progress: bars | grid: icon cards | tags: badge cloud | compact: 3-col list',
-      options: ['progress', 'grid', 'tags', 'compact'],
-    },
-    colorScheme: {
-      type: 'select',
-      label: '🌈 Color Scheme',
-      options: ['indigo', 'violet', 'emerald', 'rose', 'amber', 'cyan', 'slate'],
-    },
-    title: { type: 'string', label: 'Section Title', placeholder: 'Skills & Technologies' },
-    subtitle: { type: 'string', label: 'Subtitle', placeholder: 'Technologies I work with' },
-    categories: {
-      type: 'array',
-      label: 'Skill Categories',
-      itemLabel: 'Category',
-      itemSchema: {
-        name: { type: 'string', label: 'Category Name', placeholder: 'Frontend' },
-        skills: {
-          type: 'array',
-          label: 'Skills',
-          itemLabel: 'Skill',
-          itemSchema: {
-            name: { type: 'string', label: 'Skill Name', placeholder: 'React' },
-            level: { type: 'number', label: 'Level (%)', min: 0, max: 100 },
-            icon: { type: 'string', label: 'Icon URL (optional)' },
-          },
-        },
-      },
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'projects',
-  component: Projects as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Projects Grid',
-  description: 'Card grid showcasing portfolio projects with links and tags',
-  icon: <FolderOpen size={16} />,
-  category: 'content',
-  defaultProps: {
-    title: 'My Projects',
-    subtitle: 'Things I have built',
-    columns: 3,
-    projects: [
-      {
-        name: 'Project Alpha',
-        description: 'A description of your awesome project',
-        tags: ['React', 'NestJS', 'MongoDB'],
-        featured: true,
-      },
-    ],
-  },
-  schema: {
-    title: { type: 'string', label: 'Section Title', placeholder: 'My Projects' },
-    subtitle: { type: 'string', label: 'Subtitle', placeholder: 'Things I have built' },
-    columns: {
-      type: 'select',
-      label: 'Grid Columns',
-      options: ['2', '3', '4'],
-    },
-    projects: {
-      type: 'array',
-      label: 'Projects',
-      itemLabel: 'Project',
-      itemSchema: {
-        name: { type: 'string', label: 'Project Name', placeholder: 'My Awesome App' },
-        description: { type: 'textarea', label: 'Description', rows: 2, placeholder: 'What this project does...' },
-        image: { type: 'image', label: 'Cover Image URL' },
-        tags: {
-          type: 'array',
-          label: 'Tags',
-          itemLabel: 'Tag',
-          itemSchema: {
-            value: { type: 'string', label: 'Tag', placeholder: 'React' },
-          },
-        },
-        demoUrl: { type: 'link', label: 'Live Demo URL', placeholder: 'https://...' },
-        githubUrl: { type: 'link', label: 'GitHub URL', placeholder: 'https://github.com/...' },
-        featured: { type: 'boolean', label: 'Featured Project' },
-      },
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'experience',
-  component: Experience as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Work Experience',
-  description: 'Timeline of professional work experience',
-  icon: <Briefcase size={16} />,
-  category: 'content',
-  defaultProps: {
-    title: 'Work Experience',
-    jobs: [
-      {
-        company: 'Example Corp',
-        role: 'Senior Developer',
-        startDate: 'Jan 2022',
-        endDate: 'Present',
-        description: 'Led development of...',
-        highlights: ['Increased performance by 40%', 'Mentored junior devs'],
-        location: 'Remote',
-      },
-    ],
-  },
-  schema: {
-    title: { type: 'string', label: 'Section Title', placeholder: 'Work Experience' },
-    jobs: {
-      type: 'array',
-      label: 'Jobs',
-      itemLabel: 'Job',
-      itemSchema: {
-        company: { type: 'string', label: 'Company', placeholder: 'Example Corp' },
-        role: { type: 'string', label: 'Role / Title', placeholder: 'Senior Developer' },
-        startDate: { type: 'string', label: 'Start Date', placeholder: 'Jan 2022' },
-        endDate: { type: 'string', label: 'End Date', placeholder: 'Present' },
-        location: { type: 'string', label: 'Location', placeholder: 'Remote' },
-        logo: { type: 'image', label: 'Company Logo URL' },
-        description: { type: 'textarea', label: 'Description', rows: 3, placeholder: 'What you did there...' },
-        highlights: {
-          type: 'array',
-          label: 'Key Achievements',
-          itemLabel: 'Achievement',
-          itemSchema: {
-            value: { type: 'string', label: 'Achievement', placeholder: 'Increased performance by 40%' },
-          },
-        },
-      },
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'education',
-  component: Education as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Education',
-  description: 'Education history with institutions, degrees, and achievements',
-  icon: <GraduationCap size={16} />,
-  category: 'content',
-  defaultProps: {
-    title: 'Education',
-    entries: [
-      {
-        institution: 'University of Technology',
-        degree: "Bachelor's",
-        field: 'Computer Science',
-        startYear: '2018',
-        endYear: '2022',
-      },
-    ],
-  },
-  schema: {
-    title: { type: 'string', label: 'Section Title', placeholder: 'Education' },
-    entries: {
-      type: 'array',
-      label: 'Education Entries',
-      itemLabel: 'Entry',
-      itemSchema: {
-        institution: { type: 'string', label: 'Institution', placeholder: 'University of Technology' },
-        degree: { type: 'string', label: 'Degree', placeholder: "Bachelor's" },
-        field: { type: 'string', label: 'Field of Study', placeholder: 'Computer Science' },
-        startYear: { type: 'string', label: 'Start Year', placeholder: '2018' },
-        endYear: { type: 'string', label: 'End Year', placeholder: '2022' },
-        gpa: { type: 'string', label: 'GPA (optional)', placeholder: '3.8/4.0' },
-        logo: { type: 'image', label: 'Institution Logo URL' },
-        description: { type: 'textarea', label: 'Description (optional)', rows: 2 },
-      },
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'contact',
-  component: Contact as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Contact Section',
-  description: 'Contact form and/or social media links',
-  icon: <Mail size={16} />,
-  category: 'form',
-  defaultProps: {
-    title: 'Get In Touch',
-    subtitle: "I'm always open to new opportunities",
-    showForm: true,
-    socials: [
-      { platform: 'github', url: 'https://github.com/yourusername', label: 'GitHub' },
-      { platform: 'linkedin', url: 'https://linkedin.com/in/yourusername', label: 'LinkedIn' },
-    ],
-  },
-  schema: {
-    title: { type: 'string', label: 'Section Title', placeholder: 'Get In Touch' },
-    subtitle: { type: 'string', label: 'Subtitle', placeholder: "I'm always open to new opportunities" },
-    email: { type: 'string', label: 'Email Address', placeholder: 'you@example.com' },
-    showForm: { type: 'boolean', label: 'Show Contact Form' },
-    socials: {
-      type: 'array',
-      label: 'Social Links',
-      itemLabel: 'Social',
-      itemSchema: {
-        platform: {
-          type: 'select',
-          label: 'Platform',
-          options: ['github', 'linkedin', 'twitter', 'instagram', 'website', 'other'],
-        },
-        url: { type: 'link', label: 'Profile URL', placeholder: 'https://...' },
-        label: { type: 'string', label: 'Display Label', placeholder: 'GitHub' },
-      },
-    },
-  },
-});
-
-componentRegistry.register({
-  type: 'footer',
-  component: Footer as React.ComponentType<Record<string, unknown>>,
-  displayName: 'Footer',
-  description: 'Site footer with copyright text and optional links',
-  icon: <ChevronsDown size={16} />,
-  category: 'layout',
-  defaultProps: {
-    copyright: `© ${new Date().getFullYear()} My Portfolio. All rights reserved.`,
-    links: [
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
-    ],
-    showSocials: true,
-  },
-  schema: {
-    copyright: { type: 'string', label: 'Copyright Text', placeholder: '© 2024 My Portfolio.' },
-    links: {
-      type: 'array',
-      label: 'Footer Links',
-      itemLabel: 'Link',
-      itemSchema: {
-        label: { type: 'string', label: 'Label', placeholder: 'Privacy' },
-        href: { type: 'link', label: 'URL', placeholder: '/privacy' },
-      },
-    },
-    showSocials: { type: 'boolean', label: 'Show Social Links' },
+    transparent: { type: 'boolean', label: 'Transparent when at top' },
   },
 });
 
@@ -598,6 +238,8 @@ componentRegistry.register({
   },
 });
 
+// ─── Layout / Container Blocks ────────────────────────────────────────────────
+
 componentRegistry.register({
   type: 'container',
   component: ContainerBlock as React.ComponentType<Record<string, unknown>>,
@@ -629,7 +271,7 @@ componentRegistry.register({
   icon: <Columns2 size={16} />,
   category: 'layout',
   isContainer: true,
-  passChildrenDirect: true, // _column slots must be direct grid children for CSS grid to work
+  passChildrenDirect: true,
   defaultProps: {
     columns: '2',
     gap: 'md',
@@ -704,8 +346,6 @@ componentRegistry.register({
   },
 });
 
-// ─── Section-level Composable Blocks ─────────────────────────────────────────
-
 componentRegistry.register({
   type: 'section-wrapper',
   component: SectionWrapperBlock as React.ComponentType<Record<string, unknown>>,
@@ -768,6 +408,8 @@ componentRegistry.register({
     reverse: { type: 'boolean', label: 'Reverse on Desktop' },
   },
 });
+
+// ─── Content Atomic Blocks ────────────────────────────────────────────────────
 
 componentRegistry.register({
   type: 'stat',
@@ -867,9 +509,8 @@ componentRegistry.register({
 });
 
 console.log(
-  `[ComponentRegistry] ✅ ${componentRegistry.getTypes().length} components registered:`,
+  `[ComponentRegistry] ✅ ${componentRegistry.getTypes().length} blocks registered:`,
   componentRegistry.getTypes(),
 );
 
 export { componentRegistry };
-
