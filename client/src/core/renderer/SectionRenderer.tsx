@@ -1,8 +1,11 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
+import { useSortable, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove as dndArrayMove } from '@dnd-kit/sortable';
+import { useDroppable, DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, Settings, ImageIcon, Plus, X } from 'lucide-react';
+import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal } from 'lucide-react';
+
+
+
 import type { LayoutSection } from '../types/layout.types';
 import { componentRegistry } from '../registry/ComponentRegistry';
 import { useEditorContext } from '../context/EditorContext';
@@ -16,6 +19,9 @@ export const isDropId = (id: string) => id.startsWith(CONTAINER_DROP_PREFIX);
 /** Special type for the empty-slot placeholder block */
 export const EMPTY_SLOT_TYPE = '_empty';
 
+/** ID prefix used for per-cell empty zones inside a Columns block */
+export const COL_CELL_PREFIX = '_colcell-';
+
 /** Create a new empty slot section */
 export function makeEmptySlot(): LayoutSection {
   return {
@@ -26,6 +32,345 @@ export function makeEmptySlot(): LayoutSection {
     children: [],
   };
 }
+
+// ─── Column Cell Drop Zone ────────────────────────────────────────────────────
+/**
+ * ColCellDropZone — rendered inside a Columns grid cell when that cell is empty.
+ *
+ * Uses a synthetic drop id based on: `colcell:<columnsId>:<cellIndex>`
+ * so PageRenderer can identify which columns block and which cell index
+ * a block was dropped onto.
+ */
+const ColCellDropZone: React.FC<{
+  columnsId: string;
+  cellIndex: number;
+  /** span > 1 means this cell is a merged cell — show split button */
+  span?: number;
+}> = ({ columnsId, cellIndex, span = 1 }) => {
+  const dropId = `${COL_CELL_PREFIX}${columnsId}:${cellIndex}`;
+  const { isOver, setNodeRef } = useDroppable({ id: toDropId(dropId) });
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.dispatchEvent(
+      new CustomEvent('cms:fillColCell', { detail: { columnsId, cellIndex } }),
+    );
+  };
+
+  const handleSplit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.dispatchEvent(
+      new CustomEvent('cms:splitColCell', { detail: { columnsId, cellIndex } }),
+    );
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={handleClick}
+      style={{ width: '100%', height: '100%', minHeight: 48, position: 'relative' }}
+      className={`
+        group relative select-none cursor-pointer
+        flex items-center justify-center transition-all duration-150
+        ${
+          isOver
+            ? 'bg-indigo-500/15 text-indigo-400 shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.7)]'
+            : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-indigo-400 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.3)]'
+        }
+      `}
+    >
+      {isOver ? (
+        <span className="text-[10px] font-medium">Drop here</span>
+      ) : (
+        <Plus size={14} className="opacity-30 group-hover:opacity-80 transition-opacity" />
+      )}
+
+      {/* Split button — only shown when this is a merged cell (span > 1) */}
+      {span > 1 && (
+        <button
+          data-editor-chrome
+          onClick={handleSplit}
+          title={`Split merged column (currently ${span}×)`}
+          className="
+            absolute top-1 right-1
+            w-5 h-5 rounded
+            bg-[#1a1a2e] border border-violet-500/50
+            flex items-center justify-center
+            text-violet-400 hover:text-white
+            hover:bg-violet-600 hover:border-violet-400
+            transition-all duration-150 opacity-0 group-hover:opacity-100
+          "
+        >
+          <SplitSquareHorizontal size={10} />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ─── Columns Grid Renderer ────────────────────────────────────────────────────
+/**
+ * ColumnsGridRenderer — special renderer for `type: 'columns'`.
+ *
+ * Renders an N-cell CSS grid. Children (LayoutSection[]) map to cells by index.
+ * Cells without a child show ColCellDropZone.
+ * Cells with a child render SectionRenderer (so the child is draggable + editable).
+ *
+ * Layout model:
+ *   columns.children = [blockA, blockB, ...] — direct children, one per cell
+ *   columns.props.columns = N — total cell count
+ *
+ * When N > children.length, the extra cells are empty drop zones.
+ * When N < children.length (e.g. after removing a column), extra children are hidden.
+ */
+const ColumnsGridRenderer: React.FC<{
+  section: LayoutSection;
+  depth: number;
+}> = ({ section, depth }) => {
+  const { isEditorMode, previewMode } = useEditorContext();
+  const colCount = Number(section.props?.columns ?? 2);
+  const align = (section.props?.align as string) ?? 'stretch';
+
+  const ALIGN_MAP: Record<string, string> = {
+    start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch',
+  };
+
+  const isEditing = isEditorMode && !previewMode;
+
+  // ── colSpans: per-cell width weights ─────────────────────────────────
+  const rawSpans = section.props?.colSpans as number[] | undefined;
+  const colSpans: number[] = (
+    Array.isArray(rawSpans) && rawSpans.length === colCount && rawSpans.every(s => s > 0)
+  ) ? rawSpans : Array(colCount).fill(1);
+
+  const totalSpan = colSpans.reduce((a, b) => a + b, 0);
+
+  // CSS grid template — use actual span weights
+  const gridTemplate = colSpans.map(s => `${s}fr`).join(' ');
+
+  // ── PREVIEW / PRODUCTION path — pure CSS grid, zero DnD ──────────────
+  // Must be identical layout to edit mode so preview matches exactly.
+  if (!isEditing) {
+    return (
+      <div
+        id={section.name || section.id}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: gridTemplate,
+          gap: 0,
+          alignItems: ALIGN_MAP[align] ?? 'stretch',
+          width: '100%',
+        }}
+      >
+        {Array.from({ length: colCount }, (_, i) => {
+          const child = section.children?.[i] ?? null;
+          if (!child) return <div key={`cell-empty-${i}`} />;
+          return (
+            <div key={child.id} style={{ width: '100%', height: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <SectionRenderer section={child} isChild depth={depth + 1} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── EDIT path — DnD enabled, drop zones, merge buttons ───────────────
+  const cells = Array.from({ length: colCount }, (_, i) => ({
+    index: i,
+    span: colSpans[i],
+    child: section.children?.[i] ?? null,
+    isEmpty: !section.children?.[i],
+  }));
+
+  const cumulativeSpans = colSpans.reduce<number[]>((acc, s) => {
+    acc.push((acc[acc.length - 1] ?? 0) + s);
+    return acc;
+  }, []);
+
+  return (
+    <_ColumnsEditGrid
+      section={section}
+      depth={depth}
+      colCount={colCount}
+      align={align}
+      colSpans={colSpans}
+      totalSpan={totalSpan}
+      gridTemplate={gridTemplate}
+      cells={cells}
+      cumulativeSpans={cumulativeSpans}
+      ALIGN_MAP={ALIGN_MAP}
+    />
+  );
+};
+
+// Internal edit-mode grid (separated so hooks are not called in preview path)
+const _ColumnsEditGrid: React.FC<{
+  section: LayoutSection;
+  depth: number;
+  colCount: number;
+  align: string;
+  colSpans: number[];
+  totalSpan: number;
+  gridTemplate: string;
+  cells: { index: number; span: number; child: LayoutSection | null; isEmpty: boolean }[];
+  cumulativeSpans: number[];
+  ALIGN_MAP: Record<string, string>;
+}> = ({ section, depth, colCount, align, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
+
+  // ── Drag-to-reorder sensor ───────────────────────────────────────────
+  const reorderSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+
+  // ── Drag-end: reorder filled cells ──────────────────────────────────
+  const handleDragEnd = useCallback(
+    (event: import('@dnd-kit/core').DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIdx = cells.findIndex((c) => c.child?.id === active.id);
+      const newIdx = cells.findIndex((c) => c.child?.id === over.id);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const currentChildren = section.children ?? [];
+      const reordered = dndArrayMove(currentChildren, oldIdx, newIdx);
+      const reorderedSpans = dndArrayMove(colSpans, oldIdx, newIdx);
+      window.dispatchEvent(
+        new CustomEvent('cms:reorderColCells', {
+          detail: { columnsId: section.id, children: reordered, colSpans: reorderedSpans },
+        }),
+      );
+    },
+    [cells, section, colSpans],
+  );
+
+  // ── Merge: two adjacent empty cells → one with combined span ─────────
+  const handleMerge = useCallback(
+    (leftIndex: number) => {
+      window.dispatchEvent(
+        new CustomEvent('cms:mergeColCells', {
+          detail: {
+            columnsId: section.id,
+            leftIndex,
+            newSpan: colSpans[leftIndex] + colSpans[leftIndex + 1],
+            colSpans,
+          },
+        }),
+      );
+    },
+    [section.id, colSpans],
+  );
+
+  const filledIds = cells.filter((c) => c.child !== null).map((c) => c.child!.id);
+
+  return (
+    <DndContext
+      sensors={reorderSensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={filledIds} strategy={horizontalListSortingStrategy}>
+        <div style={{ position: 'relative', width: '100%' }}>
+          <div
+            id={section.name || section.id}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: gridTemplate,
+              gap: 0,
+              alignItems: ALIGN_MAP[align] ?? 'stretch',
+              width: '100%',
+            }}
+          >
+            {cells.map(({ index: i, child, isEmpty, span }) => {
+              if (isEmpty) {
+                return (
+                  <ColCellDropZone
+                    key={`cell-empty-${i}`}
+                    columnsId={section.id}
+                    cellIndex={i}
+                    span={span}
+                  />
+                );
+              }
+              return (
+                <ColCellSortable key={child!.id} child={child!} depth={depth} />
+              );
+            })}
+          </div>
+
+          {/* ── Merge buttons between adjacent EMPTY cells ────────────── */}
+          {colCount >= 2 &&
+            cells.slice(0, -1).map(({ index: i, isEmpty: leftEmpty }) => {
+              const rightEmpty = cells[i + 1]?.isEmpty;
+              if (!leftEmpty || !rightEmpty) return null;
+              const pct = (cumulativeSpans[i] / totalSpan) * 100;
+              return (
+                <button
+                  key={`merge-${i}`}
+                  data-editor-chrome
+                  onClick={(e) => { e.stopPropagation(); handleMerge(i); }}
+                  title={`Merge columns (${colSpans[i]}fr + ${colSpans[i+1]}fr = ${colSpans[i]+colSpans[i+1]}fr)`}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: `${pct}%`,
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 30,
+                  }}
+                  className="
+                    w-6 h-6 rounded-full
+                    bg-[#1a1a2e] border border-indigo-500/60
+                    flex items-center justify-center
+                    text-indigo-400 hover:text-white
+                    hover:bg-indigo-600 hover:border-indigo-400
+                    hover:shadow-lg hover:shadow-indigo-500/30
+                    transition-all duration-150 cursor-pointer
+                  "
+                >
+                  <Merge size={11} />
+                </button>
+              );
+            })
+          }
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+};
+
+
+// ─── ColCellSortable ──────────────────────────────────────────────────────────
+/**
+ * Wraps a filled cell child inside a useSortable hook so it can be
+ * drag-reordered horizontally within the Columns grid.
+ */
+const ColCellSortable: React.FC<{
+  child: LayoutSection;
+  depth: number;
+}> = ({ child, depth }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: child.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+        width: '100%',
+        height: '100%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: isDragging ? 'grabbing' : undefined,
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <SectionRenderer section={child} isChild depth={depth + 1} />
+    </div>
+  );
+};
 
 // ─── Empty Slot Block ─────────────────────────────────────────────────────────
 /**
@@ -60,41 +405,48 @@ const EmptySlotBlock: React.FC<{
     <div
       ref={setNodeRef}
       className={`
-        relative w-full rounded-lg border border-dashed select-none
-        flex items-center justify-center gap-2
+        group relative w-full rounded-lg border border-dashed select-none
+        flex items-center justify-center
         transition-all duration-150
-        ${isOver
-          ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 min-h-[56px]'
-          : 'border-white/15 bg-white/2 text-slate-600 hover:border-indigo-500/50 hover:text-slate-400 hover:bg-white/4'
+        ${
+          isOver
+            ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 min-h-[48px]'
+            : 'border-white/10 bg-white/2 text-slate-700 hover:border-indigo-500/40 hover:text-indigo-400 hover:bg-white/4'
         }
       `}
-      style={{ minHeight: 48 }}
+      style={{ minHeight: 40 }}
     >
       {/* Click area to open AddPanel */}
       <button
         onClick={handleClick}
-        className="flex items-center gap-2 flex-1 justify-center py-2 cursor-pointer"
+        className="flex items-center gap-1.5 flex-1 justify-center py-2 cursor-pointer"
+        title="Click to add a block"
       >
-        <Plus size={12} />
-        <span className="text-[11px] font-medium">
-          {isOver ? 'Drop here' : 'Empty slot — click to add or drop a block'}
-        </span>
+        {isOver ? (
+          <span className="text-[10px] font-medium">Drop here</span>
+        ) : (
+          <>
+            <Plus size={13} className="opacity-50 group-hover:opacity-100 transition-opacity" />
+            <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+              Add block
+            </span>
+          </>
+        )}
       </button>
 
-      {/* Delete empty slot button */}
+      {/* Delete empty slot */}
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemoveSection(section.id);
-        }}
-        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-700 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+        onClick={(e) => { e.stopPropagation(); onRemoveSection(section.id); }}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
         title="Remove empty slot"
       >
-        <X size={12} />
+        <X size={11} />
       </button>
     </div>
   );
 };
+
+
 
 // ─── Container Drop Zone ──────────────────────────────────────────────────────
 /**
@@ -312,10 +664,13 @@ interface SectionRendererProps {
   section: LayoutSection;
   isRoot?: boolean;
   isChild?: boolean;
+  /** When true: render in production mode (no sortable, no editor chrome).
+   *  Used by DragOverlay to clone the block without interactive features. */
+  isOverlay?: boolean;
   depth?: number;
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth = 0 }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOverlay = false, depth = 0 }) => {
   const {
     isEditorMode,
     previewMode,
@@ -326,17 +681,30 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
     onPropsChange,
   } = useEditorContext();
 
+  // Overlay: render as pure production (no chrome, no sortable)
+  const effectiveEditorMode = isOverlay ? false : isEditorMode;
+  const effectivePreviewMode = isOverlay ? true : previewMode;
+
   // ── Empty slot: special rendering ─────────────────────────────────────────
   if (section.type === EMPTY_SLOT_TYPE) {
-    if (!isEditorMode || previewMode) return null;
+    if (!effectiveEditorMode || effectivePreviewMode) return null;
     return <EmptySlotBlock section={section} />;
+  }
+
+  // ── Columns block: special grid renderer — no _column wrappers ────────────
+  if (section.type === 'columns') {
+    if (!effectiveEditorMode || effectivePreviewMode) {
+      return <ColumnsGridRenderer section={section} depth={depth} />;
+    }
+    return <ColumnsEditorWrapper section={section} depth={depth} />;
   }
 
   const Component = componentRegistry.resolve(section.type);
   const entry = componentRegistry.getEntry(section.type);
-  const isSelected = isEditorMode && !previewMode && selectedSectionId === section.id;
+  const isSelected = effectiveEditorMode && !effectivePreviewMode && selectedSectionId === section.id;
   const isContainer = entry?.isContainer ?? false;
   const passChildrenDirect = entry?.passChildrenDirect ?? false;
+
 
   // ── Refs ─────────────────────────────────────────────────────────────────
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -354,8 +722,9 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
   // ── Sortable ──────────────────────────────────────────────────────────────
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
-    disabled: !isEditorMode || previewMode,
+    disabled: !effectiveEditorMode || effectivePreviewMode,
   });
+
 
   // ── Stable callback ───────────────────────────────────────────────────────
   const handleFieldChange = useCallback((fieldKey: string, newValue: unknown) => {
@@ -417,9 +786,10 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
 
   // ── How children are passed to the component ─────────────────────────────
   let childrenForComponent: React.ReactNode;
-  if (!isEditorMode || !isContainer) {
+  if (!effectiveEditorMode || !isContainer) {
     childrenForComponent = renderedChildren;
   } else if (passChildrenDirect) {
+
     childrenForComponent = (
       <SortableContext items={(section.children ?? []).map((c) => c.id)} strategy={verticalListSortingStrategy}>
         {renderedChildren}
@@ -436,7 +806,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
   }
 
   // ── Preview / Production render (no editor chrome) ───────────────────────
-  if (!isEditorMode || previewMode) {
+  if (!effectiveEditorMode || effectivePreviewMode) {
     return (
       <div id={section.name || section.id}>
         <Component {...(section.props as Record<string, unknown>)} sectionId={section.name || section.id}>
@@ -494,14 +864,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
     opacity: isDragging ? 0.25 : 1,
     zIndex: isDragging ? 999 : undefined,
     width: '100%',
+    height: '100%',
     minWidth: 0,
   };
 
   // Containers that can add free children (row, section-wrapper, card, etc.)
-  // passChildrenDirect containers (columns, split) use _column slots instead
+  // passChildrenDirect containers (split) use _column slots instead
   const canAddFreeChild = isContainer && !passChildrenDirect;
-  // passChildrenDirect containers can also add a new column/slot
-  const canAddColumn = passChildrenDirect && (section.type === 'columns' || section.type === 'split');
+  // columns block gets its own "add column" button (not + for free children)
+  const canAddColumn = section.type === 'split';
 
   return (
     <div
@@ -511,135 +882,33 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
       }}
       id={section.name || section.id}
       style={dragStyle}
-      // cms-block: used by CSS :has() hover isolation
-      // cms-container-block: applied to container blocks so CSS keeps their
-      //   control label visible (dim) even when a child block is hovered.
-      className={`relative cms-block select-none${
-        isContainer ? ' cms-container-block' : ''
-      }${isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''}${isSelected ? ' z-10' : ''}`}
+      // Apply drag listeners to the whole block (delay-based activation separates click from drag)
+      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
+      className={`relative cms-block select-none touch-none${isContainer ? ' cms-container-block' : ''}${isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''}${isSelected ? ' z-10' : ''}`}
       onClickCapture={handleCapture}
       onClick={handleClick}
     >
-      {/* ── Selection ring (always shown when selected) ───────────────── */}
+      {/* ── Selection ring ────────────────────────────────────────────── */}
       <div
         className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
           isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
         }`}
       />
 
-      {/* ── Hover ring ── controlled purely by CSS :has() in index.css ── */}
-      {/*
-        The cms-hover-ring class is targeted by:
-          .cms-block:hover > .cms-hover-ring  → show ring
-          .cms-block:has(.cms-block:hover) > .cms-hover-ring → hide (child hovered)
-        The ring is invisible by default and only shows via CSS hover.
-      */}
+      {/* ── Hover ring ─────────────────────────────────────────────────── */}
       {!isSelected && (
         <div
           className="cms-hover-ring absolute inset-0 pointer-events-none rounded-sm z-10"
-          style={{
-            boxShadow: 'inset 0 0 0 1px rgba(129,140,248,0.35)',
-            opacity: 0,
-            transition: 'opacity 0.1s',
-          }}
+          style={{ boxShadow: 'inset 0 0 0 1px rgba(129,140,248,0.35)', opacity: 0, transition: 'opacity 0.1s' }}
         />
       )}
 
-      {/* ── Control label ──────────────────────────────────────────────────
-        LEAF blocks: appears inside block at top-left corner (top:0, left:0).
-          Hidden when any child cms-block is hovered (CSS :has() rule).
-        CONTAINER blocks: appears ABOVE the block (top: -22px) so it never
-          overlaps with child controls. Depth-based left offset staggers
-          nested container labels horizontally.
-          Always visible at dim opacity (0.35); full opacity on hover.
-        Selected: always opacity-100.
-      */}
-      <div
-        className={`cms-control absolute flex items-center pointer-events-none transition-all duration-150 ${
-          isContainer ? 'cms-container-control' : ''
-        } ${
-          isSelected || isDragging ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{
-          zIndex: 30 + depth,
-          // Container labels float ABOVE the block in the gap area
-          top: isContainer ? -22 : 0,
-          // Stagger left by depth so nested container labels don't stack identically
-          left: isContainer ? depth * 8 : 0,
-        }}
-      >
-        <div
-          className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium pointer-events-auto whitespace-nowrap shadow-lg shadow-black/60 ${
-            isContainer ? 'rounded-t-md rounded-br-md' : 'rounded-br-md'
-          } ${
-            isSelected
-              ? 'bg-indigo-600 text-white'
-              : isContainer
-              ? 'bg-[#0e0e1c]/98 border border-b-0 border-white/15 text-slate-400'
-              : 'bg-[#12121e]/95 border-r border-b border-white/10 text-slate-300'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-          data-editor-chrome
-        >
-          {/* Drag handle */}
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-0.5 hover:text-white touch-none shrink-0"
-            title="Drag to reorder"
-            data-editor-chrome
-          >
-            <GripVertical size={11} />
-          </button>
-
-          <span className="shrink-0 flex items-center">{entry?.icon ?? <Settings size={11} />}</span>
-          <span className="max-w-[100px] truncate">{entry?.displayName ?? section.type}</span>
-
-          {section.name && (
-            <span className="font-mono opacity-60 shrink-0 text-[9px]">#{section.name}</span>
-          )}
-
-          {/* "+" — add empty slot for containers */}
-          {(canAddFreeChild || canAddColumn) && (
-            <button
-              data-editor-chrome
-              onClick={(e) => {
-                e.stopPropagation();
-                // Dispatch event — PageEditorPage adds a _empty slot to this container
-                window.dispatchEvent(
-                  new CustomEvent('cms:addEmptySlot', { detail: { parentId: section.id } }),
-                );
-              }}
-              className="ml-0.5 p-0.5 rounded hover:bg-indigo-500/30 hover:text-indigo-300 text-slate-500 transition-all shrink-0"
-              title="Add empty slot"
-            >
-              <Plus size={10} />
-            </button>
-          )}
-
-          {/* Delete */}
-          <button
-            data-editor-chrome
-            onClick={(e) => {
-              e.stopPropagation();
-              if (confirm(`Remove "${entry?.displayName ?? section.type}"?`)) {
-                onRemoveSection(section.id);
-              }
-            }}
-            className="ml-0.5 p-0.5 rounded hover:bg-red-500/40 hover:text-red-400 text-slate-500 transition-all shrink-0"
-            title="Remove"
-          >
-            <Trash2 size={10} />
-          </button>
-        </div>
-      </div>
-
-      {/* ── The actual component ──────────────────────────────────────── */}
+      {/* ── The actual component ─────────────────────────────────────── */}
       <Component {...(section.props as Record<string, unknown>)} sectionId={section.name || section.id}>
         {childrenForComponent}
       </Component>
 
-      {/* ── Inline field picker ───────────────────────────────────────── */}
+      {/* ── Inline field picker ──────────────────────────────────────── */}
       {fieldPicker && entry?.schema?.[fieldPicker.fieldKey] && (
         <InlineFieldPicker
           state={fieldPicker}
@@ -652,3 +921,78 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, depth
     </div>
   );
 };
+
+// ─── ColumnsEditorWrapper ─────────────────────────────────────────────────────
+/**
+ * Editor-mode wrapper for `type: 'columns'`.
+ *
+ * Provides:
+ * - Selection ring + drag chrome
+ * - Control bar with: drag handle · label · "Add Column" (+) · Delete
+ * - ColumnsGridRenderer inside for the actual cell layout
+ *
+ * The "+" button dispatches `cms:addColCell` to PageEditorPage,
+ * which appends an empty slot at the next cell index and increments `columns` prop.
+ * The "−" button dispatches `cms:removeLastCol` to decrement columns + trim children.
+ */
+const ColumnsEditorWrapper: React.FC<{
+  section: LayoutSection;
+  depth: number;
+}> = ({ section, depth }) => {
+  const {
+    isEditorMode,
+    previewMode,
+    selectedSectionId,
+    onSectionSelect,
+  } = useEditorContext();
+
+  const isSelected = isEditorMode && !previewMode && selectedSectionId === section.id;
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: section.id,
+    disabled: !isEditorMode || previewMode,
+  });
+
+  const dragStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.25 : 1,
+    zIndex: isDragging ? 999 : undefined,
+    width: '100%',
+    height: '100%',
+    minWidth: 0,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      id={section.name || section.id}
+      style={dragStyle}
+      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
+      className={`relative cms-block cms-container-block select-none touch-none${
+        isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
+      }${isSelected ? ' z-10' : ''}`}
+      onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
+    >
+      {/* Selection ring */}
+      <div
+        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
+          isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+        }`}
+      />
+
+      {/* Hover ring */}
+      {!isSelected && (
+        <div
+          className="cms-hover-ring absolute inset-0 pointer-events-none rounded-sm z-10"
+          style={{ boxShadow: 'inset 0 0 0 1px rgba(129,140,248,0.35)', opacity: 0, transition: 'opacity 0.1s' }}
+        />
+      )}
+
+      {/* Grid content */}
+      <ColumnsGridRenderer section={section} depth={depth} />
+    </div>
+  );
+};
+
+

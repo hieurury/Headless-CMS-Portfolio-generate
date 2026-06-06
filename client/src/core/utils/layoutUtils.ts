@@ -192,3 +192,47 @@ export function replaceSection(
     return s;
   });
 }
+
+/**
+ * Insert a block into a Columns block's children at a specific cell index.
+ *
+ * The new Columns architecture maps `children[i]` to grid cell `i`.
+ * When inserting at index > current children count, pad with an empty
+ * LayoutSection of type `_colpad` (transparent placeholder) so that
+ * cell indices remain aligned.
+ *
+ * If a child already exists at `cellIndex`, the new block replaces it.
+ */
+export function insertIntoColumnsCell(
+  sections: LayoutSection[],
+  columnsId: string,
+  block: LayoutSection,
+  cellIndex: number,
+): LayoutSection[] {
+  return sections.map((s) => {
+    if (s.id === columnsId) {
+      const children = [...(s.children ?? [])];
+      // Pad if needed
+      while (children.length < cellIndex) {
+        children.push({
+          id: `_colpad-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+          type: '_colpad',
+          name: '',
+          props: {},
+          children: [],
+        });
+      }
+      if (children[cellIndex]) {
+        // Replace existing child at this cell
+        children[cellIndex] = block;
+      } else {
+        children[cellIndex] = block;
+      }
+      return { ...s, children };
+    }
+    if (s.children?.length) {
+      return { ...s, children: insertIntoColumnsCell(s.children, columnsId, block, cellIndex) };
+    }
+    return s;
+  });
+}

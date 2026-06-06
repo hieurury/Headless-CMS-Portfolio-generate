@@ -148,7 +148,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   All
                 </button>
                 {allCategories.map((cat) => {
-                  const meta = TEMPLATE_CATEGORIES[cat];
+                  const meta = TEMPLATE_CATEGORIES.find((c) => c.id === cat);
                   return (
                     <button
                       key={cat}
@@ -160,7 +160,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                           : 'bg-white/5 text-slate-400 hover:bg-white/10',
                       )}
                     >
-                      {meta.emoji} {meta.label}
+                      {meta.icon} {meta.label}
                     </button>
                   );
                 })}
@@ -241,21 +241,21 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
 // ─── Template Card ────────────────────────────────────────────────────────────
 
 const TemplateCard: React.FC<{ template: TemplateEntry; onAdd: () => void }> = ({ template, onAdd }) => {
-  const meta = TEMPLATE_CATEGORIES[template.category];
+  const meta = TEMPLATE_CATEGORIES.find((c) => c.id === template.category);
   return (
     <button
       onClick={onAdd}
       className="flex flex-col gap-3 p-4 rounded-xl border border-indigo-500/15 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 hover:border-indigo-500/40 hover:from-indigo-500/10 hover:to-violet-500/10 text-left transition-all group"
     >
-      {/* Emoji preview */}
-      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl group-hover:bg-indigo-500/20 transition-colors">
-        {template.emoji}
+      {/* Lucide icon preview */}
+      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-colors">
+        {template.icon}
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
           <p className="text-sm font-semibold text-white truncate">{template.name}</p>
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-mono shrink-0">
-            {meta?.emoji} {meta?.label}
+          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-mono shrink-0">
+            {meta?.icon} {meta?.label}
           </span>
         </div>
         <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">{template.description}</p>

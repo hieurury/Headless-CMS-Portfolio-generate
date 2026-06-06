@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { PageLayout } from '../types/layout.types';
-import { SectionRenderer, isDropId, fromDropId, EMPTY_SLOT_TYPE } from './SectionRenderer';
+import { SectionRenderer, isDropId, fromDropId, EMPTY_SLOT_TYPE, COL_CELL_PREFIX } from './SectionRenderer';
 import { useEditorContext } from '../context/EditorContext';
 import {
   DndContext,
   closestCenter,
   pointerWithin,
   type DragEndEvent,
+  type DragStartEvent,
   DragOverlay,
   useSensor,
   useSensors,
@@ -29,21 +30,29 @@ interface PageRendererProps {
  * Custom collision detection.
  *
  * Priority:
- *   1. _empty slot droppables (innermost, most specific) — so dragging over an
- *      empty slot highlights IT, not its ancestor container.
- *   2. Regular container droppables.
- *   3. Fallback: closestCenter for sortable reordering.
+ *   1. ColCell droppables (empty column cells — most specific)
+ *   2. _empty slot droppables
+ *   3. Regular container droppables
+ *   4. Fallback: closestCenter for sortable reordering
  */
 function customCollisionDetection(args: Parameters<typeof pointerWithin>[0]) {
   const pointerCollisions = pointerWithin(args);
 
-  // Split drop-id collisions into _empty-slot vs regular container
+  // Priority 1: ColCell drop zones (empty Columns cells)
+  const colCellCollisions = pointerCollisions.filter(
+    (c) => typeof c.id === 'string' && isDropId(c.id as string) &&
+      fromDropId(c.id as string).startsWith(COL_CELL_PREFIX),
+  );
+  if (colCellCollisions.length > 0) return colCellCollisions;
+
+  // Priority 2: _empty slot droppables (innermost, most specific)
   const emptySlotCollisions = pointerCollisions.filter(
     (c) => typeof c.id === 'string' && isDropId(c.id as string) &&
       fromDropId(c.id as string).startsWith('_empty'),
   );
   if (emptySlotCollisions.length > 0) return emptySlotCollisions;
 
+  // Priority 3: Regular container droppables
   const containerCollisions = pointerCollisions.filter(
     (c) => typeof c.id === 'string' && isDropId(c.id as string),
   );
@@ -60,6 +69,9 @@ function customCollisionDetection(args: Parameters<typeof pointerWithin>[0]) {
  * - Child reorder within a container
  * - Cross-container moves (drag from anywhere → drop into a container)
  * - Replace _empty slot when something is dragged onto it
+ *
+ * DragOverlay renders a live clone of the active block while dragging
+ * so the original stays visible as a dimmed ghost at its source position.
  */
 export const PageRenderer: React.FC<PageRendererProps> = ({
   layout,
@@ -74,26 +86,49 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
     onReplaceEmptySlot,
   } = useEditorContext();
 
+  // Track which section is being dragged so DragOverlay can clone it
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   if (!layout?.sections?.length && !isEditorMode) return null;
 
+  const activeSection = activeId ? findSectionById(sections, activeId) : null;
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // ── Case 1: Dropped onto a droppable zone ─────────────────────────
+    // ── Case 1: Dropped onto a droppable zone ─────────────────────────────────
     if (isDropId(overId)) {
       const targetId = fromDropId(overId);
 
-      // Sub-case A: Dropped onto an _empty slot → REPLACE the slot
-      // (not move-to-container, since _empty is not a real container)
+      // Sub-case A: Dropped onto a ColCell drop zone (empty column cell)
+      // targetId format: `_colcell-<columnsId>:<cellIndex>`
+      if (targetId.startsWith(COL_CELL_PREFIX)) {
+        const rest = targetId.slice(COL_CELL_PREFIX.length); // "<columnsId>:<cellIndex>"
+        const colonIdx = rest.lastIndexOf(':');
+        const columnsId = rest.slice(0, colonIdx);
+        const cellIndex = parseInt(rest.slice(colonIdx + 1), 10);
+        if (activeId !== columnsId) {
+          onMoveToContainer(activeId, columnsId, cellIndex);
+        }
+        return;
+      }
+
+      // Sub-case B: Dropped onto an _empty slot → REPLACE the slot
       if (targetId.startsWith('_empty')) {
         if (activeId !== targetId) {
           onReplaceEmptySlot(activeId, targetId);
@@ -101,7 +136,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         return;
       }
 
-      // Sub-case B: Dropped into a real container → move inside it
+      // Sub-case C: Dropped into a real container → move inside it
       if (activeId !== targetId) {
         onMoveToContainer(activeId, targetId);
       }
@@ -126,11 +161,8 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         if (oldIdx !== -1 && newIdx !== -1) onSectionReorder(oldIdx, newIdx);
       } else {
         // Within a container — skip if the target is an _empty slot
-        // (that case is handled by Case 1; if we reach here it means the
-        //  _empty slot was the nearest sortable item, not its droppable zone)
         const targetSection = findSectionById(sections, overId);
         if (targetSection?.type === EMPTY_SLOT_TYPE) {
-          // Treat as replace
           onReplaceEmptySlot(activeId, overId);
           return;
         }
@@ -140,17 +172,11 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         if (oldIdx !== -1 && newIdx !== -1) onReorderChildren(activeParentId!, oldIdx, newIdx);
       }
     } else {
-      // Different parent case.
-      // Only valid cross-container move is via an explicit _empty slot (Case 1).
-      // If we reach here, the target is a regular block in a different container
-      // (or at a different level). Do nothing — block stays in original position.
-      // This prevents blocks from being accidentally ejected from their group.
+      // Different parent — only valid cross-container move is via an explicit _empty slot.
       const targetSection = findSectionById(sections, overId);
       if (targetSection?.type === EMPTY_SLOT_TYPE) {
-        // Edge case: _empty slot reached as a sortable item rather than droppable
         onReplaceEmptySlot(activeId, overId);
       }
-      // All other cross-container drops: silently ignore.
     }
   };
 
@@ -168,7 +194,9 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
     <DndContext
       sensors={sensors}
       collisionDetection={customCollisionDetection}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveId(null)}
     >
       {/* Top-level sortable context */}
       <SortableContext
@@ -182,12 +210,34 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         </div>
       </SortableContext>
 
-      {/* Ghost overlay while dragging */}
-      <DragOverlay dropAnimation={null}>
-        <div className="bg-indigo-600/15 border-2 border-indigo-500/60 rounded-xl h-12 flex items-center justify-center px-4 gap-2 text-indigo-400 text-sm font-medium backdrop-blur-sm shadow-lg shadow-indigo-500/20">
-          <span className="text-base">✦</span>
-          Moving block...
-        </div>
+      {/*
+        DragOverlay — renders a live clone of the dragged block.
+        - dropAnimation: smooth snap-back if dropped in invalid zone.
+        - The original block remains at source with reduced opacity (handled
+          by useSortable's isDragging style in SectionRenderer).
+        - We render SectionRenderer in non-editor / non-draggable mode so
+          the clone looks identical but has no interactive chrome.
+      */}
+      <DragOverlay
+        dropAnimation={{
+          duration: 180,
+          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+        }}
+      >
+        {activeSection ? (
+          <div
+            style={{
+              opacity: 0.92,
+              borderRadius: 12,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(99,102,241,0.5)',
+              pointerEvents: 'none',
+              transform: 'scale(1.02)',
+              transformOrigin: 'top left',
+            }}
+          >
+            <SectionRenderer section={activeSection} isChild />
+          </div>
+        ) : null}
       </DragOverlay>
     </DndContext>
   );

@@ -542,14 +542,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             )}
           </div>
         </div>
-        <button
-          onClick={activeTab === 'form' ? openJsonTab : () => setActiveTab('form')}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-slate-500 hover:text-white hover:bg-white/5 transition-all"
-          title="Toggle JSON / Form view"
-        >
-          <Code2 size={12} />
-          {activeTab === 'form' ? 'JSON' : 'Form'}
-        </button>
       </div>
 
       {/* Section Name (Anchor) */}
@@ -577,11 +569,10 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             <button
               key={tab}
               onClick={tab === 'json' ? openJsonTab : () => setActiveTab('form')}
-              className={`text-xs pb-2 font-medium transition-all border-b-2 capitalize ${
-                activeTab === tab
-                  ? 'text-white border-indigo-500'
-                  : 'text-slate-500 border-transparent hover:text-slate-300'
-              }`}
+              className={`text-xs pb-2 font-medium transition-all border-b-2 capitalize ${activeTab === tab
+                ? 'text-white border-indigo-500'
+                : 'text-slate-500 border-transparent hover:text-slate-300'
+                }`}
             >
               {tab === 'form' ? '⚙ Form' : '{ } JSON'}
             </button>

@@ -1,9 +1,11 @@
 import React from 'react';
 
-type ColCount = 2 | 3 | 4 | '2' | '3' | '4';
-
-interface ColumnsBlockProps {
-  columns?: ColCount;
+export interface ColumnsBlockProps {
+  columns?: number | string;
+  /** Optional per-column span weights. Length must equal columns count.
+   *  e.g. [1, 2] → CSS `1fr 2fr` (second column is twice as wide as first).
+   *  Falls back to equal widths if not provided or length mismatch. */
+  colSpans?: number[];
   gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   align?: 'start' | 'center' | 'end' | 'stretch';
   children?: React.ReactNode;
@@ -11,53 +13,60 @@ interface ColumnsBlockProps {
   [key: string]: unknown;
 }
 
+const GAP_MAP: Record<string, string> = {
+  none: '0px',
+  sm:   '12px',
+  md:   '24px',
+  lg:   '40px',
+  xl:   '64px',
+};
+
+const ALIGN_MAP: Record<string, string> = {
+  start:   'flex-start',
+  center:  'center',
+  end:     'flex-end',
+  stretch: 'stretch',
+};
+
 /**
- * ColumnsBlock — splits its children into N equal-width columns.
+ * ColumnsBlock — N-column grid layout with optional non-uniform column widths.
  *
- * Uses CSS grid with explicit column count (no responsive breakpoints)
- * so it always renders correctly inside the editor's constrained preview area.
+ * Gap between columns is always 0. Content spacing is the responsibility
+ * of wrapper or child elements.
  *
- * Children are _column slot blocks, one per column.
- * The grid ensures each slot fills exactly 1/N of the parent width.
+ * If `colSpans` is provided and matches `columns` count, each entry defines
+ * the relative width of that column in `fr` units.
+ * e.g. colSpans=[1,2] with columns=2 → CSS `grid-template-columns: 1fr 2fr`
  */
 export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
   columns = 2,
-  gap = 'md',
-  align = 'start',
+  colSpans,
+  align = 'stretch',
   children,
   sectionId,
 }) => {
-  // Handle both number and string values (schema select returns strings)
   const colCount = Number(columns) || 2;
 
-  const gapStyle: Record<string, string> = {
-    none: '0px',
-    sm: '12px',
-    md: '24px',
-    lg: '40px',
-    xl: '64px',
-  };
+  const spans = Array.isArray(colSpans) && colSpans.length === colCount && colSpans.every(s => s > 0)
+    ? colSpans
+    : null;
 
-  const alignStyle: Record<string, string> = {
-    start: 'flex-start',
-    center: 'center',
-    end: 'flex-end',
-    stretch: 'stretch',
-  };
+  const gridTemplate = spans
+    ? spans.map(s => `${s}fr`).join(' ')
+    : `repeat(${colCount}, minmax(0, 1fr))`;
 
   return (
-    <div id={sectionId} className="w-full py-2">
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
-          gap: gapStyle[gap as string] ?? '24px',
-          alignItems: alignStyle[align as string] ?? 'flex-start',
-          width: '100%',
-        }}
-      >
-        {children}
-      </div>
+    <div
+      id={sectionId}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: gridTemplate,
+        gap: 0,
+        alignItems: ALIGN_MAP[align as string] ?? 'stretch',
+        width: '100%',
+      }}
+    >
+      {children}
     </div>
   );
 };

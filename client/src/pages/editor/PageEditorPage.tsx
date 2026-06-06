@@ -4,6 +4,7 @@ import { usePageStore } from '../../store/pageStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { EditorProvider } from '../../core/context/EditorContext';
+import { FloatingControlPanel } from '../../components/editor/FloatingControlPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { AddSectionPanel } from './components/AddSectionPanel';
 import { SmartPropEditor } from './components/SmartPropEditor';
@@ -28,6 +29,7 @@ import {
   updateSectionProps,
   updateSectionName,
   findParent,
+  insertIntoColumnsCell,
 } from '../../core/utils/layoutUtils';
 import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
@@ -35,24 +37,29 @@ type LeftTab = 'ai' | 'sections';
 
 const HEADER_H = 56;
 
-/** Build the auto-generated default children for container types (e.g., Columns → N _column slots) */
-function buildDefaultChildren(type: string, props: Record<string, unknown>): LayoutSection[] {
-  const entry = componentRegistry.getEntry(type);
+/** Build the auto-generated default children for container types */
+function buildDefaultChildren(_type: string, _props: Record<string, unknown>): LayoutSection[] {
+  // Columns: no default children — cells are rendered as empty drop zones directly
+  // Split: _column slots are still needed (two halves)
+  const entry = componentRegistry.getEntry(_type);
   if (entry?.defaultChildren) {
     return entry.defaultChildren();
   }
-  // Auto-generate column slots for 'columns' type
-  if (type === 'columns') {
-    const count = (props['columns'] as number) ?? 2;
-    return Array.from({ length: count }, (_, i) => ({
-      id: `_col-${Date.now()}-${i}`,
-      type: '_column',
-      name: '',
-      props: {},
-      children: [],
-    }));
-  }
   return [];
+}
+
+/**
+ * Immutably patch a specific section's fields (e.g. children) at any depth.
+ * Used to trim Columns children when removing a column.
+ */
+function patchSection(
+  section: LayoutSection,
+  targetId: string,
+  patch: Partial<LayoutSection>,
+): LayoutSection {
+  if (section.id === targetId) return { ...section, ...patch };
+  if (!section.children?.length) return section;
+  return { ...section, children: section.children.map((c) => patchSection(c, targetId, patch)) };
 }
 
 export const PageEditorPage: React.FC = () => {
@@ -109,19 +116,196 @@ export const PageEditorPage: React.FC = () => {
   }, []);
 
   // ── Listen for cms:addEmptySlot — "+" button on container control ──
-  // Adds an _empty placeholder child WITHOUT opening AddPanel.
+  // For non-columns containers: adds an _empty placeholder child.
   useEffect(() => {
     const handler = (e: Event) => {
       const { parentId } = (e as CustomEvent<{ parentId: string }>).detail;
-      const slot = makeEmptySlot();
-      updateLayout((layout) => ({
-        ...layout,
-        sections: addChildToSection(layout.sections, parentId, slot),
-      }));
+      updateLayout((layout) => {
+        const slot = makeEmptySlot();
+        return {
+          ...layout,
+          sections: addChildToSection(layout.sections, parentId, slot),
+        };
+      });
     };
     window.addEventListener('cms:addEmptySlot', handler);
     return () => window.removeEventListener('cms:addEmptySlot', handler);
   }, [updateLayout]);
+
+  // ── Listen for cms:addColCell — "+" on Columns control bar ────────────
+  // Increments columns count (adds 1 more empty cell).
+  // No child block is added — the new cell is an empty drop zone.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { columnsId } = (e as CustomEvent<{ columnsId: string }>).detail;
+      updateLayout((layout) => {
+        const colBlock = findSectionById(layout.sections, columnsId);
+        if (!colBlock) return layout;
+        const current = Number(colBlock.props['columns'] ?? 2);
+        return {
+          ...layout,
+          sections: updateSectionProps(layout.sections, columnsId, {
+            ...colBlock.props,
+            columns: String(current + 1),
+          }),
+        };
+      });
+    };
+    window.addEventListener('cms:addColCell', handler);
+    return () => window.removeEventListener('cms:addColCell', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:removeLastCol — "−" on Columns control bar ─────────
+  // Decrements columns count AND removes the last child if it exists.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { columnsId } = (e as CustomEvent<{ columnsId: string }>).detail;
+      updateLayout((layout) => {
+        const colBlock = findSectionById(layout.sections, columnsId);
+        if (!colBlock) return layout;
+        const current = Number(colBlock.props['columns'] ?? 2);
+        if (current <= 1) return layout; // can't go below 1
+        const newCount = current - 1;
+        // Remove the last child if it exists at the last index
+        const children = colBlock.children ?? [];
+        const newChildren = children.length > newCount
+          ? children.slice(0, newCount)
+          : children;
+        // Apply both prop change + children update
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, columnsId, { children: newChildren })),
+            columnsId,
+            { ...colBlock.props, columns: String(newCount) },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:removeLastCol', handler);
+    return () => window.removeEventListener('cms:removeLastCol', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:mergeColCells — merge two adjacent empty columns ───
+  // Updates colSpans: combines leftSpan + rightSpan into leftIndex entry,
+  // removes rightIndex entry. Decrements column count by 1.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { columnsId, leftIndex, newSpan, colSpans: currentSpans } =
+        (e as CustomEvent<{ columnsId: string; leftIndex: number; newSpan: number; colSpans: number[] }>).detail;
+      updateLayout((layout) => {
+        const colBlock = findSectionById(layout.sections, columnsId);
+        if (!colBlock) return layout;
+        const current = Number(colBlock.props['columns'] ?? 2);
+        if (current <= 1) return layout;
+
+        // Build new colSpans: replace [leftIndex] with newSpan, remove [leftIndex+1]
+        const newSpans = [...currentSpans];
+        newSpans[leftIndex] = newSpan;
+        newSpans.splice(leftIndex + 1, 1);
+
+        // Remove any child at leftIndex+1 from children (both are empty, so normally nothing to remove)
+        const children = [...(colBlock.children ?? [])];
+        if (children[leftIndex + 1] !== undefined) {
+          children.splice(leftIndex + 1, 1);
+        }
+
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, columnsId, { children })),
+            columnsId,
+            { ...colBlock.props, columns: String(current - 1), colSpans: newSpans },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:mergeColCells', handler);
+    return () => window.removeEventListener('cms:mergeColCells', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:splitColCell — split a merged cell back into two ───
+  // Splits cell at cellIndex (which has span S) into two cells of span
+  // Math.ceil(S/2) and Math.floor(S/2). Increments column count by 1.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { columnsId, cellIndex } =
+        (e as CustomEvent<{ columnsId: string; cellIndex: number }>).detail;
+      updateLayout((layout) => {
+        const colBlock = findSectionById(layout.sections, columnsId);
+        if (!colBlock) return layout;
+        const current = Number(colBlock.props['columns'] ?? 2);
+        const rawSpans = colBlock.props['colSpans'] as number[] | undefined;
+        const colSpans = Array.isArray(rawSpans) && rawSpans.length === current
+          ? [...rawSpans]
+          : Array(current).fill(1);
+
+        const cellSpan = colSpans[cellIndex] ?? 1;
+        if (cellSpan <= 1) return layout; // already minimum, nothing to split
+
+        // Split: left half = ceil(S/2), right half = floor(S/2)
+        const leftSpan = Math.ceil(cellSpan / 2);
+        const rightSpan = Math.floor(cellSpan / 2);
+        const newSpans = [...colSpans];
+        newSpans.splice(cellIndex, 1, leftSpan, rightSpan);
+
+        // Children: insert an empty slot at cellIndex+1
+        // (the cell at cellIndex keeps its current child or empty state)
+        const children = [...(colBlock.children ?? [])];
+        // No child needed at the new right slot — it will render as empty drop zone
+
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, columnsId, { children })),
+            columnsId,
+            { ...colBlock.props, columns: String(current + 1), colSpans: newSpans },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:splitColCell', handler);
+    return () => window.removeEventListener('cms:splitColCell', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:reorderColCells — drag reorder inside Columns ──────
+  // Receives the reordered children AND colSpans arrays from dnd-kit.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { columnsId, children, colSpans } =
+        (e as CustomEvent<{ columnsId: string; children: LayoutSection[]; colSpans: number[] }>).detail;
+      updateLayout((layout) => {
+        const colBlock = findSectionById(layout.sections, columnsId);
+        if (!colBlock) return layout;
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, columnsId, { children })),
+            columnsId,
+            { ...colBlock.props, colSpans },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:reorderColCells', handler);
+    return () => window.removeEventListener('cms:reorderColCells', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:fillColCell — click on empty column cell ──────────
+  // Opens AddPanel; the chosen block is inserted at the specified cell index.
+  const [fillColCell, setFillColCell] = useState<{ columnsId: string; cellIndex: number } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ columnsId: string; cellIndex: number }>).detail;
+      setFillColCell(detail);
+      setFillSlotId(null);
+      setAddChildParentId(null);
+      setShowAddPanel(true);
+    };
+    window.addEventListener('cms:fillColCell', handler);
+    return () => window.removeEventListener('cms:fillColCell', handler);
+  }, []);
 
   // ── Listen for cms:fillEmptySlot — click on an empty slot ─────────
   // Opens AddPanel; the chosen block REPLACES the _empty slot.
@@ -149,7 +333,15 @@ export const PageEditorPage: React.FC = () => {
       children,
     };
 
-    if (fillSlotId) {
+    if (fillColCell) {
+      // Insert the block at the specified cell index inside a Columns block
+      updateLayout((layout) => ({
+        ...layout,
+        sections: insertIntoColumnsCell(layout.sections, fillColCell.columnsId, newSection, fillColCell.cellIndex),
+      }));
+      setSelectedId(newSection.id);
+      setFillColCell(null);
+    } else if (fillSlotId) {
       // Replace the _empty placeholder with the real block
       updateLayout((layout) => ({
         ...layout,
@@ -178,11 +370,18 @@ export const PageEditorPage: React.FC = () => {
     setSelectedFieldKey(null);
     setShowRightPanel(true);
     setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [fillSlotId, addChildParentId, updateLayout]);
+  }, [fillColCell, fillSlotId, addChildParentId, updateLayout, draftLayout.sections]);
 
   // ── Add template (inject full tree) ───────────────────────────────
   const handleAddTemplate = useCallback((tree: LayoutSection) => {
-    if (fillSlotId) {
+    if (fillColCell) {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: insertIntoColumnsCell(layout.sections, fillColCell.columnsId, tree, fillColCell.cellIndex),
+      }));
+      setSelectedId(tree.id);
+      setFillColCell(null);
+    } else if (fillSlotId) {
       // Replace _empty placeholder with the template root
       updateLayout((layout) => ({
         ...layout,
@@ -229,11 +428,28 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Move a section into a container (or to top level if containerId is null) ──
   const handleMoveToContainer = useCallback((sectionId: string, toContainerId: string | null, toIndex?: number) => {
-    updateLayout((layout) => ({
-      ...layout,
-      sections: moveSection(layout.sections, sectionId, toContainerId, toIndex),
-    }));
+    updateLayout((layout) => {
+      // Special case: dropping into a Columns block cell — use insertIntoColumnsCell
+      // so cell indices stay aligned (sparse cells are padded, not shifted)
+      if (toContainerId && toIndex !== undefined) {
+        const targetBlock = findSectionById(layout.sections, toContainerId);
+        if (targetBlock?.type === 'columns') {
+          // First remove the block from its current location
+          const [withoutBlock, movedBlock] = removeSection(layout.sections, sectionId);
+          if (!movedBlock) return layout;
+          return {
+            ...layout,
+            sections: insertIntoColumnsCell(withoutBlock, toContainerId, movedBlock, toIndex),
+          };
+        }
+      }
+      return {
+        ...layout,
+        sections: moveSection(layout.sections, sectionId, toContainerId, toIndex),
+      };
+    });
   }, [updateLayout]);
+
 
   // ── Reorder children within a container ───────────────────────────
   const handleReorderChildren = useCallback((parentId: string, oldIndex: number, newIndex: number) => {
@@ -382,6 +598,9 @@ export const PageEditorPage: React.FC = () => {
         onNameChange: handleNameChange,
       }}
     >
+      {/* ── Floating control panel (global, fixed-position) ──────── */}
+      {!previewMode && <FloatingControlPanel />}
+
       <div className="flex flex-col bg-[#08080f]" style={{ height: '100dvh', overflow: 'hidden' }}>
         {/* ── Header ─────────────────────────────────────────────── */}
         <header
@@ -445,14 +664,6 @@ export const PageEditorPage: React.FC = () => {
               <span className="hidden sm:inline">Preview</span>
             </button>
           </div>
-
-          <button
-            onClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <Plus size={14} />
-            <span className="hidden md:inline">Add</span>
-          </button>
 
           <button
             onClick={() => setShowRightPanel((p) => !p)}
@@ -548,16 +759,6 @@ export const PageEditorPage: React.FC = () => {
             <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5">
               <span className="text-xs text-slate-600">{previewMode ? '👁 Preview' : '✏ Editor'}</span>
               <span className="text-xs text-slate-700 font-mono">{page?.slug}</span>
-              {!previewMode && (
-                <span className="ml-auto text-[10px] text-indigo-400/60 hidden md:block">
-                  Click text/images to edit inline · Drag ⠿ to reorder · Drag into containers
-                </span>
-              )}
-              {previewMode && (
-                <span className="ml-auto text-[10px] text-slate-500 hidden md:block">
-                  Preview mode — links and animations are live
-                </span>
-              )}
             </div>
 
             <div className={`flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}>
@@ -639,8 +840,8 @@ export const PageEditorPage: React.FC = () => {
           <AddSectionPanel
             onAdd={handleAddSection}
             onAddTemplate={handleAddTemplate}
-            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); setFillSlotId(null); }}
-            addingToContainer={addChildParentId !== null || fillSlotId !== null}
+            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); setFillSlotId(null); setFillColCell(null); }}
+            addingToContainer={addChildParentId !== null || fillSlotId !== null || fillColCell !== null}
           />
         )}
       </div>

@@ -14,7 +14,10 @@ import {
 } from './schemas/component.schema';
 import { CreateComponentDto } from './dto/create-component.dto';
 import { UpdateComponentDto } from './dto/update-component.dto';
-import { BUILT_IN_COMPONENTS } from './registry/component-registry';
+import {
+  BUILT_IN_COMPONENTS,
+  REMOVED_COMPONENT_TYPES,
+} from './registry/component-registry';
 
 @Injectable()
 export class ComponentsService implements OnModuleInit {
@@ -26,13 +29,27 @@ export class ComponentsService implements OnModuleInit {
   ) {}
 
   /**
-   * Seed built-in components on module initialization.
-   * Uses upsert to avoid duplicate errors on restarts.
+   * On startup:
+   * 1. Remove any stale component definitions that were deleted from the registry
+   * 2. Upsert (insert if new) all current built-in components
    */
   async onModuleInit() {
-    this.logger.log('Seeding built-in component registry...');
-    let seeded = 0;
+    this.logger.log('Syncing built-in component registry...');
 
+    // ── Step 1: Purge removed component types ────────────────────────────────
+    if (REMOVED_COMPONENT_TYPES.length > 0) {
+      const purged = await this.componentModel
+        .deleteMany({ type: { $in: REMOVED_COMPONENT_TYPES } })
+        .exec();
+      if (purged.deletedCount > 0) {
+        this.logger.log(
+          `🗑  Purged ${purged.deletedCount} removed component definition(s): ${REMOVED_COMPONENT_TYPES.filter((_, i) => i < 5).join(', ')}…`,
+        );
+      }
+    }
+
+    // ── Step 2: Seed / upsert built-in components ─────────────────────────
+    let seeded = 0;
     for (const component of BUILT_IN_COMPONENTS) {
       const result = await this.componentModel
         .findOneAndUpdate(
@@ -41,7 +58,6 @@ export class ComponentsService implements OnModuleInit {
           { upsert: true, new: false },
         )
         .exec();
-
       if (!result) seeded++;
     }
 
@@ -53,6 +69,7 @@ export class ComponentsService implements OnModuleInit {
       this.logger.log('✅ Component registry already up to date');
     }
   }
+
 
   async findAll(): Promise<ComponentDocument[]> {
     return this.componentModel.find().sort({ category: 1, name: 1 }).exec();

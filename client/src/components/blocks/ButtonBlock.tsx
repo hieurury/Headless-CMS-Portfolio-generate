@@ -1,15 +1,18 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 import { useEditorContext } from '../../core/context/EditorContext';
 
 interface ButtonBlockProps {
   label?: string;
   href?: string;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'outline';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  shape?: 'default' | 'pill' | 'square' | 'icon-only';
   align?: 'left' | 'center' | 'right';
   icon?: string;
+  iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
+  external?: boolean;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -23,18 +26,33 @@ const VARIANT_STYLES: Record<string, string> = {
     'text-indigo-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10',
   danger:
     'bg-rose-600 hover:bg-rose-500 text-white hover:shadow-lg hover:shadow-rose-500/25',
+  success:
+    'bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25',
+  warning:
+    'bg-amber-500 hover:bg-amber-400 text-black font-semibold hover:shadow-lg hover:shadow-amber-500/25',
+  outline:
+    'border border-indigo-500/50 text-indigo-400 hover:border-indigo-400 hover:bg-indigo-500/10',
 };
 
-const SIZE_STYLES: Record<string, string> = {
-  sm: 'px-4 py-2 text-sm rounded-lg',
-  md: 'px-6 py-3 text-sm rounded-xl',
-  lg: 'px-8 py-4 text-base rounded-xl',
+const SIZE_BASE: Record<string, string> = {
+  xs: 'px-3 py-1.5 text-xs',
+  sm: 'px-4 py-2 text-sm',
+  md: 'px-6 py-3 text-sm',
+  lg: 'px-8 py-4 text-base',
+  xl: 'px-10 py-5 text-lg',
+};
+
+const SHAPE_RADIUS: Record<string, string> = {
+  default:   'rounded-xl',
+  pill:      'rounded-full',
+  square:    'rounded-none',
+  'icon-only': 'rounded-xl aspect-square p-0 flex items-center justify-center',
 };
 
 const ALIGN_MAP: Record<string, string> = {
-  left: 'justify-start',
+  left:   'justify-start',
   center: 'justify-center',
-  right: 'justify-end',
+  right:  'justify-end',
 };
 
 export const ButtonBlock: React.FC<ButtonBlockProps> = ({
@@ -42,22 +60,26 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   href = '#',
   variant = 'primary',
   size = 'md',
+  shape = 'default',
   align = 'left',
   icon,
+  iconPosition = 'right',
   fullWidth = false,
+  external = false,
   sectionId,
 }) => {
   const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.primary;
-  const sizeClass = SIZE_STYLES[size] ?? SIZE_STYLES.md;
-  const alignClass = ALIGN_MAP[align] ?? 'justify-start';
+  const baseSize    = SIZE_BASE[size]    ?? SIZE_BASE.md;
+  const shapeClass  = SHAPE_RADIUS[shape] ?? SHAPE_RADIUS.default;
+  const alignClass  = ALIGN_MAP[align]   ?? 'justify-start';
 
-  const isExternalHref = href?.startsWith('http');
+  const isIconOnly = shape === 'icon-only';
+  const isExternalHref = external || href?.startsWith('http');
   const isAnchor = href?.startsWith('#');
 
   const { isEditorMode, previewMode } = useEditorContext();
 
   const handleClick = (e: React.MouseEvent) => {
-    // Disable all click behaviors in editor mode
     if (isEditorMode && !previewMode) return;
     if (isAnchor && href) {
       e.preventDefault();
@@ -65,6 +87,14 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
       if (target) target.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const iconEl = icon ? (
+    <span aria-hidden="true">{icon}</span>
+  ) : variant === 'primary' && !isIconOnly ? (
+    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1 shrink-0" />
+  ) : isExternalHref && !isIconOnly ? (
+    <ExternalLink size={14} className="shrink-0 opacity-70" />
+  ) : null;
 
   return (
     <div className={`w-full py-2 flex ${alignClass}`} id={sectionId}>
@@ -75,16 +105,14 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
         rel={isExternalHref ? 'noopener noreferrer' : undefined}
         onClick={handleClick}
         className={`
-          inline-flex items-center gap-2 font-semibold transition-all duration-300
-          ${variantClass} ${sizeClass}
+          group inline-flex items-center gap-2 font-semibold transition-all duration-300
+          ${variantClass} ${baseSize} ${shapeClass}
           ${fullWidth ? 'w-full justify-center' : ''}
         `}
       >
-        {icon && <span>{icon}</span>}
-        {label}
-        {variant === 'primary' && !icon && (
-          <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-        )}
+        {iconPosition === 'left' && iconEl}
+        {!isIconOnly && label}
+        {(iconPosition === 'right' || isIconOnly) && iconEl}
       </a>
     </div>
   );

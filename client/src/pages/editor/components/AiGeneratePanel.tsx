@@ -80,20 +80,6 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
         </span>
       </div>
 
-      {/* Example prompts */}
-      <div className="space-y-1.5">
-        <p className="text-xs text-slate-600">Try an example:</p>
-        {EXAMPLE_PROMPTS.map((ex, i) => (
-          <button
-            key={i}
-            onClick={() => setPrompt(ex)}
-            className="w-full text-left text-xs text-slate-500 hover:text-indigo-400 py-1 px-2 rounded-lg hover:bg-indigo-500/10 transition-all line-clamp-1"
-          >
-            ↗ {ex}
-          </button>
-        ))}
-      </div>
-
       {/* Error */}
       {error && (
         <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20">

@@ -73,7 +73,7 @@ export const IconBlock: React.FC<IconBlockProps> = ({
     (k) => k.toLowerCase() === (name ?? 'sparkles').toLowerCase(),
   ) ?? 'Sparkles';
 
-  const IconComponent = (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[iconKey];
+  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[iconKey];
 
   const px = ICON_PX[size] ?? 24;
   const wrapperSize = WRAPPER_SIZE[size] ?? WRAPPER_SIZE.md;
