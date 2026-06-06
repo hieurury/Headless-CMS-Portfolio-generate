@@ -163,7 +163,9 @@ const ColumnsGridRenderer: React.FC<{
         }}
       >
         {Array.from({ length: colCount }, (_, i) => {
-          const child = section.children?.[i] ?? null;
+          const raw = section.children?.[i] ?? null;
+          // Treat null or legacy _colpad entries as empty cells
+          const child = (raw && raw.type !== '_colpad') ? raw : null;
           if (!child) return <div key={`cell-empty-${i}`} />;
           return (
             <div key={child.id} style={{ width: '100%', height: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
@@ -176,12 +178,12 @@ const ColumnsGridRenderer: React.FC<{
   }
 
   // ── EDIT path — DnD enabled, drop zones, merge buttons ───────────────
-  const cells = Array.from({ length: colCount }, (_, i) => ({
-    index: i,
-    span: colSpans[i],
-    child: section.children?.[i] ?? null,
-    isEmpty: !section.children?.[i],
-  }));
+  const cells = Array.from({ length: colCount }, (_, i) => {
+    const raw = section.children?.[i] ?? null;
+    // Treat null or legacy _colpad entries as empty
+    const child = (raw && raw.type !== '_colpad') ? raw : null;
+    return { index: i, span: colSpans[i], child, isEmpty: !child };
+  });
 
   const cumulativeSpans = colSpans.reduce<number[]>((acc, s) => {
     acc.push((acc[acc.length - 1] ?? 0) + s);

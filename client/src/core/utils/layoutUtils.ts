@@ -196,10 +196,12 @@ export function replaceSection(
 /**
  * Insert a block into a Columns block's children at a specific cell index.
  *
- * The new Columns architecture maps `children[i]` to grid cell `i`.
- * When inserting at index > current children count, pad with an empty
- * LayoutSection of type `_colpad` (transparent placeholder) so that
- * cell indices remain aligned.
+ * The Columns architecture maps `children[i]` directly to grid cell `i`.
+ * When inserting at index > current children count, empty gaps are kept as
+ * `null` entries so that subsequent cell indices remain correctly aligned.
+ *
+ * The renderer accesses children via `section.children?.[i] ?? null`,
+ * so null gaps are treated as empty drop zones automatically.
  *
  * If a child already exists at `cellIndex`, the new block replaces it.
  */
@@ -211,24 +213,17 @@ export function insertIntoColumnsCell(
 ): LayoutSection[] {
   return sections.map((s) => {
     if (s.id === columnsId) {
-      const children = [...(s.children ?? [])];
-      // Pad if needed
-      while (children.length < cellIndex) {
-        children.push({
-          id: `_colpad-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-          type: '_colpad',
-          name: '',
-          props: {},
-          children: [],
-        });
-      }
-      if (children[cellIndex]) {
-        // Replace existing child at this cell
-        children[cellIndex] = block;
-      } else {
-        children[cellIndex] = block;
-      }
-      return { ...s, children };
+      // Build array of length = max(current, cellIndex+1),
+      // preserving existing children at their positions.
+      // Gaps between filled cells are kept as null so index → cell mapping
+      // stays correct (null is handled as "empty" by ColumnsGridRenderer).
+      const existing = s.children ?? [];
+      const length = Math.max(existing.length, cellIndex + 1);
+      const children = Array.from({ length }, (_, i) => existing[i] ?? null);
+      children[cellIndex] = block;
+      // Cast: null entries are intentional index-alignment placeholders.
+      // ColumnsGridRenderer checks children?.[i] ?? null, so null is safe.
+      return { ...s, children: children as LayoutSection[] };
     }
     if (s.children?.length) {
       return { ...s, children: insertIntoColumnsCell(s.children, columnsId, block, cellIndex) };
