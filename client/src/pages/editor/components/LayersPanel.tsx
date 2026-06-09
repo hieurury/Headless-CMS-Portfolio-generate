@@ -23,12 +23,12 @@ import {
 // ─── Colour palette per category ─────────────────────────────────────────────
 
 const CAT_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
-  navigation: { dot: 'bg-sky-400',     bg: 'bg-sky-500/10',    text: 'text-sky-400' },
-  layout:     { dot: 'bg-violet-400',  bg: 'bg-violet-500/10', text: 'text-violet-400' },
-  content:    { dot: 'bg-emerald-400', bg: 'bg-emerald-500/10',text: 'text-emerald-400' },
-  form:       { dot: 'bg-amber-400',   bg: 'bg-amber-500/10',  text: 'text-amber-400' },
-  media:      { dot: 'bg-pink-400',    bg: 'bg-pink-500/10',   text: 'text-pink-400' },
-  block:      { dot: 'bg-indigo-400',  bg: 'bg-indigo-500/10', text: 'text-indigo-400' },
+  navigation: { dot: 'bg-sky-400', bg: 'bg-sky-500/10', text: 'text-sky-400' },
+  layout: { dot: 'bg-violet-400', bg: 'bg-violet-500/10', text: 'text-violet-400' },
+  content: { dot: 'bg-emerald-400', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  form: { dot: 'bg-amber-400', bg: 'bg-amber-500/10', text: 'text-amber-400' },
+  media: { dot: 'bg-pink-400', bg: 'bg-pink-500/10', text: 'text-pink-400' },
+  block: { dot: 'bg-indigo-400', bg: 'bg-indigo-500/10', text: 'text-indigo-400' },
 };
 
 const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
@@ -64,57 +64,59 @@ const SortableChildrenList: React.FC<{
   onAddChild,
   onReorderChildren,
 }) => {
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+    const sensors = useSensors(
+      useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+      useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = children.findIndex((c) => c.id === active.id);
-    const newIndex = children.findIndex((c) => c.id === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) {
-      onReorderChildren(parentId, oldIndex, newIndex);
-    }
-  };
+    const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = children.findIndex((c) => c?.id === active.id);
+      const newIndex = children.findIndex((c) => c?.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onReorderChildren(parentId, oldIndex, newIndex);
+      }
+    };
 
-  return (
-    <div className="relative">
-      {/* Vertical guide line */}
-      <div
-        className="absolute top-0 bottom-0 w-px bg-white/6"
-        style={{ left: `${Math.max(6, indent) + 16}px` }}
-      />
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={children.map((c) => c.id)}
-          strategy={verticalListSortingStrategy}
+    const validChildren = children.filter((c): c is LayoutSection => c !== null);
+
+    return (
+      <div className="relative">
+        {/* Vertical guide line */}
+        <div
+          className="absolute top-0 bottom-0 w-px bg-white/6"
+          style={{ left: `${Math.max(6, indent) + 16}px` }}
+        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <div className="space-y-0.5 mt-0.5">
-            {children.map((child) => (
-              <LayerNode
-                key={child.id}
-                section={child}
-                depth={depth + 1}
-                selectedId={selectedId}
-                onSelect={onSelect}
-                onDelete={onDelete}
-                onAddChild={onAddChild}
-                onReorderChildren={onReorderChildren}
-                isSortable
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-    </div>
-  );
-};
+          <SortableContext
+            items={validChildren.map((c) => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-0.5 mt-0.5">
+              {validChildren.map((child) => (
+                <LayerNode
+                  key={child.id}
+                  section={child}
+                  depth={depth + 1}
+                  selectedId={selectedId}
+                  onSelect={onSelect}
+                  onDelete={onDelete}
+                  onAddChild={onAddChild}
+                  onReorderChildren={onReorderChildren}
+                  isSortable
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </div>
+    );
+  };
 
 // ─── Individual draggable node ────────────────────────────────────────────────
 
@@ -310,10 +312,12 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = sections.findIndex((s) => s.id === active.id);
-    const newIndex = sections.findIndex((s) => s.id === over.id);
+    const oldIndex = sections.findIndex((s) => s?.id === active.id);
+    const newIndex = sections.findIndex((s) => s?.id === over.id);
     if (oldIndex !== -1 && newIndex !== -1) onReorder(oldIndex, newIndex);
   };
+
+  const validSections = sections.filter((s): s is LayoutSection => s !== null);
 
   return (
     <div className="flex flex-col h-full">
@@ -346,11 +350,11 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={sections.map((s) => s.id)}
+          items={validSections.map((s) => s.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-0.5">
-            {sections.map((section) => (
+            {validSections.map((section) => (
               <LayerNode
                 key={section.id}
                 section={section}

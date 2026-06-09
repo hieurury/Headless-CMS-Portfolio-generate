@@ -10,6 +10,7 @@ import type { LayoutSection } from '../types/layout.types';
 import { componentRegistry } from '../registry/ComponentRegistry';
 import { useEditorContext } from '../context/EditorContext';
 import RowsGridRenderer from './RowsRenderer/RowsGridRenderer';
+import RowsEditorWrapper from './RowsRenderer/RowsEditorWrapper';
 
 // ─── Drop ID helpers ──────────────────────────────────────────────────────────
 export const CONTAINER_DROP_PREFIX = 'drop:';
@@ -698,12 +699,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     }
     return <ColumnsEditorWrapper section={section} depth={depth} />;
   }
-  // if (section.type === 'rows') {
-  //   if (!effectiveEditorMode || effectivePreviewMode) {
-  //     return <RowsGridRenderer section={section} depth={depth} />
-  //   }
-  //   // return <RowsEditorWrapper section={section} depth={depth}/>
-  // }
+  if (section.type === 'rows') {
+    if (!effectiveEditorMode || effectivePreviewMode) {
+      return <RowsGridRenderer section={section} depth={depth} />
+    }
+    return <RowsEditorWrapper section={section} depth={depth} />
+  }
   const Component = componentRegistry.resolve(section.type);
   const entry = componentRegistry.getEntry(section.type);
   const isSelected = effectiveEditorMode && !effectivePreviewMode && selectedSectionId === section.id;

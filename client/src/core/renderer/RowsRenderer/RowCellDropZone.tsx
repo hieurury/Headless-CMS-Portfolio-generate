@@ -57,14 +57,14 @@ const RowCellDropZone: React.FC<{
                     onClick={handleSplit}
                     title={`Split merged column (currently ${span}×)`}
                     className="
-            absolute top-1 right-1
-            w-5 h-5 rounded
-            bg-[#1a1a2e] border border-violet-500/50
-            flex items-center justify-center
-            text-violet-400 hover:text-white
-            hover:bg-violet-600 hover:border-violet-400
-            transition-all duration-150 opacity-0 group-hover:opacity-100
-          "
+                        absolute top-1 right-1
+                        w-5 h-5 rounded
+                        bg-[#1a1a2e] border border-violet-500/50
+                        flex items-center justify-center
+                        text-violet-400 hover:text-white
+                        hover:bg-violet-600 hover:border-violet-400
+                        transition-all duration-150 opacity-0 group-hover:opacity-100
+                      "
                 >
                     <SplitSquareHorizontal size={10} />
                 </button>

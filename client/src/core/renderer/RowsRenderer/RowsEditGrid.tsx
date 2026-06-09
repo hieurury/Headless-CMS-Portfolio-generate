@@ -131,15 +131,15 @@ const _RowsEditGrid: React.FC<{
                                         }}
                                         className="
                                         w-6 h-6 rounded-full
-                                        bg-[#1a1a2e] border border-indigo-500/60
-                                        flex items-center justify-center
-                                        text-indigo-400 hover:text-white
-                                        hover:bg-indigo-600 hover:border-indigo-400
-                                        hover:shadow-lg hover:shadow-indigo-500/30
-                                        transition-all duration-150 cursor-pointer
-                                    "
+                                            bg-[#1a1a2e] border border-indigo-500/60
+                                            flex items-center justify-center
+                                            text-indigo-400 hover:text-white
+                                            hover:bg-indigo-600 hover:border-indigo-400
+                                            hover:shadow-lg hover:shadow-indigo-500/30
+                                            transition-all duration-150 cursor-pointer
+                                        "
                                     >
-                                        <Merge size={11} className="rotate-90" />
+                                        <Merge size={11} />
                                     </button>
                                 );
                             })
