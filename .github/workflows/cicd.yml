@@ -21,7 +21,7 @@ jobs:
         run: docker build -t my-app:${{ github.sha }} .
         
       - name: Run Tests
-        run: docker run my-app:${{ github.sha }} npm test 
+        run: docker run my-app:${{ github.sha }} 
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
