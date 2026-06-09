@@ -3,12 +3,14 @@ import { arrayMove } from '@dnd-kit/sortable';
 
 /**
  * Recursively search all nested sections to find one by id.
+ * Skips null/undefined entries (can appear in Columns sparse children).
  */
 export function findSectionById(
   sections: LayoutSection[],
   id: string,
 ): LayoutSection | null {
   for (const s of sections) {
+    if (!s) continue;                         // guard against null gaps
     if (s.id === id) return s;
     if (s.children?.length) {
       const found = findSectionById(s.children, id);
@@ -28,13 +30,32 @@ export function findParent(
   _parent: LayoutSection | null = null,
 ): { parent: LayoutSection | null; index: number } | null {
   for (let i = 0; i < sections.length; i++) {
-    if (sections[i].id === id) return { parent: _parent, index: i };
-    if (sections[i].children?.length) {
-      const found = findParent(sections[i].children!, id, sections[i]);
+    const s = sections[i];
+    if (!s) continue;                         // guard against null gaps
+    if (s.id === id) return { parent: _parent, index: i };
+    if (s.children?.length) {
+      const found = findParent(s.children, id, s);
       if (found) return found;
     }
   }
   return null;
+}
+
+/**
+ * Check if a section (childId) is a descendant of another section (parentId).
+ */
+export function isDescendant(
+  sections: LayoutSection[],
+  parentId: string,
+  childId: string,
+): boolean {
+  let currentId = childId;
+  while (true) {
+    const parentInfo = findParent(sections, currentId);
+    if (!parentInfo || !parentInfo.parent) return false;
+    if (parentInfo.parent.id === parentId) return true;
+    currentId = parentInfo.parent.id;
+  }
 }
 
 /**
@@ -47,13 +68,18 @@ export function removeSection(
 ): [LayoutSection[], LayoutSection | null] {
   let removed: LayoutSection | null = null;
 
-  const recurse = (list: LayoutSection[]): LayoutSection[] => {
+  const recurse = (list: LayoutSection[], isColumnsChildren = false): LayoutSection[] => {
     const filtered: LayoutSection[] = [];
     for (const s of list) {
+      if (!s) { 
+        if (isColumnsChildren) filtered.push(s); 
+        continue; 
+      }
       if (s.id === id) {
         removed = s;
+        if (isColumnsChildren) filtered.push(null as unknown as LayoutSection);
       } else if (s.children?.length) {
-        filtered.push({ ...s, children: recurse(s.children) });
+        filtered.push({ ...s, children: recurse(s.children, s.type === 'columns') });
       } else {
         filtered.push(s);
       }
@@ -61,7 +87,7 @@ export function removeSection(
     return filtered;
   };
 
-  return [recurse(sections), removed];
+  return [recurse(sections, false), removed];
 }
 
 /**
@@ -75,6 +101,7 @@ export function addChildToSection(
   atIndex?: number,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
     if (s.id === parentId) {
       const children = [...(s.children ?? [])];
       if (atIndex !== undefined) {
@@ -101,6 +128,7 @@ export function reorderChildren(
   newIndex: number,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
     if (s.id === parentId) {
       return { ...s, children: arrayMove(s.children ?? [], oldIndex, newIndex) };
     }
@@ -150,6 +178,7 @@ export function updateSectionProps(
   newProps: Record<string, unknown>,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
     if (s.id === id) return { ...s, props: newProps };
     if (s.children?.length) {
       return { ...s, children: updateSectionProps(s.children, id, newProps) };
@@ -167,6 +196,7 @@ export function updateSectionName(
   name: string,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
     if (s.id === id) return { ...s, name };
     if (s.children?.length) {
       return { ...s, children: updateSectionName(s.children, id, name) };
@@ -185,6 +215,7 @@ export function replaceSection(
   replacement: LayoutSection,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
     if (s.id === targetId) return replacement;
     if (s.children?.length) {
       return { ...s, children: replaceSection(s.children, targetId, replacement) };
@@ -197,11 +228,10 @@ export function replaceSection(
  * Insert a block into a Columns block's children at a specific cell index.
  *
  * The Columns architecture maps `children[i]` directly to grid cell `i`.
- * When inserting at index > current children count, empty gaps are kept as
- * `null` entries so that subsequent cell indices remain correctly aligned.
+ * When inserting at index > current children count, gaps are preserved as
+ * null entries so that subsequent cell indices remain correctly aligned.
  *
- * The renderer accesses children via `section.children?.[i] ?? null`,
- * so null gaps are treated as empty drop zones automatically.
+ * All recursive utility functions guard against null with `if (!s) continue/return`.
  *
  * If a child already exists at `cellIndex`, the new block replaces it.
  */
@@ -212,17 +242,13 @@ export function insertIntoColumnsCell(
   cellIndex: number,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
     if (s.id === columnsId) {
-      // Build array of length = max(current, cellIndex+1),
-      // preserving existing children at their positions.
-      // Gaps between filled cells are kept as null so index → cell mapping
-      // stays correct (null is handled as "empty" by ColumnsGridRenderer).
       const existing = s.children ?? [];
       const length = Math.max(existing.length, cellIndex + 1);
+      // Build index-aligned array; preserve existing children, null for gaps
       const children = Array.from({ length }, (_, i) => existing[i] ?? null);
       children[cellIndex] = block;
-      // Cast: null entries are intentional index-alignment placeholders.
-      // ColumnsGridRenderer checks children?.[i] ?? null, so null is safe.
       return { ...s, children: children as LayoutSection[] };
     }
     if (s.children?.length) {

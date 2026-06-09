@@ -2,8 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove as dndArrayMove } from '@dnd-kit/sortable';
 import { useDroppable, DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal } from 'lucide-react';
-
+import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal, GripVertical } from 'lucide-react';
 
 
 import type { LayoutSection } from '../types/layout.types';
@@ -220,31 +219,6 @@ const _ColumnsEditGrid: React.FC<{
   ALIGN_MAP: Record<string, string>;
 }> = ({ section, depth, colCount, align, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
 
-  // ── Drag-to-reorder sensor ───────────────────────────────────────────
-  const reorderSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-  );
-
-  // ── Drag-end: reorder filled cells ──────────────────────────────────
-  const handleDragEnd = useCallback(
-    (event: import('@dnd-kit/core').DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIdx = cells.findIndex((c) => c.child?.id === active.id);
-      const newIdx = cells.findIndex((c) => c.child?.id === over.id);
-      if (oldIdx === -1 || newIdx === -1) return;
-      const currentChildren = section.children ?? [];
-      const reordered = dndArrayMove(currentChildren, oldIdx, newIdx);
-      const reorderedSpans = dndArrayMove(colSpans, oldIdx, newIdx);
-      window.dispatchEvent(
-        new CustomEvent('cms:reorderColCells', {
-          detail: { columnsId: section.id, children: reordered, colSpans: reorderedSpans },
-        }),
-      );
-    },
-    [cells, section, colSpans],
-  );
-
   // ── Merge: two adjacent empty cells → one with combined span ─────────
   const handleMerge = useCallback(
     (leftIndex: number) => {
@@ -265,12 +239,7 @@ const _ColumnsEditGrid: React.FC<{
   const filledIds = cells.filter((c) => c.child !== null).map((c) => c.child!.id);
 
   return (
-    <DndContext
-      sensors={reorderSensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={filledIds} strategy={horizontalListSortingStrategy}>
+    <SortableContext items={filledIds} strategy={horizontalListSortingStrategy}>
         <div style={{ position: 'relative', width: '100%' }}>
           <div
             id={section.name || section.id}
@@ -335,7 +304,6 @@ const _ColumnsEditGrid: React.FC<{
           }
         </div>
       </SortableContext>
-    </DndContext>
   );
 };
 
@@ -970,12 +938,21 @@ const ColumnsEditorWrapper: React.FC<{
       ref={setNodeRef}
       id={section.name || section.id}
       style={dragStyle}
-      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
-      className={`relative cms-block cms-container-block select-none touch-none${
+      className={`relative cms-block select-none${
         isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
       }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
     >
+      {/* Editor chrome (drag handle) */}
+      {isEditorMode && !previewMode && isSelected && (
+        <div
+          className="absolute -left-3 -top-3 w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing border border-slate-600 transition-all z-50 opacity-100 scale-100"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={12} className="text-slate-400" />
+        </div>
+      )}
       {/* Selection ring */}
       <div
         className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${

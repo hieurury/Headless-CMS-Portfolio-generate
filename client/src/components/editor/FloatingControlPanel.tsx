@@ -87,7 +87,7 @@ const FloatingControlPanel: React.FC = () => {
   const isColumns   = selectedSection.type === 'columns';
   const isContainer = !!(entry.isContainer) && !isColumns;
   const passChildrenDirect = !!(entry as { passChildrenDirect?: boolean }).passChildrenDirect;
-  const canAddFreeChild    = isContainer && !passChildrenDirect;
+  const canAddFreeChild    = isContainer && !passChildrenDirect && selectedSection.type !== 'container';
   const colCount = isColumns ? Number(selectedSection.props?.columns ?? 2) : 0;
   const colSpans = isColumns ? (selectedSection.props?.colSpans as number[] | undefined) : undefined;
 

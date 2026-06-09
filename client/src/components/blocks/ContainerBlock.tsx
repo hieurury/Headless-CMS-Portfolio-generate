@@ -2,7 +2,11 @@ import React from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AlignValue =
+type AlignX = 'left' | 'center' | 'right';
+type AlignY = 'top' | 'middle' | 'bottom';
+
+/** Legacy combined align value — still accepted for backwards compat */
+type LegacyAlign =
   | 'top-left'    | 'top-center'    | 'top-right'
   | 'middle-left' | 'center'        | 'middle-right'
   | 'bottom-left' | 'bottom-center' | 'bottom-right';
@@ -10,7 +14,6 @@ type AlignValue =
 type StyleValue    = 'none' | 'card' | 'glass' | 'outlined' | 'filled';
 type PaddingValue  = 'none' | 'sm' | 'md' | 'lg' | 'xl';
 type RadiusValue   = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-type MinHeightValue= 'none' | 'sm' | 'md' | 'lg' | 'xl';
 
 export interface ContainerBlockProps {
   /** Visual style of the container box */
@@ -22,21 +25,20 @@ export interface ContainerBlockProps {
   /** Custom background colour / gradient */
   background?: string;
   /**
-   * 9-position alignment for the child block.
-   *
-   * The container is a flex box occupying the full width (and optionally height)
-   * of its parent cell. The child is placed at the specified position within that box.
-   *
-   *  top-left  | top-center  | top-right
-   *  mid-left  | center      | mid-right
-   *  bot-left  | bot-center  | bot-right
+   * Horizontal position of the child — left | center | right.
+   * Replaces the old combined `align` prop.
    */
-  align?: AlignValue;
+  alignX?: AlignX;
   /**
-   * Minimum height of the container.
-   * Useful when the container is not inside a cell with an intrinsic height.
+   * Vertical position of the child — top | middle | bottom.
+   * Replaces the old combined `align` prop.
    */
-  minHeight?: MinHeightValue;
+  alignY?: AlignY;
+  /**
+   * @deprecated Use alignX + alignY instead.
+   * Legacy single-value align is still parsed for backwards compatibility.
+   */
+  align?: LegacyAlign;
   children?: React.ReactNode;
   sectionId?: string;
   [key: string]: unknown;
@@ -69,75 +71,86 @@ const RADIUS_MAP: Record<RadiusValue, string> = {
   '2xl':'rounded-2xl',
 };
 
-const MIN_HEIGHT_MAP: Record<MinHeightValue, string> = {
-  none: '',
-  sm:   'min-h-[80px]',
-  md:   'min-h-[160px]',
-  lg:   'min-h-[280px]',
-  xl:   'min-h-[420px]',
+/** X-axis → flexbox justifyContent */
+const JUSTIFY_MAP: Record<AlignX, string> = {
+  left:   'flex-start',
+  center: 'center',
+  right:  'flex-end',
 };
 
-/**
- * Map an AlignValue to flex `justifyContent` + `alignItems`.
- *
- * Container uses `display: flex`. Within the row direction:
- *   - justifyContent controls horizontal position (main axis)
- *   - alignItems controls vertical position (cross axis)
- */
-const ALIGN_FLEX: Record<AlignValue, { justifyContent: string; alignItems: string }> = {
-  'top-left':      { justifyContent: 'flex-start', alignItems: 'flex-start' },
-  'top-center':    { justifyContent: 'center',     alignItems: 'flex-start' },
-  'top-right':     { justifyContent: 'flex-end',   alignItems: 'flex-start' },
-  'middle-left':   { justifyContent: 'flex-start', alignItems: 'center'     },
-  'center':        { justifyContent: 'center',     alignItems: 'center'     },
-  'middle-right':  { justifyContent: 'flex-end',   alignItems: 'center'     },
-  'bottom-left':   { justifyContent: 'flex-start', alignItems: 'flex-end'   },
-  'bottom-center': { justifyContent: 'center',     alignItems: 'flex-end'   },
-  'bottom-right':  { justifyContent: 'flex-end',   alignItems: 'flex-end'   },
+/** Y-axis → flexbox alignItems */
+const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
+  top:    'flex-start',
+  middle: 'center',
+  bottom: 'flex-end',
 };
+
+// ─── Legacy → split helper ────────────────────────────────────────────────────
+/**
+ * Parse a legacy combined `align` value (e.g. "top-right", "middle-left",
+ * "center") into separate { x, y } components.
+ */
+function parseLegacyAlign(legacy: string): { x: AlignX; y: AlignY } {
+  const MAP: Record<string, { x: AlignX; y: AlignY }> = {
+    'top-left':      { x: 'left',   y: 'top'    },
+    'top-center':    { x: 'center', y: 'top'    },
+    'top-right':     { x: 'right',  y: 'top'    },
+    'middle-left':   { x: 'left',   y: 'middle' },
+    'center':        { x: 'center', y: 'middle' },
+    'middle-right':  { x: 'right',  y: 'middle' },
+    'bottom-left':   { x: 'left',   y: 'bottom' },
+    'bottom-center': { x: 'center', y: 'bottom' },
+    'bottom-right':  { x: 'right',  y: 'bottom' },
+  };
+  return MAP[legacy] ?? { x: 'center', y: 'middle' };
+}
 
 // ─── ContainerBlock ───────────────────────────────────────────────────────────
 
 /**
- * ContainerBlock — a full-width position wrapper.
+ * ContainerBlock — a full-size position wrapper.
  *
- * It fills the complete width of its parent cell and positions its single child
- * at one of 9 fixed locations using flexbox. This is the primary building block
- * for precise spatial positioning inside a Columns grid or any other layout.
+ * It fills the complete width and height of its parent cell and positions its
+ * single child using two independent axes:
+ *   - `alignX`: horizontal (left / center / right)
+ *   - `alignY`: vertical   (top  / middle / bottom)
  *
- * Typical use-cases:
- *   • Centering an icon or badge inside a grid cell
- *   • Pinning a button to the bottom-right of a card
- *   • Positioning a heading at the top-left of a section
- *
- * Style props (style, padding, borderRadius, background) control the visual box
- * itself — the same as before. The new `align` prop controls where inside the
- * box the child sits.
+ * Legacy `align` prop (e.g. "top-right") is still accepted and silently
+ * converted to the equivalent `alignX` + `alignY` values.
  */
 export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   style      = 'none',
   padding    = 'none',
   borderRadius = 'none',
   background,
-  align      = 'center',
-  minHeight  = 'none',
+  alignX,
+  alignY,
+  align,       // legacy
   children,
   sectionId,
 }) => {
-  const styleClass     = STYLE_MAP[style]      ?? '';
-  const paddingClass   = PADDING_MAP[padding]  ?? '';
-  const radiusClass    = RADIUS_MAP[borderRadius] ?? '';
-  const minHeightClass = MIN_HEIGHT_MAP[minHeight] ?? '';
-  const flexAlign      = ALIGN_FLEX[align]     ?? ALIGN_FLEX['center'];
+  // Resolve x/y — new props take priority; fall back to parsed legacy align
+  let resolvedX: AlignX = alignX ?? 'center';
+  let resolvedY: AlignY = alignY ?? 'middle';
+
+  if (align && !alignX && !alignY) {
+    const parsed = parseLegacyAlign(align);
+    resolvedX = parsed.x;
+    resolvedY = parsed.y;
+  }
+
+  const styleClass     = STYLE_MAP[style]            ?? '';
+  const paddingClass   = PADDING_MAP[padding]        ?? '';
+  const radiusClass    = RADIUS_MAP[borderRadius]    ?? '';
 
   return (
     <div
       id={sectionId}
-      className={`w-full h-full ${styleClass} ${paddingClass} ${radiusClass} ${minHeightClass} transition-all`}
+      className={`w-full h-full ${styleClass} ${paddingClass} ${radiusClass} transition-all`}
       style={{
-        display: 'flex',
-        justifyContent: flexAlign.justifyContent,
-        alignItems: flexAlign.alignItems,
+        display:        'flex',
+        justifyContent: JUSTIFY_MAP[resolvedX]     ?? 'center',
+        alignItems:     ALIGN_ITEMS_MAP[resolvedY] ?? 'center',
         ...(background ? { background } : {}),
       }}
     >

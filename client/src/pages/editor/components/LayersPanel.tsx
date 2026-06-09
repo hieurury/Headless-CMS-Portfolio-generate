@@ -33,6 +33,13 @@ const CAT_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
 
 const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
 
+/**
+ * Filter out null/undefined gaps and legacy _colpad placeholders.
+ * Columns blocks may contain null entries for index-alignment.
+ */
+const validChildren = (children: LayoutSection[] | undefined): LayoutSection[] =>
+  (children ?? []).filter((c): c is LayoutSection => !!c && c.type !== '_colpad');
+
 // ─── Shared interface for child-related props ─────────────────────────────────
 
 interface ChildNodeSharedProps {
@@ -72,12 +79,15 @@ const SortableChildrenList: React.FC<{
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = children.findIndex((c) => c.id === active.id);
-    const newIndex = children.findIndex((c) => c.id === over.id);
+    const valid = validChildren(children);
+    const oldIndex = valid.findIndex((c) => c.id === active.id);
+    const newIndex = valid.findIndex((c) => c.id === over.id);
     if (oldIndex !== -1 && newIndex !== -1) {
       onReorderChildren(parentId, oldIndex, newIndex);
     }
   };
+
+  const valid = validChildren(children);
 
   return (
     <div className="relative">
@@ -92,11 +102,11 @@ const SortableChildrenList: React.FC<{
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={children.map((c) => c.id)}
+          items={valid.map((c) => c.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-0.5 mt-0.5">
-            {children.map((child) => (
+            {valid.map((child) => (
               <LayerNode
                 key={child.id}
                 section={child}
@@ -144,7 +154,8 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   const entry = componentRegistry.getEntry(section.type);
   const color = getColor(entry?.category);
   const isContainer = entry?.isContainer ?? false;
-  const hasChildren = (section.children?.length ?? 0) > 0;
+  const visibleChildren = validChildren(section.children);
+  const hasChildren = visibleChildren.length > 0;
   const isSelected = selectedId === section.id;
   const [expanded, setExpanded] = useState(true);
 
@@ -265,7 +276,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
       {expanded && hasChildren && (
         <SortableChildrenList
           parentId={section.id}
-          children={section.children!}
+          children={visibleChildren}
           depth={depth}
           indent={indent}
           selectedId={selectedId}
@@ -346,11 +357,11 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={sections.map((s) => s.id)}
+          items={sections.filter(Boolean).map((s) => s.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-0.5">
-            {sections.map((section) => (
+            {sections.filter(Boolean).map((section) => (
               <LayerNode
                 key={section.id}
                 section={section}
