@@ -17,19 +17,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker Image
-        run: docker build -t my-app:${{ github.sha }} .
-        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
       - name: Run Tests
-        run: |
-          docker run \
-            -e PORT=3000 \
-            -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
-            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            -e JWT_EXPIRES_IN="7d" \
-            -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
-            -e GEMINI_MODEL="gemini-2.5-flash" \
-            my-app:${{ github.sha }} 
+        run: npm run test
+
+      - name: Build Docker Image
+        run: docker build -t my-app:${{ github.sha }} . 
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
