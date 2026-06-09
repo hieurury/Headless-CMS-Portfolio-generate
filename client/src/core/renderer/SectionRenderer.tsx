@@ -9,6 +9,7 @@ import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal } from 'lucide-react';
 import type { LayoutSection } from '../types/layout.types';
 import { componentRegistry } from '../registry/ComponentRegistry';
 import { useEditorContext } from '../context/EditorContext';
+import RowsGridRenderer from './RowsRenderer/RowsGridRenderer';
 
 // ─── Drop ID helpers ──────────────────────────────────────────────────────────
 export const CONTAINER_DROP_PREFIX = 'drop:';
@@ -72,10 +73,9 @@ const ColCellDropZone: React.FC<{
       className={`
         group relative select-none cursor-pointer
         flex items-center justify-center transition-all duration-150
-        ${
-          isOver
-            ? 'bg-indigo-500/15 text-indigo-400 shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.7)]'
-            : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-indigo-400 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.3)]'
+        ${isOver
+          ? 'bg-indigo-500/15 text-indigo-400 shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.7)]'
+          : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-indigo-400 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.3)]'
         }
       `}
     >
@@ -310,7 +310,7 @@ const _ColumnsEditGrid: React.FC<{
                   key={`merge-${i}`}
                   data-editor-chrome
                   onClick={(e) => { e.stopPropagation(); handleMerge(i); }}
-                  title={`Merge columns (${colSpans[i]}fr + ${colSpans[i+1]}fr = ${colSpans[i]+colSpans[i+1]}fr)`}
+                  title={`Merge columns (${colSpans[i]}fr + ${colSpans[i + 1]}fr = ${colSpans[i] + colSpans[i + 1]}fr)`}
                   style={{
                     position: 'absolute',
                     top: '50%',
@@ -410,10 +410,9 @@ const EmptySlotBlock: React.FC<{
         group relative w-full rounded-lg border border-dashed select-none
         flex items-center justify-center
         transition-all duration-150
-        ${
-          isOver
-            ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 min-h-[48px]'
-            : 'border-white/10 bg-white/2 text-slate-700 hover:border-indigo-500/40 hover:text-indigo-400 hover:bg-white/4'
+        ${isOver
+          ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 min-h-[48px]'
+          : 'border-white/10 bg-white/2 text-slate-700 hover:border-indigo-500/40 hover:text-indigo-400 hover:bg-white/4'
         }
       `}
       style={{ minHeight: 40 }}
@@ -481,11 +480,10 @@ const ContainerDropZone: React.FC<{
   return (
     <div
       ref={setNodeRef}
-      className={`relative w-full transition-all duration-150 ${
-        isOver && (isEmpty || hasEmptySlot)
-          ? 'bg-indigo-500/8 ring-1 ring-inset ring-indigo-500/40 rounded-lg'
-          : ''
-      }`}
+      className={`relative w-full transition-all duration-150 ${isOver && (isEmpty || hasEmptySlot)
+        ? 'bg-indigo-500/8 ring-1 ring-inset ring-indigo-500/40 rounded-lg'
+        : ''
+        }`}
       style={{ minHeight: isEmpty ? 48 : undefined }}
     >
       {isEmpty ? (
@@ -700,7 +698,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     }
     return <ColumnsEditorWrapper section={section} depth={depth} />;
   }
-
+  // if (section.type === 'rows') {
+  //   if (!effectiveEditorMode || effectivePreviewMode) {
+  //     return <RowsGridRenderer section={section} depth={depth} />
+  //   }
+  //   // return <RowsEditorWrapper section={section} depth={depth}/>
+  // }
   const Component = componentRegistry.resolve(section.type);
   const entry = componentRegistry.getEntry(section.type);
   const isSelected = effectiveEditorMode && !effectivePreviewMode && selectedSectionId === section.id;
@@ -892,9 +895,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     >
       {/* ── Selection ring ────────────────────────────────────────────── */}
       <div
-        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
-          isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
-        }`}
+        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+          }`}
       />
 
       {/* ── Hover ring ─────────────────────────────────────────────────── */}
@@ -971,16 +973,14 @@ const ColumnsEditorWrapper: React.FC<{
       id={section.name || section.id}
       style={dragStyle}
       {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
-      className={`relative cms-block cms-container-block select-none touch-none${
-        isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
-      }${isSelected ? ' z-10' : ''}`}
+      className={`relative cms-block cms-container-block select-none touch-none${isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
+        }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
     >
       {/* Selection ring */}
       <div
-        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
-          isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
-        }`}
+        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+          }`}
       />
 
       {/* Hover ring */}
