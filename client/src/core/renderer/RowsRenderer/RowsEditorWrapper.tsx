@@ -3,6 +3,7 @@ import type { LayoutSection } from "../../types/layout.types";
 import { useEditorContext } from "../../context/EditorContext";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
+import RowsGridRenderer from "./RowsGridRenderer";
 
 const RowsEditorWrapper: React.FC<{
     section: LayoutSection;
@@ -40,8 +41,20 @@ const RowsEditorWrapper: React.FC<{
                 }${isSelected ? ' z-10' : ''}`}
             onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
         >
-            <div></div>
+            {/* Selection ring */}
+            <div
+                className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+                    }`}
+            />
 
+            {/* Hover ring */}
+            {!isSelected && (
+                <div
+                    className="cms-hover-ring absolute inset-0 pointer-events-none rounded-sm z-10"
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(129,140,248,0.35)', opacity: 0, transition: 'opacity 0.1s' }}
+                />
+            )}
+            <RowsGridRenderer section={section} depth={depth} />
         </div>
 
     )

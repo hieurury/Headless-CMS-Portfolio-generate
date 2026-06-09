@@ -9,8 +9,8 @@ export function findSectionById(
   id: string,
 ): LayoutSection | null {
   for (const s of sections) {
-    if (s.id === id) return s;
-    if (s.children?.length) {
+    if (s?.id === id) return s;
+    if (s?.children?.length) {
       const found = findSectionById(s.children, id);
       if (found) return found;
     }
@@ -28,8 +28,8 @@ export function findParent(
   _parent: LayoutSection | null = null,
 ): { parent: LayoutSection | null; index: number } | null {
   for (let i = 0; i < sections.length; i++) {
-    if (sections[i].id === id) return { parent: _parent, index: i };
-    if (sections[i].children?.length) {
+    if (sections[i]?.id === id) return { parent: _parent, index: i };
+    if (sections[i]?.children?.length) {
       const found = findParent(sections[i].children!, id, sections[i]);
       if (found) return found;
     }
@@ -50,6 +50,10 @@ export function removeSection(
   const recurse = (list: LayoutSection[]): LayoutSection[] => {
     const filtered: LayoutSection[] = [];
     for (const s of list) {
+      if (!s) {
+        filtered.push(s);
+        continue;
+      }
       if (s.id === id) {
         removed = s;
       } else if (s.children?.length) {
@@ -75,6 +79,7 @@ export function addChildToSection(
   atIndex?: number,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;
     if (s.id === parentId) {
       const children = [...(s.children ?? [])];
       if (atIndex !== undefined) {
@@ -101,6 +106,7 @@ export function reorderChildren(
   newIndex: number,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;
     if (s.id === parentId) {
       return { ...s, children: arrayMove(s.children ?? [], oldIndex, newIndex) };
     }
@@ -150,6 +156,7 @@ export function updateSectionProps(
   newProps: Record<string, unknown>,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;
     if (s.id === id) return { ...s, props: newProps };
     if (s.children?.length) {
       return { ...s, children: updateSectionProps(s.children, id, newProps) };
@@ -167,6 +174,7 @@ export function updateSectionName(
   name: string,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;
     if (s.id === id) return { ...s, name };
     if (s.children?.length) {
       return { ...s, children: updateSectionName(s.children, id, name) };
@@ -185,6 +193,7 @@ export function replaceSection(
   replacement: LayoutSection,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;
     if (s.id === targetId) return replacement;
     if (s.children?.length) {
       return { ...s, children: replaceSection(s.children, targetId, replacement) };
@@ -212,6 +221,7 @@ export function insertIntoColumnsCell(
   cellIndex: number,
 ): LayoutSection[] {
   return sections.map((s) => {
+    if (!s) return s;
     if (s.id === columnsId) {
       // Build array of length = max(current, cellIndex+1),
       // preserving existing children at their positions.
