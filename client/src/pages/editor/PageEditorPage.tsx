@@ -664,7 +664,12 @@ export const PageEditorPage: React.FC = () => {
               <span className="hidden sm:inline">Preview</span>
             </button>
           </div>
-
+          <button
+            onClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-medium transition-all"
+          >
+            <Plus size={11} /> Add
+          </button>
           <button
             onClick={() => setShowRightPanel((p) => !p)}
             title="Toggle right panel"

@@ -12,6 +12,7 @@ import {
   Link2,
   MousePointerClick,
   Sparkles,
+  Rows2,
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
@@ -23,6 +24,7 @@ import { HeadingBlock } from '../../components/blocks/HeadingBlock';
 import { LinkBlock } from '../../components/blocks/LinkBlock';
 import { ButtonBlock } from '../../components/blocks/ButtonBlock';
 import { IconBlock } from '../../components/blocks/IconBlock';
+import { RowsBlock } from '../../components/blocks/RowsBlock';
 
 // ─── NavBarWrapperBlock — composable sticky navbar container ──────────────────
 componentRegistry.register({
@@ -51,11 +53,11 @@ componentRegistry.register({
     background: 'dark',
   },
   schema: {
-    sticky:      { type: 'boolean', label: 'Sticky on Scroll' },
+    sticky: { type: 'boolean', label: 'Sticky on Scroll' },
     transparent: { type: 'boolean', label: 'Transparent at Top' },
-    background:  { type: 'select', label: 'Background Style', options: ['dark', 'glass', 'light', 'none'] },
-    padding:     { type: 'select', label: 'Horizontal Padding', options: ['sm', 'md', 'lg', 'xl'] },
-    maxWidth:    { type: 'select', label: 'Content Max Width', options: ['lg', 'xl', '2xl', 'full'] },
+    background: { type: 'select', label: 'Background Style', options: ['dark', 'glass', 'light', 'none'] },
+    padding: { type: 'select', label: 'Horizontal Padding', options: ['sm', 'md', 'lg', 'xl'] },
+    maxWidth: { type: 'select', label: 'Content Max Width', options: ['lg', 'xl', '2xl', 'full'] },
   },
 });
 
@@ -83,7 +85,25 @@ componentRegistry.register({
     align: { type: 'select', label: 'Vertical Align', options: ['start', 'center', 'end', 'stretch'] },
   },
 });
-
+componentRegistry.register({
+  type: 'rows',
+  component: RowsBlock as React.ComponentType<Record<string, unknown>>,
+  displayName: 'Rows' as unknown as string,
+  description: 'Split into N rows',
+  icon: <Rows2 size={16} />,
+  category: 'layout',
+  isContainer: true,
+  defaultProps: {
+    rows: '2',
+    gap: 'md',
+    align: 'stretch',
+  },
+  schema: {
+    rows: { type: 'select', label: 'Number of Rows', options: ['2', '3', '4'] },
+    gap: { type: 'select', label: 'Row Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
+    align: { type: 'select', label: 'Vertical Align', options: ['start', 'center', 'end', 'stretch'] },
+  }
+})
 componentRegistry.register({
   type: 'container',
   component: ContainerBlock as React.ComponentType<Record<string, unknown>>,
