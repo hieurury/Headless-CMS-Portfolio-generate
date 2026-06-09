@@ -21,7 +21,15 @@ jobs:
         run: docker build -t my-app:${{ github.sha }} .
         
       - name: Run Tests
-        run: docker run my-app:${{ github.sha }} 
+        run: |
+          docker run \
+            -e PORT=3000 \
+            -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            -e JWT_EXPIRES_IN="7d" \
+            -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+            -e GEMINI_MODEL="gemini-2.5-flash" \
+            my-app:${{ github.sha }} 
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -43,4 +51,8 @@ jobs:
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image $IMAGE_PATH \
             --region ${{ env.REGION }} \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars="MONGODB_URI=${{ secrets.MONGODB_URI }}" \
+            --set-env-vars="JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+            --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
+            --set-env-vars="GEMINI_MODEL=gemini-2.5-flash"
