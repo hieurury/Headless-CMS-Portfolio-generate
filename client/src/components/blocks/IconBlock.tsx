@@ -32,6 +32,8 @@ interface IconBlockProps {
   alignX?: AlignX;
   /** Vertical position within the cell */
   alignY?: AlignY;
+  textColor?: string;
+  backgroundColor?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -70,6 +72,8 @@ export const IconBlock: React.FC<IconBlockProps> = ({
   align   = 'left',
   alignX,
   alignY  = 'middle',
+  textColor,
+  backgroundColor,
   sectionId,
 }) => {
   // Resolve X: new alignX wins, fall back to legacy align
@@ -104,12 +108,13 @@ export const IconBlock: React.FC<IconBlockProps> = ({
       {hasBackground ? (
         <div
           className={`flex items-center justify-center shrink-0 ${wrapperSize} ${accentStyle.bg} ${shapeClass}`}
+          style={backgroundColor ? { backgroundColor, borderColor: backgroundColor } : undefined}
         >
           {IconComponent && (
             <IconComponent
               size={px}
               className={accentStyle.text}
-              style={color ? { color } : undefined}
+              style={(textColor || color) ? { color: textColor || color } : undefined}
             />
           )}
         </div>
@@ -117,7 +122,7 @@ export const IconBlock: React.FC<IconBlockProps> = ({
         IconComponent && (
           <IconComponent
             size={px}
-            style={color ? { color } : undefined}
+            style={(textColor || color) ? { color: textColor || color } : undefined}
             className={accentStyle.text}
           />
         )

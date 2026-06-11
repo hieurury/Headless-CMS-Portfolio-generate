@@ -2,19 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore';
+import { t } from '../../i18n';
 import {
   Plus, Folder, ExternalLink, Trash2, Loader2,
   LayoutGrid, LogOut, Globe, Lock, Copy, Check,
+  Sun, Moon, Briefcase, FileText, Code, Palette, Laptop, Camera, Book, Video, Image as ImageIcon
 } from 'lucide-react';
+
+const ICONS = [
+  { name: 'Folder', component: Folder },
+  { name: 'Briefcase', component: Briefcase },
+  { name: 'FileText', component: FileText },
+  { name: 'Code', component: Code },
+  { name: 'Palette', component: Palette },
+  { name: 'Laptop', component: Laptop },
+  { name: 'Camera', component: Camera },
+  { name: 'Book', component: Book },
+  { name: 'Video', component: Video },
+  { name: 'ImageIcon', component: ImageIcon },
+];
 
 export const DashboardPage: React.FC = () => {
   const { portfolios, fetchAll, create, remove, isLoading, error } = usePortfolioStore();
   const { user, logout } = useAuthStore();
+  const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ title: '', slug: '', description: '' });
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const [form, setForm] = useState({ title: '', slug: '', description: '', icon: 'Folder' });
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const lang = t(language).dashboard;
 
   const handleCopyLink = (slug: string, id: string) => {
     const url = `${window.location.origin}/p/${slug}`;
@@ -30,9 +50,14 @@ export const DashboardPage: React.FC = () => {
     e.preventDefault();
     setCreating(true);
     try {
-      const p = await create(form);
+      const p = await create({
+        title: form.title,
+        slug: form.slug,
+        description: form.description,
+        meta: { icon: form.icon },
+      });
       setShowCreate(false);
-      setForm({ title: '', slug: '', description: '' });
+      setForm({ title: '', slug: '', description: '', icon: 'Folder' });
       navigate(`/dashboard/portfolios/${p._id}`);
     } finally {
       setCreating(false);
@@ -42,48 +67,68 @@ export const DashboardPage: React.FC = () => {
   const slugify = (s: string) =>
     s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
+  const SelectedIconComp = ICONS.find(ic => ic.name === form.icon)?.component || Folder;
+
   return (
     <div className="min-h-screen">
-      {/* Top Nav */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-md">
-        <div className="container-max mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
+      {/* Top Nav (Styled matching Landing Page) */}
+      <nav className="home-navbar home-navbar--scrolled">
+        <div className="home-navbar__inner container-max px-6">
+          {/* Logo */}
+          <Link to="/" className="home-navbar__logo">
+            <span className="home-navbar__logo-mark">◆</span>
+            <span className="home-navbar__logo-text">CMS Portfolio</span>
+          </Link>
+          
+          <div className="home-navbar__right">
+            <div className="home-navbar__links">
+              <Link to="/explore" className="home-navbar__link">
+                {lang.community}
+              </Link>
             </div>
-            <span className="font-bold text-white">Portfolio CMS</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              to="/explore"
-              className="hidden sm:flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              <Globe size={15} /> Explore
-            </Link>
-            <span className="text-slate-400 text-sm hidden sm:block">Hi, {user?.name}</span>
-            <button
-              onClick={() => { logout(); navigate('/login'); }}
-              className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              <LogOut size={16} /> Sign out
-            </button>
+
+            <div className="home-navbar__controls">
+              <button
+                className="home-navbar__icon-btn"
+                onClick={toggleLanguage}
+                title={language === 'en' ? 'Switch to Vietnamese' : 'Chuyển sang Tiếng Anh'}
+              >
+                <span className="home-navbar__lang-label">{language.toUpperCase()}</span>
+              </button>
+              
+              <button
+                className="home-navbar__icon-btn"
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+
+              <button
+                onClick={() => { logout(); navigate('/login'); }}
+                className="home-navbar__icon-btn"
+                title={lang.signOut}
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="container-max mx-auto px-6 py-12">
+      <main className="container-max mx-auto px-6 pt-24 pb-12">
         {/* Header row */}
         <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">My Portfolios</h1>
-            <p className="text-slate-400 text-sm">{portfolios.length} portfolio{portfolios.length !== 1 ? 's' : ''}</p>
+            <h1 className="text-3xl font-bold text-[var(--color-text)] mb-1">{lang.myPortfolios}</h1>
+            <p className="text-[var(--color-text-muted)] text-sm">{portfolios.length} {portfolios.length !== 1 ? lang.portfoliosCountPlural : lang.portfoliosCount}</p>
           </div>
           <button
             id="create-portfolio-btn"
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-bg text-white font-semibold text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-85 transition-all duration-300 shadow-sm hover:shadow-md"
           >
-            <Plus size={18} /> New Portfolio
+            <Plus size={18} /> {lang.newPortfolio}
           </button>
         </div>
 
@@ -97,14 +142,14 @@ export const DashboardPage: React.FC = () => {
         {/* Error state */}
         {!isLoading && error && portfolios.length === 0 && (
           <div className="text-center py-24">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-xl border border-red-500/20 bg-red-500/5 flex items-center justify-center">
               <LayoutGrid size={36} className="text-red-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Could not load portfolios</h3>
-            <p className="text-slate-400 mb-6 text-sm">{error}</p>
+            <h3 className="text-xl font-semibold text-[var(--color-text)] mb-2">Could not load portfolios</h3>
+            <p className="text-[var(--color-text-muted)] mb-6 text-sm">{error}</p>
             <button
               onClick={() => { void fetchAll(); }}
-              className="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+              className="px-6 py-3 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-85 transition-all shadow-sm hover:shadow-md"
             >
               Retry
             </button>
@@ -114,50 +159,52 @@ export const DashboardPage: React.FC = () => {
         {/* Empty state */}
         {!isLoading && !error && portfolios.length === 0 && (
           <div className="text-center py-24">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl glass flex items-center justify-center">
-              <LayoutGrid size={36} className="text-indigo-400" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm flex items-center justify-center">
+              <LayoutGrid size={36} className="text-[var(--color-text-muted)]" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No portfolios yet</h3>
-            <p className="text-slate-400 mb-6">Create your first portfolio to get started</p>
+            <h3 className="text-xl font-semibold text-[var(--color-text)] mb-2">{lang.noPortfolios}</h3>
+            <p className="text-[var(--color-text-muted)] mb-6">Create your first portfolio to get started</p>
             <button
               onClick={() => setShowCreate(true)}
-              className="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+              className="px-6 py-3 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-85 transition-all shadow-sm hover:shadow-md"
             >
-              Create Portfolio
+              {lang.createPortfolio}
             </button>
           </div>
         )}
 
         {/* Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {portfolios.map((p) => (
-            <div key={p._id} className="glass glass-hover rounded-2xl p-6 space-y-4 transition-all duration-300 hover:-translate-y-1 group">
+          {portfolios.map((p) => {
+            const IconComp = ICONS.find(ic => ic.name === p.meta?.icon)?.component || Folder;
+            return (
+            <div key={p._id} className="bg-[var(--color-surface)] rounded-lg p-6 space-y-4 shadow-sm border border-transparent hover:border-[var(--color-border-hover)] hover:shadow-md transition-all duration-300 hover:-translate-y-1 group">
               <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                  <Folder size={22} className="text-indigo-400" />
+                <div className="w-12 h-12 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center text-xl">
+                  <IconComp size={22} className="text-[var(--color-text)]" />
                 </div>
                 <div className="flex items-center gap-1.5">
                   {p.isPublished
-                    ? <Globe size={14} className="text-emerald-400" />
-                    : <Lock size={14} className="text-slate-500" />}
-                  <span className="text-xs text-slate-500">{p.isPublished ? 'Published' : 'Draft'}</span>
+                    ? <Globe size={14} className="text-emerald-500" />
+                    : <Lock size={14} className="text-[var(--color-text-muted)]" />}
+                  <span className="text-xs text-[var(--color-text-muted)]">{p.isPublished ? lang.public : lang.private}</span>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">{p.title}</h3>
-                <p className="text-xs text-slate-500 mt-1 font-mono">/{p.slug}</p>
+                <h3 className="text-lg font-bold text-[var(--color-text)] group-hover:opacity-80 transition-opacity line-clamp-1">{p.title}</h3>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1 font-mono">/{p.slug}</p>
                 {p.description && (
-                  <p className="text-sm text-slate-400 mt-2 line-clamp-2">{p.description}</p>
+                  <p className="text-sm text-[var(--color-text-faint)] mt-2 line-clamp-2">{p.description}</p>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+              <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-border)]">
                 <Link
                   to={`/dashboard/portfolios/${p._id}`}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-sm text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-2)] transition-colors"
                 >
-                  <ExternalLink size={14} /> Manage
+                  <ExternalLink size={14} /> {lang.manage}
                 </Link>
 
                 {p.isPublished && (
@@ -167,7 +214,7 @@ export const DashboardPage: React.FC = () => {
                       to={`/p/${p.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                      className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
                       title="View public portfolio"
                     >
                       <Globe size={15} />
@@ -175,24 +222,25 @@ export const DashboardPage: React.FC = () => {
                     {/* Copy link */}
                     <button
                       onClick={() => handleCopyLink(p.slug, p._id)}
-                      className="p-2 rounded-lg text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                      className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-violet-500 hover:bg-violet-500/10 transition-colors"
                       title="Copy public link"
                     >
-                      {copiedId === p._id ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}
+                      {copiedId === p._id ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
                     </button>
                   </>
                 )}
 
                 <button
                   onClick={() => { if (confirm('Delete this portfolio?')) remove(p._id); }}
-                  className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  title="Delete portfolio"
+                  className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                  title={lang.delete}
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </main>
 
@@ -201,47 +249,74 @@ export const DashboardPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCreate(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md glass rounded-2xl p-8 shadow-2xl animate-slide-up"
+            className="relative w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-8 shadow-2xl animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-white mb-6">Create New Portfolio</h2>
+            <h2 className="text-xl font-bold text-[var(--color-text)] mb-6">{lang.createPortfolio}</h2>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Title</label>
-                <input
-                  id="portfolio-title"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value, slug: slugify(e.target.value) })}
-                  placeholder="My Developer Portfolio"
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
-                />
+              <div className="flex gap-4">
+                <div className="relative shrink-0">
+                  <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Icon</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowIconPicker(!showIconPicker)}
+                    className="h-[46px] w-[54px] flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                  >
+                    <SelectedIconComp size={20} />
+                  </button>
+                  {showIconPicker && (
+                    <div className="absolute top-[100%] mt-2 left-0 w-[220px] p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl grid grid-cols-5 gap-1 z-20">
+                      {ICONS.map(ic => (
+                        <button
+                          key={ic.name}
+                          type="button"
+                          onClick={() => { setForm({ ...form, icon: ic.name }); setShowIconPicker(false); }}
+                          className={`p-2 rounded flex items-center justify-center transition-colors ${form.icon === ic.name ? 'bg-[var(--color-surface-2)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-surface-2)]'}`}
+                          title={ic.name}
+                        >
+                          <ic.component size={18} className="text-[var(--color-text)]" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Title</label>
+                  <input
+                    id="portfolio-title"
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value, slug: slugify(e.target.value) })}
+                    placeholder="My Developer Portfolio"
+                    required
+                    className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Slug</label>
+                <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Slug</label>
                 <input
                   id="portfolio-slug"
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
                   placeholder="my-developer-portfolio"
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono text-sm"
+                  className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Description (optional)</label>
+                <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Description (optional)</label>
                 <input
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="A short description..."
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                  className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCreate(false)}
-                  className="flex-1 py-3 rounded-xl glass glass-hover text-slate-300 font-medium transition-all"
+                  className="flex-1 h-[46px] rounded-lg border border-[var(--color-border)] text-[var(--color-text)] font-medium transition-all hover:bg-[var(--color-surface-2)] shadow-sm"
                 >
                   Cancel
                 </button>
@@ -249,7 +324,7 @@ export const DashboardPage: React.FC = () => {
                   id="portfolio-create-confirm"
                   type="submit"
                   disabled={creating}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl gradient-bg text-white font-semibold transition-all disabled:opacity-60"
+                  className="flex-1 flex items-center justify-center gap-2 h-[46px] rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold transition-all disabled:opacity-60 hover:opacity-85 shadow-sm hover:shadow-md"
                 >
                   {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                   Create

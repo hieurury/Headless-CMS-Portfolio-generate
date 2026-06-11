@@ -14,7 +14,7 @@ interface PortfolioState {
     title: string;
     slug: string;
     description?: string;
-    meta?: { theme?: string; primaryColor?: string; fontFamily?: string };
+    meta?: { theme?: string; primaryColor?: string; fontFamily?: string; icon?: string };
   }) => Promise<Portfolio>;
   update: (id: string, data: Partial<Portfolio>) => Promise<void>;
   remove: (id: string) => Promise<void>;

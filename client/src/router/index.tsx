@@ -15,6 +15,7 @@ import { PageEditorPage } from '../pages/editor/PageEditorPage';
 import { PublicPortfolioPage } from '../pages/public/PublicPortfolioPage';
 import { PublicPortfolioHubPage } from '../pages/public/PublicPortfolioHubPage';
 import { ExplorePage } from '../pages/explore/ExplorePage';
+import { HomePage } from '../pages/home/HomePage';
 
 // ─── Route Guards ──────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ const PublicRoute: React.FC = () => {
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
+    element: <HomePage />,
   },
 
   // ── Auth (redirect if logged in) ─────────────────────────────────

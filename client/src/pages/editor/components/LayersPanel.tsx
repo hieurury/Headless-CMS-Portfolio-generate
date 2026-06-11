@@ -28,7 +28,7 @@ const CAT_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
   content:    { dot: 'bg-emerald-400', bg: 'bg-emerald-500/10',text: 'text-emerald-400' },
   form:       { dot: 'bg-amber-400',   bg: 'bg-amber-500/10',  text: 'text-amber-400' },
   media:      { dot: 'bg-pink-400',    bg: 'bg-pink-500/10',   text: 'text-pink-400' },
-  block:      { dot: 'bg-indigo-400',  bg: 'bg-indigo-500/10', text: 'text-indigo-400' },
+  block:      { dot: 'bg-[var(--color-text)]',  bg: 'bg-[var(--color-accent)] text-[var(--color-bg)]', text: 'text-[var(--color-text)] font-semibold' },
 };
 
 const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
@@ -194,11 +194,11 @@ const LayerNode: React.FC<LayerNodeProps> = ({
       {/* ── Row ─────────────────────────────────────────────────── */}
       <div
         className={clsx(
-          'group flex items-center gap-1 rounded-lg py-1 pr-1 cursor-pointer transition-all duration-150',
+          'group flex items-center gap-1 rounded-md py-1 pr-1 cursor-pointer transition-all duration-150',
           isSelected
-            ? 'bg-indigo-500/15 text-white'
-            : 'text-slate-400 hover:bg-white/5 hover:text-white',
-          isDragging && 'shadow-xl shadow-black/40',
+            ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
+            : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]',
+          isDragging && 'shadow-md shadow-black/40',
         )}
         style={{ paddingLeft: `${Math.max(6, indent)}px` }}
         onClick={() => onSelect(section.id)}
@@ -208,7 +208,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
           <button
             {...attributes}
             {...listeners}
-            className="p-0.5 text-slate-700 hover:text-slate-400 cursor-grab active:cursor-grabbing shrink-0 touch-none opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-0.5 text-slate-700 hover:text-[var(--color-text-muted)] cursor-grab active:cursor-grabbing shrink-0 touch-none opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical size={12} />
@@ -218,7 +218,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
         {/* Tree connector for non-sortable children */}
         {!isSortable && depth > 0 && (
           <div className="w-3 shrink-0 flex items-center justify-center">
-            <div className="w-2 h-px bg-white/10" />
+            <div className="w-2 h-px bg-[var(--color-surface-2)] hover:brightness-110" />
           </div>
         )}
 
@@ -228,7 +228,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
             className={clsx(
               'p-0.5 shrink-0 transition-transform duration-150',
               expanded ? 'rotate-90' : 'rotate-0',
-              'text-slate-600 hover:text-slate-300',
+              'text-[var(--color-text-faint)] hover:text-[var(--color-text)]',
             )}
             onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
           >
@@ -245,11 +245,11 @@ const LayerNode: React.FC<LayerNodeProps> = ({
 
         {/* Label */}
         <div className="flex-1 min-w-0">
-          <p className={clsx('text-xs font-medium truncate leading-tight', isSelected ? 'text-white' : '')}>
+          <p className={clsx('text-xs font-medium truncate leading-tight', isSelected ? 'text-[var(--color-text)]' : '')}>
             {entry?.displayName ?? section.type}
           </p>
           {section.name && (
-            <p className="text-[10px] text-indigo-400 font-mono truncate opacity-70">
+            <p className="text-[10px] text-[var(--color-text)] font-semibold font-mono truncate opacity-70">
               #{section.name}
             </p>
           )}
@@ -267,7 +267,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
             <button
               title="Add block inside"
               onClick={() => onAddChild(section.id)}
-              className="p-1 rounded text-slate-600 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
+              className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] transition-all"
             >
               <Plus size={10} />
             </button>
@@ -279,7 +279,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
                 onDelete(section.id);
               }
             }}
-            className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="p-1 rounded text-[var(--color-text-faint)] hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
             <Trash2 size={10} />
           </button>
@@ -344,14 +344,14 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-2 px-1">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <Eye size={12} className="text-slate-600" />
+        <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+          <Eye size={12} className="text-[var(--color-text-faint)]" />
           Layers
           <span className="text-slate-700 font-mono normal-case tracking-normal">{sections.length}</span>
         </span>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-medium transition-all"
+          className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all"
         >
           <Plus size={11} /> Add
         </button>
@@ -359,8 +359,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
 
       {/* Empty state */}
       {sections.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-white/10 rounded-xl">
-          <p className="text-xs text-slate-600">No sections yet</p>
+        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-md">
+          <p className="text-xs text-[var(--color-text-faint)]">No sections yet</p>
         </div>
       )}
 

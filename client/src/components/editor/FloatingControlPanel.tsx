@@ -107,7 +107,7 @@ const FloatingControlPanel: React.FC = () => {
         maxWidth: 420,
         visibility: isVisible ? 'visible' : 'hidden',
       }}
-      className="flex flex-col rounded-2xl overflow-hidden shadow-2xl shadow-black/70 border border-white/12 bg-[#0c0c1a]/97 backdrop-blur-md"
+      className="flex flex-col rounded-md overflow-hidden shadow-2xl shadow-black/70 border border-white/12 bg-[#0c0c1a]/97 backdrop-blur-md"
     >
       {/* ── Header / Grip ──────────────────────────────────────────────── */}
       <div
@@ -115,34 +115,34 @@ const FloatingControlPanel: React.FC = () => {
         onMouseDown={onGripMouseDown}
         data-editor-chrome
       >
-        <GripVertical size={14} className="text-slate-600 shrink-0" />
+        <GripVertical size={14} className="text-[var(--color-text-faint)] shrink-0" />
 
         {/* Block icon */}
-        <span className="shrink-0 text-indigo-400 flex items-center" style={{ lineHeight: 1 }}>
+        <span className="shrink-0 text-[var(--color-text)] font-semibold flex items-center" style={{ lineHeight: 1 }}>
           {entry.icon ?? <Settings size={14} />}
         </span>
 
         {/* Display name */}
-        <span className="text-sm font-semibold text-white truncate flex-1">
+        <span className="text-sm font-semibold text-[var(--color-text)] truncate flex-1">
           {entry.displayName ?? selectedSection.type}
         </span>
 
         {/* Columns badge */}
         {isColumns && (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-slate-400 shrink-0">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-[var(--color-text-muted)] shrink-0">
             {colCount} col
             {colSpans && colSpans.some(s => s !== 1) && (
-              <span className="ml-1 text-indigo-400">
+              <span className="ml-1 text-[var(--color-text)] font-semibold">
                 {colSpans.map(s => `${s}fr`).join(' · ')}
               </span>
             )}
           </span>
         )}
         {isRows && (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-slate-400 shrink-0">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-[var(--color-text-muted)] shrink-0">
             {colCount} row
             {colSpans && colSpans.some(s => s !== 1) && (
-              <span className="ml-1 text-indigo-400">
+              <span className="ml-1 text-[var(--color-text)] font-semibold">
                 {colSpans.map(s => `${s}fr`).join(' · ')}
               </span>
             )}
@@ -150,7 +150,7 @@ const FloatingControlPanel: React.FC = () => {
         )}
         {/* Anchor name */}
         {selectedSection.name && (
-          <span className="text-[10px] font-mono text-slate-500 shrink-0">
+          <span className="text-[10px] font-mono text-[var(--color-text-faint)] shrink-0">
             #{selectedSection.name}
           </span>
         )}
@@ -199,7 +199,7 @@ const FloatingControlPanel: React.FC = () => {
               />
             )}
             {/* Column count readout */}
-            <span className="text-[11px] text-slate-500 font-mono px-2">
+            <span className="text-[11px] text-[var(--color-text-faint)] font-mono px-2">
               {colCount} col
             </span>
           </>
@@ -231,7 +231,7 @@ const FloatingControlPanel: React.FC = () => {
               />
             )}
             {/* Column count readout */}
-            <span className="text-[11px] text-slate-500 font-mono px-2">
+            <span className="text-[11px] text-[var(--color-text-faint)] font-mono px-2">
               {rowCount} row
             </span>
           </>
@@ -264,10 +264,10 @@ const ActionBtn: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, color, onClick }) => {
   const colorMap = {
-    indigo: 'hover:bg-indigo-500/20 hover:text-indigo-300 border-indigo-500/20',
+    indigo: 'hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:text-indigo-300 border-[var(--color-border)]',
     rose: 'hover:bg-rose-500/20 hover:text-rose-300 border-rose-500/20',
     red: 'hover:bg-red-500/20 hover:text-red-300 border-red-500/20',
-    slate: 'hover:bg-white/10 hover:text-white border-white/10',
+    slate: 'hover:bg-[var(--color-surface-2)] hover:brightness-110 hover:text-[var(--color-text)] border-[var(--color-border)]',
   };
   return (
     <button
@@ -275,8 +275,8 @@ const ActionBtn: React.FC<{
       title={label}
       data-editor-chrome
       className={`
-        flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
-        text-slate-400 text-xs font-medium
+        flex items-center gap-1.5 px-2.5 py-1.5 rounded-md
+        text-[var(--color-text-muted)] text-xs font-medium
         border border-transparent transition-all duration-150
         ${colorMap[color]}
       `}

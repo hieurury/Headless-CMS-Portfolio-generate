@@ -12,7 +12,7 @@ interface PageState {
   fetchOne: (portfolioId: string, pageId: string) => Promise<void>;
   create: (
     portfolioId: string,
-    data: { title: string; slug: string; order?: number; layout?: PageLayout },
+    data: { title: string; slug: string; order?: number; layout?: PageLayout; meta?: { icon?: string } },
   ) => Promise<Page>;
   update: (portfolioId: string, pageId: string, data: Partial<Page>) => Promise<void>;
   remove: (portfolioId: string, pageId: string) => Promise<void>;

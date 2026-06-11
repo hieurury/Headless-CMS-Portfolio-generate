@@ -33,6 +33,8 @@ interface LinkBlockProps {
   color?: string;
   external?: boolean;
   showIcon?: boolean;
+  textColor?: string;
+  backgroundColor?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -63,6 +65,8 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
   alignY   = 'middle',
   external = false,
   showIcon = false,
+  textColor,
+  backgroundColor,
   sectionId,
 }) => {
   const { isEditorMode, previewMode } = useEditorContext();
@@ -93,6 +97,8 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[resolvedX]  ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        backgroundColor: backgroundColor,
+        color: textColor,
       }}
     >
       <a

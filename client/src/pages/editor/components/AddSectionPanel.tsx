@@ -66,47 +66,47 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-[var(--color-surface)] backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative w-full max-w-xl glass rounded-2xl shadow-2xl animate-slide-up overflow-hidden flex flex-col max-h-[85vh]"
+        className="relative w-full max-w-xl glass rounded-md shadow-2xl animate-slide-up overflow-hidden flex flex-col max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)] shrink-0">
           <div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-[var(--color-text)]">
               {addingToContainer ? 'Add Block to Container' : 'Add to Page'}
             </h3>
             {addingToContainer && (
-              <p className="text-xs text-indigo-400 mt-0.5">Block will be placed inside the container</p>
+              <p className="text-xs text-[var(--color-text)] font-semibold mt-0.5">Block will be placed inside the container</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+            className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] hover:brightness-110 transition-all"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Search */}
-        <div className="px-5 py-3 border-b border-white/5 shrink-0">
+        <div className="px-5 py-3 border-b border-[var(--color-border)] shrink-0">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={activeTab === 'templates' ? 'Search templates...' : 'Search blocks...'}
               autoFocus
-              className="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-200 text-sm
-                placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors"
+              className="w-full pl-9 pr-4 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+                placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors"
             />
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-white/5 shrink-0 px-5">
+        <div className="flex border-b border-[var(--color-border)] shrink-0 px-5">
           {([
             { key: 'templates' as const, label: 'Templates', icon: Wand2, count: filteredTemplates.length },
             { key: 'blocks' as const, label: 'Blocks', icon: Box, count: filteredAtoms.length },
@@ -118,12 +118,12 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
               className={clsx(
                 'flex items-center gap-1.5 py-3 pr-4 text-sm font-medium transition-all border-b-2',
                 activeTab === key
-                  ? 'text-white border-indigo-500'
-                  : 'text-slate-500 border-transparent hover:text-slate-300',
+                  ? 'text-[var(--color-text)] border-[var(--color-text)]'
+                  : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]',
               )}
             >
               <Icon size={13} /> {label}
-              <span className="ml-1 text-xs text-slate-600 font-mono">{count}</span>
+              <span className="ml-1 text-xs text-[var(--color-text-faint)] font-mono">{count}</span>
             </button>
           ))}
         </div>
@@ -141,8 +141,8 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   className={clsx(
                     'px-3 py-1 rounded-full text-xs font-medium transition-all',
                     selectedCategory === 'all'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white/5 text-slate-400 hover:bg-white/10',
+                      ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
+                      : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:brightness-110',
                   )}
                 >
                   All
@@ -156,8 +156,8 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                       className={clsx(
                         'px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1',
                         selectedCategory === cat
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white/5 text-slate-400 hover:bg-white/10',
+                          ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
+                          : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:brightness-110',
                       )}
                     >
                       {meta?.icon} {meta?.label}
@@ -182,7 +182,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-slate-600 text-center">
+              <p className="text-xs text-[var(--color-text-faint)] text-center">
                 Templates are pre-built layout trees — every element inside is directly editable
               </p>
             </>
@@ -204,7 +204,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-slate-600 mt-4 text-center">
+              <p className="text-xs text-[var(--color-text-faint)] mt-4 text-center">
                 Atomic blocks — combine them inside Layout containers for complex designs
               </p>
             </>
@@ -227,7 +227,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-slate-600 mt-4 text-center">
+              <p className="text-xs text-[var(--color-text-faint)] mt-4 text-center">
                 Containers — hold and arrange blocks. Nest freely: Card inside Columns, Rows of Buttons...
               </p>
             </>
@@ -245,20 +245,20 @@ const TemplateCard: React.FC<{ template: TemplateEntry; onAdd: () => void }> = (
   return (
     <button
       onClick={onAdd}
-      className="flex flex-col gap-3 p-4 rounded-xl border border-indigo-500/15 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 hover:border-indigo-500/40 hover:from-indigo-500/10 hover:to-violet-500/10 text-left transition-all group"
+      className="flex flex-col gap-3 p-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] hover:border-[var(--color-border)] hover:brightness-110 text-left transition-all group"
     >
       {/* Lucide icon preview */}
-      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-colors">
+      <div className="w-12 h-12 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] group-hover:text-[var(--color-text)] transition-colors">
         {template.icon}
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
-          <p className="text-sm font-semibold text-white truncate">{template.name}</p>
-          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-mono shrink-0">
+          <p className="text-sm font-semibold text-[var(--color-text)] truncate">{template.name}</p>
+          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold font-mono shrink-0">
             {meta?.icon} {meta?.label}
           </span>
         </div>
-        <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">{template.description}</p>
+        <p className="text-[11px] text-[var(--color-text-faint)] leading-snug line-clamp-2">{template.description}</p>
       </div>
     </button>
   );
@@ -270,23 +270,23 @@ const ComponentCard: React.FC<{ entry: RegistryEntry; onAdd: () => void; isConta
   <button
     onClick={onAdd}
     className={clsx(
-      'flex items-start gap-3 p-3 rounded-xl border text-left transition-all group',
+      'flex items-start gap-3 p-3 rounded-md border text-left transition-all group',
       isContainer
         ? 'border-violet-500/20 bg-violet-500/5 hover:border-violet-500/40 hover:bg-violet-500/10'
-        : 'border-white/5 bg-white/2 hover:border-indigo-500/30 hover:bg-indigo-500/8',
+        : 'border-[var(--color-border)] bg-white/2 hover:border-[var(--color-border)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]',
     )}
   >
     <div className={clsx(
-      'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+      'w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
       isContainer
         ? 'bg-violet-500/15 text-violet-400 group-hover:bg-violet-500/25'
-        : 'bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25',
+        : 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold group-hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]',
     )}>
       {entry.icon ?? <Settings size={16} />}
     </div>
     <div className="min-w-0">
       <div className="flex items-center gap-1.5">
-        <p className="text-sm font-medium text-slate-200 truncate">{entry.displayName}</p>
+        <p className="text-sm font-medium text-[var(--color-text)] truncate">{entry.displayName}</p>
         {isContainer && (
           <span className="text-[9px] px-1 py-0.5 rounded bg-violet-500/20 text-violet-400 font-mono uppercase tracking-wide shrink-0">
             container
@@ -294,7 +294,7 @@ const ComponentCard: React.FC<{ entry: RegistryEntry; onAdd: () => void; isConta
         )}
       </div>
       {entry.description && (
-        <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-2">{entry.description}</p>
+        <p className="text-[11px] text-[var(--color-text-faint)] mt-0.5 leading-snug line-clamp-2">{entry.description}</p>
       )}
       <p className="text-[10px] text-slate-700 font-mono mt-1">{entry.type}</p>
     </div>
@@ -306,7 +306,7 @@ const ComponentCard: React.FC<{ entry: RegistryEntry; onAdd: () => void; isConta
 const EmptyState: React.FC<{ query: string }> = ({ query }) => (
   <div className="flex flex-col items-center justify-center py-10 text-center">
     <Search size={24} className="text-slate-700 mb-3" />
-    <p className="text-sm text-slate-500">No results for "{query}"</p>
+    <p className="text-sm text-[var(--color-text-faint)]">No results for "{query}"</p>
     <p className="text-xs text-slate-700 mt-1">Try a different keyword</p>
   </div>
 );

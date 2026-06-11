@@ -30,6 +30,10 @@ export class CreatePageDto {
   @IsBoolean()
   isPublished?: boolean;
 
+  @IsOptional()
+  @IsObject()
+  meta?: { icon?: string };
+
   /**
    * The JSON layout object.
    * Structure: { sections: [ { id, type, props, children } ] }

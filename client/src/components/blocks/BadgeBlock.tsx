@@ -22,6 +22,8 @@ export interface BadgeBlockProps {
   shape?: 'rounded' | 'pill';
   alignX?: AlignX;
   alignY?: AlignY;
+  textColor?: string;
+  backgroundColor?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -75,6 +77,8 @@ export const BadgeBlock: React.FC<BadgeBlockProps> = ({
   shape     = 'pill',
   alignX    = 'left',
   alignY    = 'middle',
+  textColor,
+  backgroundColor,
   sectionId,
 }) => {
   const sizeClass  = SIZE_MAP[size] ?? SIZE_MAP.sm;
@@ -96,6 +100,10 @@ export const BadgeBlock: React.FC<BadgeBlockProps> = ({
         <span
           data-cms-field="text"
           className={`inline-block font-medium cursor-text transition-colors ${sizeClass} ${shapeClass} ${colorClass}`}
+          style={{
+            ...(backgroundColor ? { backgroundColor, borderColor: backgroundColor } : {}),
+            ...(textColor ? { color: textColor } : {}),
+          }}
         >
           {text}
         </span>

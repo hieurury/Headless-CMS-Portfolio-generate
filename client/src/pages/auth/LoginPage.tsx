@@ -25,17 +25,17 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center px-4 relative">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-indigo-600/8 blur-[120px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[var(--color-surface-2)] blur-[120px]" />
       </div>
 
       <div className="w-full max-w-md animate-slide-up">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl gradient-bg mb-6 shadow-xl shadow-indigo-500/30">
-            <span className="text-white text-2xl font-bold">C</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] mb-6 shadow-xl">
+            <span className="text-[var(--color-text)] text-2xl font-bold">C</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-slate-400">Sign in to your CMS account</p>
+          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">Welcome back</h1>
+          <p className="text-[var(--color-text-muted)]">Sign in to your CMS account</p>
         </div>
 
         {/* Form */}
@@ -48,7 +48,7 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-slate-400 mb-1.5">Email</label>
+              <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Email</label>
               <input
                 id="login-email"
                 type="email"
@@ -56,12 +56,12 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-slate-400 mb-1.5">Password</label>
+              <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Password</label>
               <div className="relative">
                 <input
                   id="login-password"
@@ -70,12 +70,12 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 pr-12 rounded-xl bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
                 >
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -86,16 +86,16 @@ export const LoginPage: React.FC = () => {
               id="login-submit"
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl gradient-bg text-white font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-85 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? <><Loader2 size={18} className="animate-spin" /> Signing in...</> : 'Sign In'}
             </button>
           </form>
 
           <div className="text-center pt-2">
-            <p className="text-slate-400 text-sm">
+            <p className="text-[var(--color-text-muted)] text-sm">
               Don't have an account?{' '}
-              <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              <Link to="/register" className="text-[var(--color-text)] hover:opacity-80 font-medium transition-colors underline">
                 Create one
               </Link>
             </p>

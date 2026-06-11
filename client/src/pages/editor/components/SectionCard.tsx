@@ -12,7 +12,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   content: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
   form: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   media: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
-  block: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+  block: 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold border-[var(--color-border)]',
 };
 
 interface SectionCardProps {
@@ -61,10 +61,10 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       ref={setNodeRef}
       style={style}
       className={clsx(
-        'group flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all duration-200',
+        'group flex items-center gap-2 p-2.5 rounded-md border cursor-pointer transition-all duration-200',
         isSelected
-          ? 'border-indigo-500/50 bg-indigo-500/10'
-          : 'border-white/5 bg-white/2 hover:border-white/10 hover:bg-white/5',
+          ? 'border-[var(--color-border)] bg-[var(--color-accent)] text-[var(--color-bg)]'
+          : 'border-[var(--color-border)] bg-white/2 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-2)]',
         isDragging && 'shadow-2xl shadow-black/50',
       )}
       onClick={onSelect}
@@ -73,7 +73,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       <button
         {...attributes}
         {...listeners}
-        className="p-1 text-slate-700 hover:text-slate-400 cursor-grab active:cursor-grabbing shrink-0 touch-none"
+        className="p-1 text-slate-700 hover:text-[var(--color-text-muted)] cursor-grab active:cursor-grabbing shrink-0 touch-none"
         onClick={(e) => e.stopPropagation()}
         title="Drag to reorder"
       >
@@ -81,7 +81,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       </button>
 
       {/* Index */}
-      <span className="w-4 text-xs text-slate-600 font-mono text-center shrink-0">
+      <span className="w-4 text-xs text-[var(--color-text-faint)] font-mono text-center shrink-0">
         {index + 1}
       </span>
 
@@ -100,11 +100,11 @@ export const SectionCard: React.FC<SectionCardProps> = ({
 
       {/* Display name + anchor name */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-300 truncate">
+        <p className="text-xs text-[var(--color-text)] truncate">
           {entry?.displayName ?? section.type}
         </p>
         {section.name && (
-          <p className="text-[10px] text-indigo-400 font-mono mt-0.5 truncate">
+          <p className="text-[10px] text-[var(--color-text)] font-semibold font-mono mt-0.5 truncate">
             #{section.name}
           </p>
         )}
@@ -118,7 +118,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         <button
           onClick={onMoveUp}
           disabled={index === 0}
-          className="p-1 rounded text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           title="Move up"
         >
           <ArrowUp size={12} />
@@ -126,7 +126,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         <button
           onClick={onMoveDown}
           disabled={index === total - 1}
-          className="p-1 rounded text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           title="Move down"
         >
           <ArrowDown size={12} />
@@ -135,7 +135,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           onClick={() => {
             if (confirm(`Delete "${section.type}" section?`)) onDelete();
           }}
-          className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          className="p-1 rounded text-[var(--color-text-faint)] hover:text-red-400 hover:bg-red-500/10 transition-all"
           title="Delete section"
         >
           <Trash2 size={12} />

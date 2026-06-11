@@ -26,6 +26,8 @@ interface HeadingBlockProps {
   alignX?: AlignX;
   /** Vertical position of the block within its cell (top / middle / bottom) */
   alignY?: AlignY;
+  textColor?: string;
+  backgroundColor?: string;
   color?: string;
   gradient?: boolean;
   sectionId?: string;
@@ -56,6 +58,8 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   align     = 'left',
   alignX    = 'left',
   alignY    = 'middle',
+  textColor,
+  backgroundColor,
   color,
   gradient  = false,
   sectionId,
@@ -63,7 +67,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   const Tag        = level as React.ElementType;
   const sizeClass  = SIZE_MAP[size]           ?? 'text-xl';
   const textAlign  = TEXT_ALIGN_MAP[align]    ?? 'text-left';
-  const textClass  = gradient ? 'gradient-text' : color ? '' : 'text-white';
+  const textClass = gradient ? 'gradient-text' : '';
 
   return (
     <div
@@ -74,13 +78,14 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[alignX]     ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        backgroundColor: backgroundColor,
       }}
     >
       <div className={`py-2 ${textAlign}`}>
         <Tag
           data-cms-field="text"
           className={`font-bold leading-tight ${sizeClass} ${textClass} cursor-text`}
-          style={color && !gradient ? { color } : undefined}
+          style={(textColor || color) && !gradient ? { color: textColor || color } : undefined}
         >
           {text}
         </Tag>

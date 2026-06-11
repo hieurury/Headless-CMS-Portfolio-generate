@@ -12,6 +12,8 @@ interface NavBarWrapperBlockProps {
   maxWidth?: 'lg' | 'xl' | '2xl' | 'full';
   /** Background style */
   background?: 'dark' | 'glass' | 'light' | 'none';
+  textColor?: string;
+  backgroundColor?: string;
   children?: React.ReactNode;
   sectionId?: string;
   [key: string]: unknown;
@@ -50,6 +52,8 @@ export const NavBarWrapperBlock: React.FC<NavBarWrapperBlockProps> = ({
   padding = 'lg',
   maxWidth = 'xl',
   background = 'dark',
+  textColor,
+  backgroundColor,
   children,
   sectionId,
 }) => {
@@ -68,7 +72,7 @@ export const NavBarWrapperBlock: React.FC<NavBarWrapperBlockProps> = ({
 
   const bgStyle: React.CSSProperties = isTransparentNow
     ? { backgroundColor: 'transparent', borderBottom: '1px solid transparent' }
-    : BG_STYLES[background] ?? BG_STYLES.dark;
+    : backgroundColor ? { backgroundColor } : BG_STYLES[background] ?? BG_STYLES.dark;
 
   const wrapperStyle: React.CSSProperties = {
     width: '100%',
@@ -76,6 +80,7 @@ export const NavBarWrapperBlock: React.FC<NavBarWrapperBlockProps> = ({
     transition: 'background-color 300ms ease, border-color 300ms ease',
     ...(sticky ? { position: 'sticky', top: 0 } : {}),
     ...bgStyle,
+    color: textColor,
   };
 
   return (

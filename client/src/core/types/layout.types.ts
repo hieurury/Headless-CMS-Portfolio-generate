@@ -21,6 +21,7 @@ export interface PortfolioMeta {
   theme?: string;
   primaryColor?: string;
   fontFamily?: string;
+  icon?: string;
 }
 
 export interface Portfolio {
@@ -43,6 +44,7 @@ export interface Page {
   slug: string;
   order: number;
   isPublished: boolean;
+  meta?: { icon?: string };
   layout: PageLayout;
   createdAt: string;
   updatedAt: string;

@@ -9,6 +9,8 @@ export interface ColumnsBlockProps {
   gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   align?: 'start' | 'center' | 'end' | 'stretch';
   children?: React.ReactNode;
+  textColor?: string;
+  backgroundColor?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -34,6 +36,8 @@ export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
   columns = 2,
   colSpans,
   align = 'stretch',
+  textColor,
+  backgroundColor,
   children,
   sectionId,
 }) => {
@@ -56,6 +60,8 @@ export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
         gap: 0,
         alignItems: ALIGN_MAP[align as string] ?? 'stretch',
         width: '100%',
+        backgroundColor: backgroundColor,
+        color: textColor,
       }}
     >
       {children}

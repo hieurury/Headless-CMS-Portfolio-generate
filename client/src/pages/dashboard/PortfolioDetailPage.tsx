@@ -2,19 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { usePageStore } from '../../store/pageStore';
+import { useUIStore } from '../../store/uiStore';
+import { t } from '../../i18n';
 import {
   ArrowLeft, Plus, FileText, Eye, Trash2,
   Loader2, Code2, ChevronRight, Pencil, Globe, Lock,
+  Folder, Briefcase, Code, Palette, Laptop, Camera, Book, Video, Image as ImageIcon, Sun, Moon
 } from 'lucide-react';
+
+const ICONS = [
+  { name: 'FileText', component: FileText },
+  { name: 'Folder', component: Folder },
+  { name: 'Briefcase', component: Briefcase },
+  { name: 'Code', component: Code },
+  { name: 'Palette', component: Palette },
+  { name: 'Laptop', component: Laptop },
+  { name: 'Camera', component: Camera },
+  { name: 'Book', component: Book },
+  { name: 'Video', component: Video },
+  { name: 'ImageIcon', component: ImageIcon },
+];
 
 export const PortfolioDetailPage: React.FC = () => {
   const { portfolioId } = useParams<{ portfolioId: string }>();
   const navigate = useNavigate();
   const { current: portfolio, fetchOne } = usePortfolioStore();
   const { pages, fetchAll, create, remove, update, isLoading } = usePageStore();
+  const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ title: '', slug: '' });
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const [form, setForm] = useState({ title: '', slug: '', icon: 'FileText' });
   const [creating, setCreating] = useState(false);
+
+  const lang = t(language).dashboard;
 
   useEffect(() => {
     if (portfolioId) {
@@ -29,9 +49,9 @@ export const PortfolioDetailPage: React.FC = () => {
     setCreating(true);
     try {
       const slug = form.slug || (form.title === 'Home' ? '/' : `/${form.title.toLowerCase().replace(/\s+/g, '-')}`);
-      await create(portfolioId, { title: form.title, slug, layout: { sections: [] } });
+      await create(portfolioId, { title: form.title, slug, layout: { sections: [] }, meta: { icon: form.icon } });
       setShowCreate(false);
-      setForm({ title: '', slug: '' });
+      setForm({ title: '', slug: '', icon: 'FileText' });
     } finally {
       setCreating(false);
     }
@@ -40,24 +60,42 @@ export const PortfolioDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-md">
-        <div className="container-max mx-auto px-6 h-16 flex items-center gap-4">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-sm"
-          >
-            <ArrowLeft size={16} /> Dashboard
-          </button>
-          <ChevronRight size={14} className="text-slate-600" />
-          <span className="text-white font-medium">{portfolio?.title ?? '...'}</span>
+      <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
+        <div className="container-max mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors text-sm"
+            >
+              <ArrowLeft size={16} /> {lang.dashboard}
+            </button>
+            <ChevronRight size={14} className="text-[var(--color-border)]" />
+            <span className="text-[var(--color-text)] font-medium">{portfolio?.title ?? '...'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleLanguage}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
+              title={language === 'en' ? 'Switch to Vietnamese' : 'Chuyển sang Tiếng Anh'}
+            >
+              {language.toUpperCase()}
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="container-max mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">Pages</h1>
-            <p className="text-slate-400 text-sm font-mono">/{portfolio?.slug}</p>
+            <h1 className="text-3xl font-bold text-[var(--color-text)] mb-1">{lang.pages}</h1>
+            <p className="text-[var(--color-text-muted)] text-sm font-mono">/{portfolio?.slug}</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Publish toggle */}
@@ -72,21 +110,21 @@ export const PortfolioDetailPage: React.FC = () => {
                 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
                   portfolio.isPublished
-                    ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-                    : 'border-white/10 text-slate-400 bg-white/5 hover:bg-white/10'
+                    ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20'
+                    : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
                 }`}
                 title={portfolio.isPublished ? 'Click to unpublish' : 'Click to publish'}
               >
                 {portfolio.isPublished ? <Globe size={14} /> : <Lock size={14} />}
-                {portfolio.isPublished ? 'Published' : 'Draft'}
+                {portfolio.isPublished ? lang.public : lang.private}
               </button>
             )}
             <button
               id="create-page-btn"
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-bg text-white font-semibold text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:scale-105"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-85 transition-all shadow-sm hover:shadow-md"
             >
-              <Plus size={18} /> New Page
+              <Plus size={18} /> {lang.newPage}
             </button>
           </div>
         </div>
@@ -99,43 +137,45 @@ export const PortfolioDetailPage: React.FC = () => {
 
         {!isLoading && pages.length === 0 && (
           <div className="text-center py-24">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl glass flex items-center justify-center">
-              <FileText size={36} className="text-indigo-400" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center">
+              <FileText size={36} className="text-[var(--color-text-muted)]" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No pages yet</h3>
-            <p className="text-slate-400 mb-6">Add your first page to start building</p>
+            <h3 className="text-xl font-semibold text-[var(--color-text)] mb-2">{lang.noPages}</h3>
+            <p className="text-[var(--color-text-muted)] mb-6">Add your first page to start building</p>
             <button
               onClick={() => setShowCreate(true)}
-              className="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+              className="px-6 py-3 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-85 transition-all shadow-sm hover:shadow-md"
             >
-              Create Page
+              {lang.createPage}
             </button>
           </div>
         )}
 
         <div className="space-y-3">
-          {pages.map((page) => (
-            <div key={page._id} className="glass glass-hover rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 group">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-                <FileText size={18} className="text-violet-400" />
+          {pages.map((page) => {
+            const IconComp = ICONS.find(ic => ic.name === page.meta?.icon)?.component || FileText;
+            return (
+            <div key={page._id} className="bg-[var(--color-surface)] border border-transparent border-l-[5px] border-l-[var(--color-text)] shadow-sm hover:shadow-md rounded-lg p-5 flex items-center gap-4 transition-all duration-300 group">
+              <div className="w-10 h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                <IconComp size={18} className="text-[var(--color-text)]" />
               </div>
 
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white group-hover:text-indigo-300 transition-colors">{page.title}</h3>
+                <h3 className="font-semibold text-[var(--color-text)] group-hover:opacity-80 transition-opacity">{page.title}</h3>
                 <div className="flex items-center gap-3 mt-0.5">
-                  <code className="text-xs text-slate-500 font-mono">{page.slug}</code>
-                  <span className="text-slate-700">·</span>
-                  <span className="text-xs text-slate-500">
-                    {page.layout?.sections?.length ?? 0} section{(page.layout?.sections?.length ?? 0) !== 1 ? 's' : ''}
+                  <code className="text-xs text-[var(--color-text-muted)] font-mono">{page.slug}</code>
+                  <span className="text-[var(--color-text-faint)]">·</span>
+                  <span className="text-xs text-[var(--color-text-muted)]">
+                    {page.layout?.sections?.length ?? 0} {(page.layout?.sections?.length ?? 0) !== 1 ? lang.sectionsPlural : lang.sections}
                   </span>
                   {/* Published status badge */}
                   <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md ${
                     page.isPublished
-                      ? 'text-emerald-400 bg-emerald-500/10'
-                      : 'text-slate-600 bg-white/5'
+                      ? 'text-emerald-500 bg-emerald-500/10'
+                      : 'text-[var(--color-text-faint)] border border-[var(--color-border)]'
                   }`}>
                     {page.isPublished ? <Globe size={10} /> : <Lock size={10} />}
-                    {page.isPublished ? 'Public' : 'Draft'}
+                    {page.isPublished ? lang.public : lang.private}
                   </span>
                 </div>
               </div>
@@ -149,8 +189,8 @@ export const PortfolioDetailPage: React.FC = () => {
                   }}
                   className={`p-2 rounded-lg transition-colors ${
                     page.isPublished
-                      ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-                      : 'text-slate-600 hover:text-emerald-400 hover:bg-emerald-500/10'
+                      ? 'text-emerald-500 hover:bg-emerald-500/10'
+                      : 'text-[var(--color-text-muted)] hover:text-emerald-500 hover:bg-[var(--color-surface-2)]'
                   }`}
                   title={page.isPublished ? 'Unpublish page' : 'Publish page'}
                 >
@@ -160,7 +200,7 @@ export const PortfolioDetailPage: React.FC = () => {
                 {/* Edit */}
                 <Link
                   to={`/dashboard/portfolios/${portfolioId}/pages/${page._id}/edit`}
-                  className="p-2 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                  className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                   title="Open editor"
                 >
                   <Pencil size={16} />
@@ -171,9 +211,9 @@ export const PortfolioDetailPage: React.FC = () => {
                   onClick={() => {
                     const json = JSON.stringify(page.layout, null, 2);
                     const w = window.open('', '_blank');
-                    w?.document.write(`<pre style="background:#0a0a0f;color:#e2e8f0;padding:2rem;font-family:monospace;font-size:13px;white-space:pre-wrap;">${json}</pre>`);
+                    w?.document.write(`<pre style="background:var(--color-bg);color:var(--color-text);padding:2rem;font-family:monospace;font-size:13px;white-space:pre-wrap;">${json}</pre>`);
                   }}
-                  className="p-2 rounded-lg text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                  className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                   title="Inspect JSON layout"
                 >
                   <Code2 size={16} />
@@ -182,7 +222,7 @@ export const PortfolioDetailPage: React.FC = () => {
                 {/* Preview */}
                 <Link
                   to={`/preview/${portfolioId}/${encodeURIComponent(page._id)}`}
-                  className="p-2 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                  className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                   title="Preview page"
                 >
                   <Eye size={16} />
@@ -194,14 +234,15 @@ export const PortfolioDetailPage: React.FC = () => {
                     if (portfolioId && confirm('Delete this page?'))
                       remove(portfolioId, page._id);
                   }}
-                  className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                   title="Delete page"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </main>
 
@@ -210,46 +251,76 @@ export const PortfolioDetailPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCreate(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md glass rounded-2xl p-8 shadow-2xl animate-slide-up"
+            className="relative w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-8 shadow-2xl animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-white mb-2">Create New Page</h2>
-            <p className="text-slate-400 text-sm mb-6">The page will start empty. Use the AI editor to generate a layout.</p>
+            <h2 className="text-xl font-bold text-[var(--color-text)] mb-6">{lang.createPage}</h2>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Page Title</label>
-                <input
-                  id="page-title"
-                  value={form.title}
-                  onChange={(e) => setForm({
-                    title: e.target.value,
-                    slug: e.target.value === 'Home' ? '/' : `/${e.target.value.toLowerCase().replace(/\s+/g, '-')}`,
-                  })}
-                  placeholder="Home, About, Projects..."
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
-                />
+              <div className="flex gap-4">
+                <div className="relative shrink-0">
+                  <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Icon</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowIconPicker(!showIconPicker)}
+                    className="h-[46px] w-[54px] flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                  >
+                    {(() => {
+                      const C = ICONS.find(ic => ic.name === form.icon)?.component || FileText;
+                      return <C size={20} />;
+                    })()}
+                  </button>
+                  {showIconPicker && (
+                    <div className="absolute top-[100%] mt-2 left-0 w-[220px] p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl grid grid-cols-5 gap-1 z-20">
+                      {ICONS.map(ic => (
+                        <button
+                          key={ic.name}
+                          type="button"
+                          onClick={() => { setForm({ ...form, icon: ic.name }); setShowIconPicker(false); }}
+                          className={`p-2 rounded flex items-center justify-center transition-colors ${form.icon === ic.name ? 'bg-[var(--color-surface-2)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-surface-2)]'}`}
+                          title={ic.name}
+                        >
+                          <ic.component size={18} className="text-[var(--color-text)]" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Page Title</label>
+                  <input
+                    id="page-title"
+                    value={form.title}
+                    onChange={(e) => setForm({
+                      ...form,
+                      title: e.target.value,
+                      slug: e.target.value === 'Home' ? '/' : `/${e.target.value.toLowerCase().replace(/\s+/g, '-')}`,
+                    })}
+                    placeholder="Home, About, Projects..."
+                    required
+                    className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Slug</label>
+                <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Slug</label>
                 <input
                   id="page-slug"
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
                   placeholder="/ or /about"
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono text-sm"
+                  className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono text-sm"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="flex-1 py-3 rounded-xl glass glass-hover text-slate-300 font-medium transition-all">
+                  className="flex-1 h-[46px] rounded-lg border border-[var(--color-border)] text-[var(--color-text)] font-medium transition-all hover:bg-[var(--color-surface-2)] shadow-sm">
                   Cancel
                 </button>
                 <button
                   id="page-create-confirm"
                   type="submit"
                   disabled={creating}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl gradient-bg text-white font-semibold transition-all disabled:opacity-60"
+                  className="flex-1 flex items-center justify-center gap-2 h-[46px] rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold transition-all disabled:opacity-60 hover:opacity-85 shadow-sm hover:shadow-md"
                 >
                   {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                   Create

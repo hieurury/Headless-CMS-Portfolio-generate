@@ -22,6 +22,8 @@ export interface ImageBlockProps {
   borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   alignX?: AlignX;
   alignY?: AlignY;
+  textColor?: string;
+  backgroundColor?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -52,6 +54,8 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   borderRadius = 'md',
   alignX       = 'center',
   alignY       = 'middle',
+  textColor,
+  backgroundColor,
   sectionId,
 }) => {
   const radiusClass = RADIUS_MAP[borderRadius] ?? 'rounded-md';
@@ -67,6 +71,8 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[alignX]     ?? 'center',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        backgroundColor: backgroundColor,
+        color: textColor,
       }}
     >
       <div className="w-full flex" style={{ justifyContent: JUSTIFY_MAP[alignX] ?? 'center' }}>

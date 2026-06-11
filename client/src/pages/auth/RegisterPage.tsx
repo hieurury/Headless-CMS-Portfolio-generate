@@ -25,16 +25,16 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-violet-600/8 blur-[120px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[var(--color-surface-2)] blur-[120px]" />
       </div>
 
       <div className="w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl gradient-bg mb-6 shadow-xl shadow-indigo-500/30">
-            <span className="text-white text-2xl font-bold">C</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] mb-6 shadow-xl">
+            <span className="text-[var(--color-text)] text-2xl font-bold">C</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Create account</h1>
-          <p className="text-slate-400">Start building your portfolio</p>
+          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">Create account</h1>
+          <p className="text-[var(--color-text-muted)]">Start building your portfolio</p>
         </div>
 
         <div className="glass rounded-2xl p-8 space-y-5">
@@ -51,7 +51,7 @@ export const RegisterPage: React.FC = () => {
               { key: 'password', label: 'Password', type: 'password', placeholder: '••••••••', id: 'register-password' },
             ].map(({ key, label, type, placeholder, id }) => (
               <div key={key}>
-                <label className="block text-sm text-slate-400 mb-1.5">{label}</label>
+                <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">{label}</label>
                 <input
                   id={id}
                   type={type}
@@ -60,7 +60,7 @@ export const RegisterPage: React.FC = () => {
                   placeholder={placeholder}
                   required
                   minLength={key === 'password' ? 6 : undefined}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
                 />
               </div>
             ))}
@@ -69,16 +69,16 @@ export const RegisterPage: React.FC = () => {
               id="register-submit"
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl gradient-bg text-white font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-85 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
               {isLoading ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : 'Create Account'}
             </button>
           </form>
 
           <div className="text-center pt-2">
-            <p className="text-slate-400 text-sm">
+            <p className="text-[var(--color-text-muted)] text-sm">
               Already have an account?{' '}
-              <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              <Link to="/login" className="text-[var(--color-text)] hover:opacity-80 font-medium transition-colors underline">
                 Sign in
               </Link>
             </p>

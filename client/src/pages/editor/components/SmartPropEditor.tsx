@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   Plus, Trash2, ChevronDown, ChevronUp, GripVertical,
-  Image as ImageIcon, Link, Code2, Eye, EyeOff,
+  Image as ImageIcon, Link, Eye, EyeOff,
 } from 'lucide-react';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import type { FieldSchema } from '../../../core/types/registry.types';
@@ -20,24 +20,24 @@ function set(obj: Record<string, unknown>, key: string, value: unknown): Record<
 
 const Label: React.FC<{ children: React.ReactNode; description?: string }> = ({ children, description }) => (
   <div className="mb-1.5">
-    <label className="text-xs font-medium text-slate-300">{children}</label>
-    {description && <p className="text-xs text-slate-600 mt-0.5">{description}</p>}
+    <label className="text-xs font-medium text-[var(--color-text)]">{children}</label>
+    {description && <p className="text-xs text-[var(--color-text-faint)] mt-0.5">{description}</p>}
   </div>
 );
 
 const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
   <input
     {...props}
-    className={`w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-200 text-sm
-      placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition-colors ${props.className ?? ''}`}
+    className={`w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+      placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors ${props.className ?? ''}`}
   />
 );
 
 const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
   <textarea
     {...props}
-    className={`w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-200 text-sm
-      placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition-colors resize-none leading-relaxed ${props.className ?? ''}`}
+    className={`w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+      placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors resize-none leading-relaxed ${props.className ?? ''}`}
   />
 );
 
@@ -46,7 +46,7 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = (
     type="button"
     onClick={() => onChange(!checked)}
     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none
-      ${checked ? 'bg-indigo-600' : 'bg-white/10'}`}
+      ${checked ? 'bg-[var(--color-accent)] text-[var(--color-bg)]' : 'bg-[var(--color-surface-2)] hover:brightness-110'}`}
   >
     <span
       className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform
@@ -131,7 +131,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
               max={schema.max}
               value={(value as number) ?? schema.min}
               onChange={(e) => handleChange(Number(e.target.value))}
-              className="flex-1 accent-indigo-500"
+              className="flex-1 accent-[var(--color-accent)]"
             />
           )}
         </div>
@@ -157,8 +157,8 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         <select
           value={(value as string) ?? (schema.options?.[0] ?? '')}
           onChange={(e) => handleChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-200 text-sm
-            focus:outline-none focus:border-indigo-500/60 transition-colors"
+          className="w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+            focus:outline-none focus:border-[var(--color-border)] transition-colors"
         >
           {schema.options?.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
@@ -176,21 +176,21 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         <div className="flex items-center gap-2">
           <input
             type="color"
-            value={(value as string) || '#6366f1'}
+            value={(value as string) || '#000000'}
             onChange={(e) => handleChange(e.target.value)}
             className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
           />
           <Input
             type="text"
             value={(value as string) ?? ''}
-            placeholder="#6366f1 or rgba(99,102,241,0.5)"
+            placeholder="#000000 or rgba(0,0,0,0.5)"
             onChange={(e) => handleChange(e.target.value)}
             className="flex-1"
           />
           {Boolean(value) && (
             <button
               onClick={() => handleChange('')}
-              className="text-slate-600 hover:text-red-400 text-xs"
+              className="text-[var(--color-text-faint)] hover:text-red-400 text-xs"
               title="Clear color"
             >✕</button>
           )}
@@ -214,7 +214,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
           onChange={(e) => handleChange(e.target.value)}
         />
         {imgSrc && (
-          <div className="mt-2 rounded-lg overflow-hidden border border-white/10 bg-white/5">
+          <div className="mt-2 rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)]">
             <img
               src={imgSrc}
               alt="preview"
@@ -240,8 +240,8 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
           placeholder={schema.placeholder ?? '#section-name, /page, or https://...'}
           onChange={(e) => handleChange(e.target.value)}
         />
-        <p className="text-xs text-slate-600 mt-1">
-          Use <code className="text-indigo-400">#name</code> to scroll to a section, <code className="text-indigo-400">/page</code> for navigation, or full URL
+        <p className="text-xs text-[var(--color-text-faint)] mt-1">
+          Use <code className="text-[var(--color-text)] font-semibold">#name</code> to scroll to a section, <code className="text-[var(--color-text)] font-semibold">/page</code> for navigation, or full URL
         </p>
       </div>
     );
@@ -286,17 +286,17 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     };
 
     return (
-      <div className={`${depth > 0 ? 'pl-3 border-l border-white/5' : ''}`}>
+      <div className={`${depth > 0 ? 'pl-3 border-l border-[var(--color-border)]' : ''}`}>
         <button
           type="button"
           onClick={() => setExpanded((p) => !p)}
           className="flex items-center gap-2 w-full text-left mb-2"
         >
           <Label>{schema.label}</Label>
-          <span className="ml-auto text-slate-600">
+          <span className="ml-auto text-[var(--color-text-faint)]">
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </span>
-          <span className="text-xs text-slate-600 font-mono">{items.length}</span>
+          <span className="text-xs text-[var(--color-text-faint)] font-mono">{items.length}</span>
         </button>
 
         {expanded && (
@@ -316,16 +316,16 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
                     <button
                       onClick={() => moveItem(idx, -1)}
                       disabled={idx === 0}
-                      className="text-slate-600 hover:text-white disabled:opacity-30 p-1"
+                      className="text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30 p-1"
                     ><ChevronUp size={13} /></button>
                     <button
                       onClick={() => moveItem(idx, 1)}
                       disabled={idx === items.length - 1}
-                      className="text-slate-600 hover:text-white disabled:opacity-30 p-1"
+                      className="text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30 p-1"
                     ><ChevronDown size={13} /></button>
                     <button
                       onClick={() => removeItem(idx)}
-                      className="text-slate-600 hover:text-red-400 p-1"
+                      className="text-[var(--color-text-faint)] hover:text-red-400 p-1"
                     ><Trash2 size={13} /></button>
                   </div>
                 );
@@ -352,8 +352,8 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-dashed border-white/10
-                text-slate-500 hover:text-white hover:border-indigo-500/30 hover:bg-indigo-500/5 text-xs transition-all"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-md border border-dashed border-[var(--color-border)]
+                text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:border-[var(--color-border)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs transition-all"
             >
               <Plus size={13} /> Add {schema.itemLabel ?? 'Item'}
             </button>
@@ -368,8 +368,8 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     <div>
       <Label>{schema.label}</Label>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-slate-600">Raw JSON</span>
-        <button onClick={() => setShowRaw((p) => !p)} className="text-xs text-slate-600 hover:text-indigo-400">
+        <span className="text-xs text-[var(--color-text-faint)]">Raw JSON</span>
+        <button onClick={() => setShowRaw((p) => !p)} className="text-xs text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold">
           {showRaw ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>
       </div>
@@ -421,24 +421,24 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
   const previewValue = previewKey ? ((item[previewKey] as string) || `${itemLabel} ${idx + 1}`) : `${itemLabel} ${idx + 1}`;
 
   return (
-    <div className="border border-white/8 rounded-xl overflow-hidden bg-white/2">
+    <div className="border border-white/8 rounded-md overflow-hidden bg-white/2">
       {/* Card header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-white/3">
         <GripVertical size={14} className="text-slate-700 shrink-0" />
         <button
           type="button"
           onClick={() => setCollapsed((p) => !p)}
-          className="flex-1 text-left text-xs font-medium text-slate-400 hover:text-white truncate"
+          className="flex-1 text-left text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] truncate"
         >
           {collapsed ? '▶' : '▼'} {previewValue}
         </button>
-        <button onClick={onMoveUp} disabled={idx === 0} className="p-1 text-slate-600 hover:text-white disabled:opacity-30">
+        <button onClick={onMoveUp} disabled={idx === 0} className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30">
           <ChevronUp size={12} />
         </button>
-        <button onClick={onMoveDown} disabled={idx === total - 1} className="p-1 text-slate-600 hover:text-white disabled:opacity-30">
+        <button onClick={onMoveDown} disabled={idx === total - 1} className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30">
           <ChevronDown size={12} />
         </button>
-        <button onClick={onRemove} className="p-1 text-slate-600 hover:text-red-400">
+        <button onClick={onRemove} className="p-1 text-[var(--color-text-faint)] hover:text-red-400">
           <Trash2 size={12} />
         </button>
       </div>
@@ -536,17 +536,17 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-lg">{entry?.icon ?? '⚙️'}</span>
           <div>
-            <p className="text-sm font-semibold text-white">{entry?.displayName ?? sectionType}</p>
+            <p className="text-sm font-semibold text-[var(--color-text)]">{entry?.displayName ?? sectionType}</p>
             {entry?.description && (
-              <p className="text-xs text-slate-500 mt-0.5 leading-snug">{entry.description}</p>
+              <p className="text-xs text-[var(--color-text-faint)] mt-0.5 leading-snug">{entry.description}</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Section Name (Anchor) */}
-      <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 space-y-1.5">
-        <label className="text-xs font-medium text-indigo-400 flex items-center gap-1.5">
+      <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)] text-[var(--color-bg)] p-3 space-y-1.5">
+        <label className="text-xs font-medium text-[var(--color-text)] font-semibold flex items-center gap-1.5">
           <span>#</span> Section Anchor Name
         </label>
         <input
@@ -554,24 +554,24 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           value={sectionName ?? ''}
           placeholder="e.g. about, hero, projects"
           onChange={(e) => onNameChange(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-          className="w-full px-3 py-2 rounded-lg bg-black/20 border border-indigo-500/20 text-slate-200 text-sm
-            placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors font-mono"
+          className="w-full px-3 py-2 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+            placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors font-mono"
         />
-        <p className="text-xs text-slate-600">
-          Navbar links can use <code className="text-indigo-400">#{sectionName || 'name'}</code> to scroll to this section
+        <p className="text-xs text-[var(--color-text-faint)]">
+          Navbar links can use <code className="text-[var(--color-text)] font-semibold">#{sectionName || 'name'}</code> to scroll to this section
         </p>
       </div>
 
       {/* Form / JSON tabs */}
       {schema && (
-        <div className="flex border-b border-white/5 -mx-0 gap-3">
+        <div className="flex border-b border-[var(--color-border)] -mx-0 gap-3">
           {(['form', 'json'] as const).map((tab) => (
             <button
               key={tab}
               onClick={tab === 'json' ? openJsonTab : () => setActiveTab('form')}
               className={`text-xs pb-2 font-medium transition-all border-b-2 capitalize ${activeTab === tab
-                ? 'text-white border-indigo-500'
-                : 'text-slate-500 border-transparent hover:text-slate-300'
+                ? 'text-[var(--color-text)] border-[var(--color-border-hover)]'
+                : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]'
                 }`}
             >
               {tab === 'form' ? '⚙ Form' : '{ } JSON'}
@@ -587,7 +587,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             <div
               key={key}
               ref={(el) => { fieldRefs.current[key] = el; }}
-              className="rounded-lg transition-all"
+              className="rounded-md transition-all"
             >
               <FieldRenderer
                 fieldKey={key}
@@ -602,7 +602,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
 
       {/* Fallback: no schema — always show JSON */}
       {activeTab === 'form' && !schema && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+        <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
           <p className="text-xs text-amber-400 mb-2">
             This component doesn't have a form schema yet. Edit props as JSON:
           </p>
@@ -615,8 +615,8 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
                 onChange(JSON.parse(e.target.value) as Record<string, unknown>);
               } catch { /* ignore mid-edit */ }
             }}
-            className="w-full px-3 py-3 rounded-lg bg-black/30 border border-white/10 text-slate-300 font-mono text-xs
-              leading-relaxed focus:outline-none focus:border-indigo-500/50 resize-none"
+            className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
+              leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
           />
         </div>
       )}
@@ -629,19 +629,19 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             rows={12}
             spellCheck={false}
             onChange={(e) => { setJsonText(e.target.value); setJsonError(null); }}
-            className="w-full px-3 py-3 rounded-lg bg-black/30 border border-white/10 text-slate-300 font-mono text-xs
-              leading-relaxed focus:outline-none focus:border-indigo-500/50 resize-none"
+            className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
+              leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
             style={{ fontFamily: "'Fira Code', 'Cascadia Code', monospace" }}
           />
           {jsonError && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 font-mono">
+            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2 font-mono">
               {jsonError}
             </p>
           )}
           <button
             onClick={applyJson}
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold
-              transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+            className="w-full py-2.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-sm font-semibold
+              transition-all hover:shadow-lg hover:shadow-black/10"
           >
             Apply JSON
           </button>

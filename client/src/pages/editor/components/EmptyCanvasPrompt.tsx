@@ -12,7 +12,7 @@ const EXAMPLES = [
   {
     icon: Code2,
     label: 'Full-Stack Dev',
-    color: 'from-indigo-500/20 to-violet-500/10 border-indigo-500/30 text-indigo-300',
+    color: 'bg-[var(--color-surface-2)] border-[var(--color-border)] text-[var(--color-text)]',
     prompt:
       'Tạo portfolio cho Full Stack Developer tên là Alex. Sử dụng cấu trúc MODERN HERO (chia 2 cột với ảnh). Thêm section About, sau đó là section Skills dạng Feature Cards (chứa React, Node.js, Docker). Tiếp theo là Projects Grid (3 cột, dùng Card) và một Experience Timeline. Cuối trang là Footer có các nút liên hệ.',
   },
@@ -107,7 +107,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
 
       {/* ── Icon ────────────────────────────────────────────────── */}
       <div className="relative mb-6">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-600/30 to-indigo-600/20 border border-violet-500/20 flex items-center justify-center shadow-xl shadow-violet-500/10 backdrop-blur-sm">
+        <div className="w-20 h-20 rounded-3xl bg-[var(--color-surface-2)] border border-[var(--color-border-hover)] flex items-center justify-center shadow-md shadow-black/10 backdrop-blur-sm">
           <Sparkles size={34} className="text-violet-400" />
         </div>
         {/* Pulse ring */}
@@ -115,15 +115,15 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
       </div>
 
       {/* ── Heading ─────────────────────────────────────────────── */}
-      <h2 className="text-2xl font-bold text-white mb-2 text-center">
+      <h2 className="text-2xl font-bold text-[var(--color-text)] mb-2 text-center">
         Start with AI
       </h2>
-      <p className="text-slate-500 text-sm text-center mb-8 max-w-sm leading-relaxed">
+      <p className="text-[var(--color-text-faint)] text-sm text-center mb-8 max-w-sm leading-relaxed">
         Describe your portfolio and Gemini will generate a full layout in seconds.
         Or{' '}
         <button
           onClick={onAddBlocks}
-          className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors underline-offset-2 hover:underline"
+          className="text-[var(--color-text)] font-semibold hover:text-[var(--color-text)] font-medium transition-colors underline-offset-2 hover:underline"
         >
           add blocks manually
         </button>
@@ -156,12 +156,12 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
       <div className="w-full max-w-xl">
         <div
           className={`
-            relative rounded-2xl border transition-all duration-200
+            relative rounded-md border transition-all duration-200
             ${isReady
-              ? 'border-violet-500/40 shadow-lg shadow-violet-500/10'
-              : 'border-white/10'
+              ? 'border-violet-500/40 shadow-lg shadow-black/10'
+              : 'border-[var(--color-border)]'
             }
-            bg-white/5
+            bg-[var(--color-surface-2)]
           `}
         >
           <textarea
@@ -170,7 +170,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
             placeholder="e.g. Portfolio for a React developer named John with dark theme. Include about, skills (React, Node, Docker), 3 projects with GitHub links, and a contact form."
             rows={4}
             disabled={isLoading}
-            className="w-full px-5 pt-4 pb-2 bg-transparent text-slate-300 text-sm placeholder-slate-700 focus:outline-none resize-none leading-relaxed disabled:opacity-50"
+            className="w-full px-5 pt-4 pb-2 bg-transparent text-[var(--color-text)] text-sm placeholder-slate-700 focus:outline-none resize-none leading-relaxed disabled:opacity-50"
           />
 
           {/* Bottom bar inside textarea card */}
@@ -181,7 +181,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
             <button
               onClick={() => handleGenerate()}
               disabled={isLoading || !isReady}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold
+              className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold
                 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
@@ -196,13 +196,13 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
 
         {/* Error / success */}
         {error && (
-          <div className="mt-3 flex items-start gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+          <div className="mt-3 flex items-start gap-2 px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20">
             <AlertCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
             <p className="text-xs text-red-400">{error}</p>
           </div>
         )}
         {generated !== null && (
-          <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-md bg-emerald-500/10 border border-emerald-500/20">
             <Zap size={14} className="text-emerald-400 shrink-0" />
             <p className="text-xs text-emerald-400 font-semibold">
               ✓ {generated} sections generated by Gemini
@@ -213,16 +213,16 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
 
       {/* ── Divider ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-4 my-8 w-full max-w-xl">
-        <div className="flex-1 h-px bg-white/5" />
+        <div className="flex-1 h-px bg-[var(--color-surface-2)]" />
         <span className="text-xs text-slate-700 font-medium">or start blank</span>
-        <div className="flex-1 h-px bg-white/5" />
+        <div className="flex-1 h-px bg-[var(--color-surface-2)]" />
       </div>
 
       {/* ── Manual add button ────────────────────────────────────── */}
       <button
         onClick={onAddBlocks}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-white/3 hover:bg-white/8 hover:border-white/20
-          text-slate-400 hover:text-white text-sm font-medium transition-all duration-200 group"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-md border border-[var(--color-border)] bg-white/3 hover:bg-white/8 hover:border-[var(--color-border-hover)]
+          text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-sm font-medium transition-all duration-200 group"
       >
         <Plus size={15} className="group-hover:rotate-90 transition-transform duration-200" />
         Add blocks manually

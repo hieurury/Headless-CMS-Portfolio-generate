@@ -40,6 +40,9 @@ export class Page {
   @Prop({ default: false })
   isPublished: boolean;
 
+  @Prop({ type: Object, default: {} })
+  meta?: { icon?: string };
+
   /**
    * The JSON layout — the core runtime-renderable structure.
    * Stored as a flexible Mixed type to allow deep nesting.

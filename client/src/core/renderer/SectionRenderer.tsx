@@ -77,8 +77,8 @@ const ColCellDropZone: React.FC<{
         flex items-center justify-center transition-all duration-150
         ${
           isOver
-            ? 'bg-indigo-500/15 text-indigo-400 shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.7)]'
-            : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-indigo-400 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.3)]'
+            ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] shadow-[inset_0_0_0_1.5px_var(--color-border-hover)]'
+            : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-[var(--color-text)] hover:shadow-[inset_0_0_0_1.5px_var(--color-border-hover)]'
         }
       `}
     >
@@ -97,7 +97,7 @@ const ColCellDropZone: React.FC<{
           className="
             absolute top-1 right-1
             w-5 h-5 rounded
-            bg-[#1a1a2e] border border-violet-500/50
+            bg-[var(--color-surface)] border border-violet-500/50
             flex items-center justify-center
             text-violet-400 hover:text-white
             hover:bg-violet-600 hover:border-violet-400
@@ -293,11 +293,11 @@ const _ColumnsEditGrid: React.FC<{
                   }}
                   className="
                     w-6 h-6 rounded-full
-                    bg-[#1a1a2e] border border-indigo-500/60
+                    bg-[var(--color-surface)] border border-[var(--color-border-hover)]
                     flex items-center justify-center
-                    text-indigo-400 hover:text-white
-                    hover:bg-indigo-600 hover:border-indigo-400
-                    hover:shadow-lg hover:shadow-indigo-500/30
+                    text-[var(--color-text)] hover:text-white
+                    hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:border-[var(--color-border-hover)]
+                    hover:shadow-lg hover:shadow-black/20
                     transition-all duration-150 cursor-pointer
                   "
                 >
@@ -384,8 +384,8 @@ const EmptySlotBlock: React.FC<{
         transition-all duration-150
         ${
           isOver
-            ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400 min-h-[48px]'
-            : 'border-white/10 bg-white/2 text-slate-700 hover:border-indigo-500/40 hover:text-indigo-400 hover:bg-white/4'
+            ? 'border-[var(--color-border-hover)] bg-[var(--color-surface-2)] text-[var(--color-text)] min-h-[48px]'
+            : 'border-white/10 bg-white/2 text-slate-700 hover:border-[var(--color-border-hover)]/40 hover:text-[var(--color-text)] hover:bg-white/4'
         }
       `}
       style={{ minHeight: 40 }}
@@ -455,7 +455,7 @@ const ContainerDropZone: React.FC<{
       ref={setNodeRef}
       className={`relative w-full transition-all duration-150 ${
         isOver && (isEmpty || hasEmptySlot)
-          ? 'bg-indigo-500/8 ring-1 ring-inset ring-indigo-500/40 rounded-lg'
+          ? 'bg-white/5 ring-1 ring-inset ring-[var(--color-border-hover)] rounded-lg'
           : ''
       }`}
       style={{ minHeight: isEmpty ? 48 : undefined }}
@@ -479,7 +479,7 @@ const ContainerDropZone: React.FC<{
         >
           {renderedChildren}
           {isOver && hasEmptySlot && (
-            <div className="h-0.5 mx-2 mt-1 rounded-full bg-indigo-500/60 animate-pulse" />
+            <div className="h-0.5 mx-2 mt-1 rounded-full bg-[var(--color-border-hover)] animate-pulse" />
           )}
         </SortableContext>
       )}
@@ -523,7 +523,7 @@ const InlineFieldPicker: React.FC<{
   return (
     <div
       ref={pickerRef}
-      className="absolute z-[300] rounded-xl shadow-2xl shadow-black/70 border border-indigo-500/40 overflow-hidden"
+      className="absolute z-[300] rounded-xl shadow-2xl shadow-black/70 border border-[var(--color-border-hover)]/40 overflow-hidden"
       style={{
         top: state.top + 8,
         left: state.left,
@@ -535,8 +535,8 @@ const InlineFieldPicker: React.FC<{
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
-        <ImageIcon size={11} className="text-indigo-400 shrink-0" />
-        <span className="text-xs font-semibold text-indigo-400">{schema.label}</span>
+        <ImageIcon size={11} className="text-[var(--color-text)] shrink-0" />
+        <span className="text-xs font-semibold text-[var(--color-text)]">{schema.label}</span>
       </div>
       <div className="p-3 space-y-2">
         <input
@@ -551,7 +551,7 @@ const InlineFieldPicker: React.FC<{
           }}
           placeholder={schema.placeholder ?? 'https://...'}
           className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-200 text-xs
-            placeholder-slate-700 focus:outline-none focus:border-indigo-500/60 transition-colors"
+            placeholder-slate-700 focus:outline-none focus:border-[var(--color-border-hover)] transition-colors"
         />
         {schema.type === 'image' && val && (
           <div className="h-20 rounded-lg overflow-hidden bg-white/5 border border-white/10">
@@ -560,7 +560,7 @@ const InlineFieldPicker: React.FC<{
         )}
         <button
           onClick={confirm}
-          className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all"
+          className="w-full py-1.5 rounded-lg bg-[var(--color-accent)] text-[var(--color-bg)] hover:brightness-110 text-white text-xs font-semibold transition-all"
         >
           Confirm
         </button>
@@ -859,14 +859,14 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       style={dragStyle}
       // Apply drag listeners to the whole block (delay-based activation separates click from drag)
       {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
-      className={`relative cms-block select-none touch-none${isContainer ? ' cms-container-block' : ''}${isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''}${isSelected ? ' z-10' : ''}`}
+      className={`relative cms-block select-none touch-none${isContainer ? ' cms-container-block' : ''}${isDragging ? ' shadow-2xl shadow-black/20' : ''}${isSelected ? ' z-10' : ''}`}
       onClickCapture={handleCapture}
       onClick={handleClick}
     >
       {/* ── Selection ring ────────────────────────────────────────────── */}
       <div
         className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
-          isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+          isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''
         }`}
       />
 
@@ -944,7 +944,7 @@ const ColumnsEditorWrapper: React.FC<{
       id={section.name || section.id}
       style={dragStyle}
       className={`relative cms-block select-none${
-        isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
+        isDragging ? ' shadow-2xl shadow-black/20' : ''
       }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
     >
@@ -961,7 +961,7 @@ const ColumnsEditorWrapper: React.FC<{
       {/* Selection ring */}
       <div
         className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
-          isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+          isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''
         }`}
       />
 

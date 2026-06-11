@@ -757,7 +757,7 @@ export const PageEditorPage: React.FC = () => {
   if (isLoading && !page) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 size={36} className="animate-spin text-indigo-400" />
+        <Loader2 size={36} className="animate-spin text-[var(--color-text)] font-semibold" />
       </div>
     );
   }
@@ -793,22 +793,22 @@ export const PageEditorPage: React.FC = () => {
       {/* ── Floating control panel (global, fixed-position) ──────── */}
       {!previewMode && <FloatingControlPanel />}
 
-      <div className="flex flex-col bg-[#08080f]" style={{ height: '100dvh', overflow: 'hidden' }}>
+      <div className="flex flex-col bg-[var(--color-bg)]" style={{ height: '100dvh', overflow: 'hidden' }}>
         {/* ── Header ─────────────────────────────────────────────── */}
         <header
-          className="shrink-0 border-b border-white/5 bg-[#0a0a0f]/95 backdrop-blur-md flex items-center px-3 gap-2 z-40"
+          className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md flex items-center px-3 gap-2 z-40"
           style={{ height: HEADER_H }}
         >
           <button
             onClick={() => navigate(`/dashboard/portfolios/${portfolioId}`)}
-            className="p-1.5 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
           >
             <ArrowLeft size={16} />
           </button>
           <ChevronRight size={12} className="text-slate-700" />
-          <span className="text-slate-500 text-sm truncate max-w-[100px]">{portfolio?.title}</span>
+          <span className="text-[var(--color-text-faint)] text-sm truncate max-w-[100px]">{portfolio?.title}</span>
           <ChevronRight size={12} className="text-slate-700" />
-          <span className="text-white text-sm font-medium truncate max-w-[120px]">{page?.title}</span>
+          <span className="text-[var(--color-text)] text-sm font-medium truncate max-w-[120px]">{page?.title}</span>
 
           <div className="flex-1" />
 
@@ -820,23 +820,23 @@ export const PageEditorPage: React.FC = () => {
             onClick={() => setShowLeftPanel((p) => !p)}
             title="Toggle left panel"
             className={clsx(
-              'p-1.5 rounded-lg transition-all',
-              showLeftPanel ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-500 hover:text-white hover:bg-white/5',
+              'p-1.5 rounded-md transition-all',
+              showLeftPanel ? 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
             )}
           >
             <PanelLeft size={15} />
           </button>
 
           {/* ── Preview / Edit Mode Toggle ─────────────────────────────── */}
-          <div className="flex items-center rounded-lg border border-white/10 overflow-hidden bg-white/3">
+          <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
             <button
               onClick={() => setPreviewMode(false)}
               title="Edit mode — click elements to edit inline"
               className={clsx(
                 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
                 !previewMode
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-400 hover:text-white',
+                  ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
               )}
             >
               <PenLine size={13} />
@@ -848,8 +848,8 @@ export const PageEditorPage: React.FC = () => {
               className={clsx(
                 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
                 previewMode
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white',
+                  ? 'bg-slate-700 text-[var(--color-text)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
               )}
             >
               <Eye size={13} />
@@ -858,7 +858,7 @@ export const PageEditorPage: React.FC = () => {
           </div>
           <button
             onClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-medium transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all"
           >
             <Plus size={11} /> Add
           </button>
@@ -866,8 +866,8 @@ export const PageEditorPage: React.FC = () => {
             onClick={() => setShowRightPanel((p) => !p)}
             title="Toggle right panel"
             className={clsx(
-              'p-1.5 rounded-lg transition-all',
-              showRightPanel ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-500 hover:text-white hover:bg-white/5',
+              'p-1.5 rounded-md transition-all',
+              showRightPanel ? 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
             )}
           >
             <PanelRight size={15} />
@@ -877,10 +877,10 @@ export const PageEditorPage: React.FC = () => {
             onClick={handleSave}
             disabled={!isDirty || isSaving}
             className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all',
               isDirty
-                ? 'bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-lg hover:shadow-indigo-500/25'
-                : 'bg-white/5 text-slate-500 cursor-not-allowed',
+                ? 'bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:shadow-lg hover:shadow-black/10'
+                : 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-not-allowed',
             )}
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : savedFeedback ? <Check size={14} /> : <Save size={14} />}
@@ -894,10 +894,10 @@ export const PageEditorPage: React.FC = () => {
           {/* LEFT: AI + Layers */}
           {showLeftPanel && !previewMode && (
             <aside
-              className="shrink-0 border-r border-white/5 bg-[#0a0a0f] flex flex-col"
+              className="shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col"
               style={{ width: 240 }}
             >
-              <div className="flex border-b border-white/5 shrink-0">
+              <div className="flex border-b border-[var(--color-border)] shrink-0">
                 {([
                   { key: 'ai' as LeftTab, label: 'AI', icon: Sparkles },
                   { key: 'sections' as LeftTab, label: 'Layers', icon: Layers },
@@ -907,7 +907,7 @@ export const PageEditorPage: React.FC = () => {
                     onClick={() => setLeftTab(key)}
                     className={clsx(
                       'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2',
-                      leftTab === key ? 'text-white border-indigo-500' : 'text-slate-500 border-transparent hover:text-slate-300',
+                      leftTab === key ? 'text-[var(--color-text)] border-[var(--color-text)]' : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]',
                     )}
                   >
                     <Icon size={13} /> {label}
@@ -944,7 +944,7 @@ export const PageEditorPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="px-3 py-2 border-t border-white/5 text-xs text-slate-700 shrink-0 flex justify-between">
+              <div className="px-3 py-2 border-t border-[var(--color-border)] text-xs text-slate-700 shrink-0 flex justify-between">
                 <span>{draftLayout.sections.length} top-level</span>
                 <span>{componentRegistry.getTypes().length} types</span>
               </div>
@@ -952,9 +952,9 @@ export const PageEditorPage: React.FC = () => {
           )}
 
           {/* CENTER: Preview */}
-          <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#08080f]">
-            <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5">
-              <span className="text-xs text-slate-600">{previewMode ? '👁 Preview' : '✏ Editor'}</span>
+          <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[var(--color-bg)]">
+            <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]">
+              <span className="text-xs text-[var(--color-text-faint)]">{previewMode ? '👁 Preview' : '✏ Editor'}</span>
               <span className="text-xs text-slate-700 font-mono">{page?.slug}</span>
             </div>
 
@@ -975,27 +975,27 @@ export const PageEditorPage: React.FC = () => {
           {/* RIGHT: Props Editor */}
           {showRightPanel && !previewMode && (
             <aside
-              className="shrink-0 border-l border-white/5 bg-[#0a0a0f] flex flex-col"
+              className="shrink-0 border-l border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col"
               style={{ width: 300 }}
             >
-              <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+              <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]">
                 {selectedSection ? (
                   <div className="flex items-center gap-2 min-w-0">
-                    <Settings size={13} className="text-indigo-400 shrink-0" />
-                    <span className="text-xs font-semibold text-white truncate">
+                    <Settings size={13} className="text-[var(--color-text)] font-semibold shrink-0" />
+                    <span className="text-xs font-semibold text-[var(--color-text)] truncate">
                       {componentRegistry.getEntry(selectedSection.type)?.displayName ?? selectedSection.type}
                     </span>
                     {/* Is this a child block? */}
                     {selectedId && findParent(draftLayout.sections, selectedId)?.parent && (
-                      <span className="text-[10px] text-slate-600 font-mono">child</span>
+                      <span className="text-[10px] text-[var(--color-text-faint)] font-mono">child</span>
                     )}
                   </div>
                 ) : (
-                  <span className="text-xs text-slate-600">No selection</span>
+                  <span className="text-xs text-[var(--color-text-faint)]">No selection</span>
                 )}
                 <button
                   onClick={() => { setSelectedId(null); setSelectedFieldKey(null); }}
-                  className="p-1 rounded text-slate-600 hover:text-white hover:bg-white/5 transition-all shrink-0"
+                  className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all shrink-0"
                 >
                   <X size={13} />
                 </button>
@@ -1015,14 +1015,14 @@ export const PageEditorPage: React.FC = () => {
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                    <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-3">
-                      <Settings size={20} className="text-slate-600" />
+                    <div className="w-12 h-12 rounded-md bg-[var(--color-surface-2)] flex items-center justify-center mb-3">
+                      <Settings size={20} className="text-[var(--color-text-faint)]" />
                     </div>
-                    <p className="text-sm text-slate-500 font-medium">No block selected</p>
+                    <p className="text-sm text-[var(--color-text-faint)] font-medium">No block selected</p>
                     <p className="text-xs text-slate-700 mt-1">
                       Click any block in the preview to edit
                     </p>
-                    <p className="text-xs text-indigo-400/50 mt-3 text-center leading-relaxed">
+                    <p className="text-xs text-[var(--color-text)] font-semibold/50 mt-3 text-center leading-relaxed">
                       ✏ Click text or images<br />directly in the preview
                     </p>
                   </div>

@@ -19,12 +19,12 @@ interface InlineFieldEditorProps {
 }
 
 const INPUT_CLS =
-  'w-full px-3 py-2 rounded-lg bg-[#0d0d1a] border border-white/10 text-slate-200 text-sm ' +
-  'placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition-colors';
+  'w-full px-3 py-2 rounded-md bg-[#0d0d1a] border border-[var(--color-border)] text-[var(--color-text)] text-sm ' +
+  'placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors';
 
 const TEXTAREA_CLS =
-  'w-full px-3 py-2 rounded-lg bg-[#0d0d1a] border border-white/10 text-slate-200 text-sm ' +
-  'placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition-colors resize-none leading-relaxed';
+  'w-full px-3 py-2 rounded-md bg-[#0d0d1a] border border-[var(--color-border)] text-[var(--color-text)] text-sm ' +
+  'placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors resize-none leading-relaxed';
 
 export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
   schema,
@@ -110,12 +110,12 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
     if (schema.type === 'array') {
       return (
         <div className="space-y-2">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--color-text-muted)]">
             Trường danh sách — cần chỉnh sửa trong panel đầy đủ.
           </p>
           <button
             onClick={onOpenInPanel}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 text-xs font-medium hover:bg-indigo-600/30 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/20 border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-xs font-medium hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]/30 transition-all"
           >
             <ExternalLink size={12} /> Mở trong Properties Panel
           </button>
@@ -155,7 +155,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       return (
         <div className="space-y-1.5">
           <div className="relative">
-            <Link size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Link size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
             <input
               autoFocus
               type="text"
@@ -166,8 +166,8 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
               className={INPUT_CLS + ' pl-8'}
             />
           </div>
-          <p className="text-[11px] text-slate-600">
-            Dùng <code className="text-indigo-400">#name</code> để scroll, <code className="text-indigo-400">/page</code> để điều hướng
+          <p className="text-[11px] text-[var(--color-text-faint)]">
+            Dùng <code className="text-[var(--color-text)] font-semibold">#name</code> để scroll, <code className="text-[var(--color-text)] font-semibold">/page</code> để điều hướng
           </p>
         </div>
       );
@@ -178,7 +178,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       return (
         <div className="space-y-2">
           <div className="relative">
-            <ImageIcon size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <ImageIcon size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
             <input
               autoFocus
               type="text"
@@ -190,7 +190,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
             />
           </div>
           {src && !imgError && (
-            <div className="rounded-lg overflow-hidden border border-white/10 bg-white/5 h-24">
+            <div className="rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] h-24">
               <img
                 src={src}
                 alt="preview"
@@ -214,12 +214,12 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
         <button
           type="button"
           onClick={() => handleChange(!checked)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? 'bg-indigo-600' : 'bg-white/10'}`}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? 'bg-[var(--color-accent)] text-[var(--color-bg)]' : 'bg-[var(--color-surface-2)] hover:brightness-110'}`}
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
           />
-          <span className="ml-14 text-sm text-slate-300 whitespace-nowrap">
+          <span className="ml-14 text-sm text-[var(--color-text)] whitespace-nowrap">
             {checked ? 'Bật' : 'Tắt'}
           </span>
         </button>
@@ -240,7 +240,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
-          <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)] pointer-events-none" />
         </div>
       );
     }
@@ -265,7 +265,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
               max={schema.max}
               value={(localValue as number) ?? schema.min}
               onChange={(e) => handleChange(Number(e.target.value))}
-              className="w-full accent-indigo-500"
+              className="w-full accent-[var(--color-text)]"
             />
           )}
         </div>
@@ -278,7 +278,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
   return (
     <div
       ref={panelRef}
-      className="absolute z-[200] w-72 rounded-2xl shadow-2xl shadow-black/60 animate-slide-up"
+      className="absolute z-[200] w-72 rounded-md shadow-2xl shadow-black/60 animate-slide-up"
       style={{
         top: position.top,
         left: position.left,
@@ -288,21 +288,21 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
-        <span className="text-xs font-semibold text-indigo-400 truncate max-w-[180px]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">
+        <span className="text-xs font-semibold text-[var(--color-text)] font-semibold truncate max-w-[180px]">
           ✏️ {schema.label}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={onOpenInPanel}
             title="Mở trong Properties Panel"
-            className="p-1 rounded text-slate-600 hover:text-indigo-400 hover:bg-white/5 transition-all"
+            className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold hover:bg-[var(--color-surface-2)] transition-all"
           >
             <ExternalLink size={11} />
           </button>
           <button
             onClick={commitAndClose}
-            className="p-1 rounded text-slate-600 hover:text-white hover:bg-white/5 transition-all"
+            className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all"
           >
             <X size={12} />
           </button>
@@ -319,7 +319,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
         <div className="px-3 pb-3">
           <button
             onClick={commitAndClose}
-            className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all"
+            className="w-full py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-semibold transition-all"
           >
             Xác nhận
           </button>

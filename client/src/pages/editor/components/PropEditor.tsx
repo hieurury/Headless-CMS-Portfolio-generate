@@ -56,10 +56,10 @@ export const PropEditor: React.FC<PropEditorProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500 uppercase tracking-wider">
-          Props — <span className="font-mono text-indigo-400">{sectionType}</span>
+        <p className="text-xs text-[var(--color-text-faint)] uppercase tracking-wider">
+          Props — <span className="font-mono text-[var(--color-text)] font-semibold">{sectionType}</span>
         </p>
-        <p className="text-xs text-slate-600">Ctrl+S to apply</p>
+        <p className="text-xs text-[var(--color-text-faint)]">Ctrl+S to apply</p>
       </div>
 
       <div className="relative">
@@ -69,13 +69,13 @@ export const PropEditor: React.FC<PropEditorProps> = ({
           onKeyDown={handleKeyDown}
           rows={14}
           spellCheck={false}
-          className="w-full px-3 py-3 rounded-xl bg-[#0a0a0f] border border-white/10 text-slate-300 font-mono text-xs leading-relaxed focus:outline-none focus:border-indigo-500/50 resize-none transition-colors"
+          className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none transition-colors"
           style={{ fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace" }}
         />
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-red-500/10 border border-red-500/20">
           <AlertCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
           <p className="text-xs text-red-400 font-mono break-all">{error}</p>
         </div>
@@ -83,7 +83,7 @@ export const PropEditor: React.FC<PropEditorProps> = ({
 
       <button
         onClick={handleApply}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/20"
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-black/10"
       >
         {saved ? (
           <><Check size={15} /> Applied!</>

@@ -59,6 +59,8 @@ componentRegistry.register({
     background: 'dark',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     sticky: { type: 'boolean', label: 'Sticky on Scroll' },
     transparent: { type: 'boolean', label: 'Transparent at Top' },
     background: { type: 'select', label: 'Background Style', options: ['dark', 'glass', 'light', 'none'] },
@@ -86,6 +88,8 @@ componentRegistry.register({
     align: 'stretch',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     columns: { type: 'select', label: 'Number of Columns', options: ['2', '3', '4'] },
     gap: { type: 'select', label: 'Column Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     align: { type: 'select', label: 'Vertical Align', options: ['start', 'center', 'end', 'stretch'] },
@@ -136,6 +140,8 @@ componentRegistry.register({
     alignY: 'middle',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     alignX: {
       type: 'select',
       label: 'Horizontal (X)',
@@ -151,7 +157,6 @@ componentRegistry.register({
     style: { type: 'select', label: 'Box Style', options: ['none', 'card', 'glass', 'outlined', 'filled'] },
     padding: { type: 'select', label: 'Padding', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-    background: { type: 'color', label: 'Background Color' },
   },
 });
 
@@ -175,13 +180,14 @@ componentRegistry.register({
     gradient: false,
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     text: { type: 'string', label: 'Heading Text', placeholder: 'Your Heading Here' },
     level: { type: 'select', label: 'HTML Level', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
     size: { type: 'select', label: 'Size', options: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'] },
     align: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
-    color: { type: 'color', label: 'Text Color' },
     gradient: { type: 'boolean', label: 'Gradient Effect' },
   },
 });
@@ -205,6 +211,8 @@ componentRegistry.register({
     external: false,
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     label: { type: 'string', label: 'Link Text', placeholder: 'About' },
     href: { type: 'link', label: 'URL / Anchor', placeholder: '#about or /page or https://...' },
     variant: { type: 'select', label: 'Style', options: ['inline', 'nav', 'underline', 'pill'] },
@@ -236,6 +244,8 @@ componentRegistry.register({
     iconPosition: 'right',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     label: { type: 'string', label: 'Button Label', placeholder: 'Click Me' },
     href: { type: 'link', label: 'Link / URL', placeholder: '#about or /page or https://...' },
     variant: { type: 'select', label: 'Style', options: ['primary', 'secondary', 'ghost', 'danger', 'success', 'warning', 'outline'] },
@@ -267,6 +277,8 @@ componentRegistry.register({
     alignY: 'middle',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     name: { type: 'string', label: 'Icon Name (Lucide)', placeholder: 'Sparkles, Star, Code2, Zap…' },
     size: { type: 'select', label: 'Size', options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'] },
     shape: { type: 'select', label: 'Background Shape', options: ['none', 'circle', 'square', 'rounded'] },
@@ -295,6 +307,8 @@ componentRegistry.register({
     alignY: 'middle',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     url: { type: 'image', label: 'Image URL', placeholder: 'https://...' },
     alt: { type: 'string', label: 'Alt Text', placeholder: 'Description of the image' },
     aspectRatio: { type: 'select', label: 'Aspect Ratio', options: ['auto', '16/9', '4/3', '1/1', '3/4'] },
@@ -321,12 +335,13 @@ componentRegistry.register({
     alignY: 'middle',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     text: { type: 'textarea', label: 'Text Content', placeholder: 'Write your description...' },
     size: { type: 'select', label: 'Text Size', options: ['xs', 'sm', 'base', 'lg', 'xl'] },
     align: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
-    color: { type: 'color', label: 'Text Color' },
   },
 });
 
@@ -348,6 +363,8 @@ componentRegistry.register({
     alignY: 'middle',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
     text: { type: 'string', label: 'Badge Text', placeholder: 'New Feature' },
     variant: { type: 'select', label: 'Style Variant', options: ['solid', 'outline', 'subtle'] },
     color: { type: 'select', label: 'Color', options: ['indigo', 'rose', 'emerald', 'amber', 'sky', 'slate', 'violet'] },

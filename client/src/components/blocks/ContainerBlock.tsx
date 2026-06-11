@@ -39,6 +39,8 @@ export interface ContainerBlockProps {
    * Legacy single-value align is still parsed for backwards compatibility.
    */
   align?: LegacyAlign;
+  textColor?: string;
+  backgroundColor?: string;
   children?: React.ReactNode;
   sectionId?: string;
   [key: string]: unknown;
@@ -126,6 +128,8 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   alignX,
   alignY,
   align,       // legacy
+  textColor,
+  backgroundColor,
   children,
   sectionId,
 }) => {
@@ -151,7 +155,8 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[resolvedX]     ?? 'center',
         alignItems:     ALIGN_ITEMS_MAP[resolvedY] ?? 'center',
-        ...(background ? { background } : {}),
+        ...(backgroundColor ? { backgroundColor } : background ? { background } : {}),
+        color: textColor,
       }}
     >
       {children}

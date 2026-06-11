@@ -20,6 +20,8 @@ export interface DescriptionBlockProps {
   align?: 'left' | 'center' | 'right';
   alignX?: AlignX;
   alignY?: AlignY;
+  textColor?: string;
+  backgroundColor?: string;
   color?: string;
   sectionId?: string;
   [key: string]: unknown;
@@ -45,6 +47,8 @@ export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
   align     = 'left',
   alignX    = 'left',
   alignY    = 'middle',
+  textColor,
+  backgroundColor,
   color,
   sectionId,
 }) => {
@@ -60,13 +64,14 @@ export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[alignX]     ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        backgroundColor: backgroundColor,
       }}
     >
       <div className={`py-1 w-full ${textAlign}`}>
         <p
           data-cms-field="text"
           className={`leading-relaxed ${sizeClass} cursor-text`}
-          style={color ? { color } : { color: 'var(--cms-desc-color, #94a3b8)' }}
+          style={textColor ? { color: textColor } : color ? { color } : { color: 'var(--cms-desc-color, #94a3b8)' }}
         >
           {text}
         </p>

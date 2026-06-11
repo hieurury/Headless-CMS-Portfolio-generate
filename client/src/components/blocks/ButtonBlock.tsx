@@ -34,6 +34,8 @@ interface ButtonBlockProps {
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
   external?: boolean;
+  textColor?: string;
+  backgroundColor?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -84,6 +86,8 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   iconPosition = 'right',
   fullWidth    = false,
   external     = false,
+  textColor,
+  backgroundColor,
   sectionId,
 }) => {
   const resolvedX: AlignX = alignX ?? (align as AlignX) ?? 'left';
@@ -124,6 +128,8 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[resolvedX]  ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        backgroundColor: backgroundColor,
+        color: textColor,
       }}
     >
       <a
