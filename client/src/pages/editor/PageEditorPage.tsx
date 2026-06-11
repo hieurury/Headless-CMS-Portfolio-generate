@@ -57,6 +57,7 @@ function patchSection(
   targetId: string,
   patch: Partial<LayoutSection>,
 ): LayoutSection {
+  if (!section) return section;
   if (section.id === targetId) return { ...section, ...patch };
   if (!section.children?.length) return section;
   return { ...section, children: section.children.map((c) => patchSection(c, targetId, patch)) };
@@ -131,7 +132,47 @@ export const PageEditorPage: React.FC = () => {
     window.addEventListener('cms:addEmptySlot', handler);
     return () => window.removeEventListener('cms:addEmptySlot', handler);
   }, [updateLayout]);
-
+  // ── Listen for cms:addRowCell
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
+      updateLayout((layout) => {
+        const rowBlock = findSectionById(layout.sections, rowsId);
+        if (!rowBlock) return layout;
+        const current = Number(rowBlock.props['rows'] ?? 1);
+        return {
+          ...layout,
+          sections: updateSectionProps(layout.sections, rowsId, {
+            ...rowBlock.props,
+            rows: String(current + 1),
+          })
+        }
+      })
+    }
+    window.addEventListener('cms:addRowCell', handler);
+    return () => window.removeEventListener('cms:addRowCell', handler);
+  }, [updateLayout]);
+  // ── Listen for cms:removeLastRow
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
+      updateLayout((layout) => {
+        const rowBlock = findSectionById(layout.sections, rowsId);
+        if (!rowBlock) return layout;
+        const current = Number(rowBlock.props['rows'] ?? 1);
+        if (current <= 1) return layout;
+        return {
+          ...layout,
+          sections: updateSectionProps(layout.sections, rowsId, {
+            ...rowBlock.props,
+            rows: String(current - 1),
+          })
+        }
+      })
+    }
+    window.addEventListener('cms:removeLastRow', handler);
+    return () => window.removeEventListener('cms:removeLastRow', handler);
+  }, [updateLayout]);
   // ── Listen for cms:addColCell — "+" on Columns control bar ────────────
   // Increments columns count (adds 1 more empty cell).
   // No child block is added — the new cell is an empty drop zone.
@@ -223,7 +264,39 @@ export const PageEditorPage: React.FC = () => {
     window.addEventListener('cms:mergeColCells', handler);
     return () => window.removeEventListener('cms:mergeColCells', handler);
   }, [updateLayout]);
+  useEffect(() => {
+    const rowHandler = (e: Event) => {
+      const { rowId, aboveIndex, newSpan, rowSpans: currentSpans } =
+        (e as CustomEvent<{ rowId: string; aboveIndex: number; newSpan: number; rowSpans: number[] }>).detail;
+      updateLayout((layout) => {
+        const rowBlock = findSectionById(layout.sections, rowId);
 
+        if (!rowBlock) return layout;
+        const current = Number(rowBlock.props['rows'] ?? 2);
+
+        if (current <= 1) return layout; // can't go below 1
+        const newSpans = [...currentSpans]
+        newSpans[aboveIndex] = newSpan
+        newSpans.splice(aboveIndex + 1, 1)
+        // Remove the last child if it exists at the last index
+        const children = [...(rowBlock.children ?? [])];
+        if (children[aboveIndex + 1] !== undefined) {
+          children.splice(aboveIndex + 1, 1);
+        }
+        // Apply both prop change + children update
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, rowId, { children })),
+            rowId,
+            { ...rowBlock.props, rows: String(current - 1), rowSpans: newSpans },
+          ),
+        };
+      });
+    }
+    window.addEventListener('cms:mergeRowCells', rowHandler);
+    return () => window.removeEventListener('cms:mergeRowCells', rowHandler);
+  }, [updateLayout]);
   // ── Listen for cms:splitColCell — split a merged cell back into two ───
   // Splits cell at cellIndex (which has span S) into two cells of span
   // Math.ceil(S/2) and Math.floor(S/2). Increments column count by 1.
@@ -332,7 +405,6 @@ export const PageEditorPage: React.FC = () => {
       props: defaults,
       children,
     };
-
     if (fillColCell) {
       // Insert the block at the specified cell index inside a Columns block
       updateLayout((layout) => ({

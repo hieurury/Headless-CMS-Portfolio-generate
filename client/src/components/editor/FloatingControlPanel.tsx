@@ -50,7 +50,7 @@ const FloatingControlPanel: React.FC = () => {
       x: Math.round((window.innerWidth - w) / 2),
       y: Math.round(window.innerHeight - h - 24),
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSectionId]);
 
   // Grip drag
@@ -81,31 +81,31 @@ const FloatingControlPanel: React.FC = () => {
     : null;
 
   const entry = selectedSection ? componentRegistry.getEntry(selectedSection.type) : null;
-
   if (!isEditorMode || previewMode || !selectedSection || !entry) return null;
 
-  const isColumns   = selectedSection.type === 'columns';
-  const isContainer = !!(entry.isContainer) && !isColumns;
+  const isColumns = selectedSection.type === 'columns';
+  const isRows = selectedSection.type === 'rows';
+  const isContainer = !!(entry.isContainer) && !isColumns && !isRows;
   const passChildrenDirect = !!(entry as { passChildrenDirect?: boolean }).passChildrenDirect;
-  const canAddFreeChild    = isContainer && !passChildrenDirect;
+  const canAddFreeChild = isContainer && !passChildrenDirect;
   const colCount = isColumns ? Number(selectedSection.props?.columns ?? 2) : 0;
   const colSpans = isColumns ? (selectedSection.props?.colSpans as number[] | undefined) : undefined;
-
+  const rowCount = isRows ? Number(selectedSection.props?.rows ?? 1) : 0;
+  const rowSpans = isRows ? (selectedSection.props?.rowSpans as number[] | undefined) : undefined;
   // Determine visibility: initially hidden until layout effect fires
   const isVisible = pos !== UNSET;
-
   return (
     <div
       ref={panelRef}
       data-editor-chrome
       style={{
-        position:  'fixed',
-        left:      pos.x,
-        top:       pos.y,
-        zIndex:    9999,
+        position: 'fixed',
+        left: pos.x,
+        top: pos.y,
+        zIndex: 9999,
         userSelect: 'none',
-        minWidth:  260,
-        maxWidth:  420,
+        minWidth: 260,
+        maxWidth: 420,
         visibility: isVisible ? 'visible' : 'hidden',
       }}
       className="flex flex-col rounded-2xl overflow-hidden shadow-2xl shadow-black/70 border border-white/12 bg-[#0c0c1a]/97 backdrop-blur-md"
@@ -139,7 +139,16 @@ const FloatingControlPanel: React.FC = () => {
             )}
           </span>
         )}
-
+        {isRows && (
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-slate-400 shrink-0">
+            {colCount} row
+            {colSpans && colSpans.some(s => s !== 1) && (
+              <span className="ml-1 text-indigo-400">
+                {colSpans.map(s => `${s}fr`).join(' · ')}
+              </span>
+            )}
+          </span>
+        )}
         {/* Anchor name */}
         {selectedSection.name && (
           <span className="text-[10px] font-mono text-slate-500 shrink-0">
@@ -197,6 +206,38 @@ const FloatingControlPanel: React.FC = () => {
           </>
         )}
 
+        {/* Rows controls */}
+        {isRows && (
+          <>
+            <ActionBtn
+              icon={<Plus size={14} />}
+              label="Add row"
+              color="indigo"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent('cms:addRow', { detail: { parentId: selectedSection.id } }),
+                )
+              }
+            />
+            {rowCount > 1 && (
+              <ActionBtn
+                icon={<Minus size={14} />}
+                label="Remove last row"
+                color="rose"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent('cms:removeLastRow', { detail: { parentId: selectedSection.id } }),
+                  )
+                }
+              />
+            )}
+            {/* Column count readout */}
+            <span className="text-[11px] text-slate-500 font-mono px-2">
+              {rowCount} row
+            </span>
+          </>
+        )}
+
         {/* Spacer */}
         <div className="flex-1" />
 
@@ -225,9 +266,9 @@ const ActionBtn: React.FC<{
 }> = ({ icon, label, color, onClick }) => {
   const colorMap = {
     indigo: 'hover:bg-indigo-500/20 hover:text-indigo-300 border-indigo-500/20',
-    rose:   'hover:bg-rose-500/20 hover:text-rose-300 border-rose-500/20',
-    red:    'hover:bg-red-500/20 hover:text-red-300 border-red-500/20',
-    slate:  'hover:bg-white/10 hover:text-white border-white/10',
+    rose: 'hover:bg-rose-500/20 hover:text-rose-300 border-rose-500/20',
+    red: 'hover:bg-red-500/20 hover:text-red-300 border-red-500/20',
+    slate: 'hover:bg-white/10 hover:text-white border-white/10',
   };
   return (
     <button

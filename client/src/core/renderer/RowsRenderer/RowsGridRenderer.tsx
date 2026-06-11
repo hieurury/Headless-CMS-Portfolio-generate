@@ -12,10 +12,9 @@ const RowsGridRenderer: React.FC<{
     const ALIGN_MAP: Record<string, string> = {
         start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch',
     };
-
     const isEditing = isEditorMode && !previewMode;
     const align = (section.props?.align as string) ?? 'stretch';
-    
+
     // ── rowSpans: per-cell height weights ─────────────────────────────────
     const rawSpans = section.props?.rowSpans as number[] | undefined;
     const rowSpans: number[] = (
@@ -54,7 +53,7 @@ const RowsGridRenderer: React.FC<{
             </div>
         );
     }
-    
+
     const cells = Array.from({ length: rowCount }, (_, i) => {
         const raw = section.children?.[i] ?? null;
         // Treat null or legacy _colpad entries as empty

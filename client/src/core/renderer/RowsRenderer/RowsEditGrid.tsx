@@ -33,6 +33,7 @@ const _RowsEditGrid: React.FC<{
     cumulativeSpans,
     ALIGN_MAP,
 }) => {
+
         const handleDragEnd = useCallback(
             (event: import('@dnd-kit/core').DragEndEvent) => {
                 const { active, over } = event;
@@ -57,13 +58,13 @@ const _RowsEditGrid: React.FC<{
         );
 
         const handleMerge = useCallback(
-            (leftIndex: number) => {
+            (aboveIndex: number) => {
                 window.dispatchEvent(
                     new CustomEvent('cms:mergeRowCells', {
                         detail: {
                             rowId: section.id,
-                            leftIndex,
-                            newSpan: rowSpans[leftIndex] + rowSpans[leftIndex + 1],
+                            aboveIndex,
+                            newSpan: rowSpans[aboveIndex] + rowSpans[aboveIndex + 1],
                             rowSpans,
                         },
                     }),
