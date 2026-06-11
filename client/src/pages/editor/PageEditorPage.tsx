@@ -30,6 +30,7 @@ import {
   updateSectionName,
   findParent,
   insertIntoColumnsCell,
+  insertIntoRowsCell,
 } from '../../core/utils/layoutUtils';
 import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
@@ -341,6 +342,66 @@ export const PageEditorPage: React.FC = () => {
     return () => window.removeEventListener('cms:splitColCell', handler);
   }, [updateLayout]);
 
+  // ── Listen for cms:splitRowCell — split a merged cell back into two ───
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { rowId, cellIndex } =
+        (e as CustomEvent<{ rowId: string; cellIndex: number }>).detail;
+      updateLayout((layout) => {
+        const rowBlock = findSectionById(layout.sections, rowId);
+        if (!rowBlock) return layout;
+        const current = Number(rowBlock.props['rows'] ?? 2);
+        const rawSpans = rowBlock.props['rowSpans'] as number[] | undefined;
+        const rowSpans = Array.isArray(rawSpans) && rawSpans.length === current
+          ? [...rawSpans]
+          : Array(current).fill(1);
+
+        const cellSpan = rowSpans[cellIndex] ?? 1;
+        if (cellSpan <= 1) return layout;
+
+        const leftSpan = Math.ceil(cellSpan / 2);
+        const rightSpan = Math.floor(cellSpan / 2);
+        const newSpans = [...rowSpans];
+        newSpans.splice(cellIndex, 1, leftSpan, rightSpan);
+
+        const children = [...(rowBlock.children ?? [])];
+
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, rowId, { children })),
+            rowId,
+            { ...rowBlock.props, rows: String(current + 1), rowSpans: newSpans },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:splitRowCell', handler);
+    return () => window.removeEventListener('cms:splitRowCell', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:reorderRowCells — drag reorder inside Rows ──────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { rowId, children, rowSpans } =
+        (e as CustomEvent<{ rowId: string; children: LayoutSection[]; rowSpans: number[] }>).detail;
+      updateLayout((layout) => {
+        const rowBlock = findSectionById(layout.sections, rowId);
+        if (!rowBlock) return layout;
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, rowId, { children })),
+            rowId,
+            { ...rowBlock.props, rowSpans },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:reorderRowCells', handler);
+    return () => window.removeEventListener('cms:reorderRowCells', handler);
+  }, [updateLayout]);
+
   // ── Listen for cms:reorderColCells — drag reorder inside Columns ──────
   // Receives the reordered children AND colSpans arrays from dnd-kit.
   useEffect(() => {
@@ -380,6 +441,21 @@ export const PageEditorPage: React.FC = () => {
     return () => window.removeEventListener('cms:fillColCell', handler);
   }, []);
 
+  const [fillRowCell, setFillRowCell] = useState<{ rowId: string; cellIndex: number } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ rowId: string; cellIndex: number }>).detail;
+      setFillRowCell(detail);
+      setFillColCell(null);
+      setFillSlotId(null);
+      setAddChildParentId(null);
+      setShowAddPanel(true);
+    };
+    window.addEventListener('cms:fillRowCell', handler);
+    return () => window.removeEventListener('cms:fillRowCell', handler);
+  }, []);
+
   // ── Listen for cms:fillEmptySlot — click on an empty slot ─────────
   // Opens AddPanel; the chosen block REPLACES the _empty slot.
   useEffect(() => {
@@ -413,6 +489,13 @@ export const PageEditorPage: React.FC = () => {
       }));
       setSelectedId(newSection.id);
       setFillColCell(null);
+    } else if (fillRowCell) {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: insertIntoRowsCell(layout.sections, fillRowCell.rowId, newSection, fillRowCell.cellIndex),
+      }));
+      setSelectedId(newSection.id);
+      setFillRowCell(null);
     } else if (fillSlotId) {
       // Replace the _empty placeholder with the real block
       updateLayout((layout) => ({
@@ -442,7 +525,7 @@ export const PageEditorPage: React.FC = () => {
     setSelectedFieldKey(null);
     setShowRightPanel(true);
     setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [fillColCell, fillSlotId, addChildParentId, updateLayout, draftLayout.sections]);
+  }, [fillColCell, fillRowCell, fillSlotId, addChildParentId, updateLayout, draftLayout.sections]);
 
   // ── Add template (inject full tree) ───────────────────────────────
   const handleAddTemplate = useCallback((tree: LayoutSection) => {
@@ -453,6 +536,13 @@ export const PageEditorPage: React.FC = () => {
       }));
       setSelectedId(tree.id);
       setFillColCell(null);
+    } else if (fillRowCell) {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: insertIntoRowsCell(layout.sections, fillRowCell.rowId, tree, fillRowCell.cellIndex),
+      }));
+      setSelectedId(tree.id);
+      setFillRowCell(null);
     } else if (fillSlotId) {
       // Replace _empty placeholder with the template root
       updateLayout((layout) => ({
@@ -512,6 +602,13 @@ export const PageEditorPage: React.FC = () => {
           return {
             ...layout,
             sections: insertIntoColumnsCell(withoutBlock, toContainerId, movedBlock, toIndex),
+          };
+        } else if (targetBlock?.type === 'rows') {
+          const [withoutBlock, movedBlock] = removeSection(layout.sections, sectionId);
+          if (!movedBlock) return layout;
+          return {
+            ...layout,
+            sections: insertIntoRowsCell(withoutBlock, toContainerId, movedBlock, toIndex),
           };
         }
       }

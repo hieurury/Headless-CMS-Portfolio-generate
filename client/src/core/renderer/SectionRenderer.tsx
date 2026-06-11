@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { useSortable, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove as dndArrayMove } from '@dnd-kit/sortable';
-import { useDroppable, DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useSortable, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal, GripVertical } from 'lucide-react';
 
@@ -17,6 +17,10 @@ export const isDropId = (id: string) => id.startsWith(CONTAINER_DROP_PREFIX);
 
 /** Special type for the empty-slot placeholder block */
 export const EMPTY_SLOT_TYPE = '_empty';
+
+import RowsGridRenderer from './RowsRenderer/RowsGridRenderer';
+import RowsEditorWrapper from './RowsRenderer/RowsEditorWrapper';
+
 
 /** ID prefix used for per-cell empty zones inside a Columns block */
 export const COL_CELL_PREFIX = '_colcell-';
@@ -647,7 +651,6 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     selectedSectionId,
     onSectionSelect,
     onFieldSelect,
-    onRemoveSection,
     onPropsChange,
   } = useEditorContext();
 
@@ -667,6 +670,14 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       return <ColumnsGridRenderer section={section} depth={depth} />;
     }
     return <ColumnsEditorWrapper section={section} depth={depth} />;
+  }
+
+  // ── Rows block: special grid renderer ────────────
+  if (section.type === 'rows') {
+    if (!effectiveEditorMode || effectivePreviewMode) {
+      return <RowsGridRenderer section={section} depth={depth} />;
+    }
+    return <RowsEditorWrapper section={section} depth={depth} />;
   }
 
   const Component = componentRegistry.resolve(section.type);
@@ -837,12 +848,6 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     height: '100%',
     minWidth: 0,
   };
-
-  // Containers that can add free children (row, section-wrapper, card, etc.)
-  // passChildrenDirect containers (split) use _column slots instead
-  const canAddFreeChild = isContainer && !passChildrenDirect;
-  // columns block gets its own "add column" button (not + for free children)
-  const canAddColumn = section.type === 'split';
 
   return (
     <div

@@ -13,18 +13,10 @@ export interface ColumnsBlockProps {
   [key: string]: unknown;
 }
 
-const GAP_MAP: Record<string, string> = {
-  none: '0px',
-  sm:   '12px',
-  md:   '24px',
-  lg:   '40px',
-  xl:   '64px',
-};
-
 const ALIGN_MAP: Record<string, string> = {
-  start:   'flex-start',
-  center:  'center',
-  end:     'flex-end',
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
   stretch: 'stretch',
 };
 

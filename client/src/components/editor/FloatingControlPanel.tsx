@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import React, { useLayoutEffect, useRef, useState, useCallback } from 'react';
 import {
   GripVertical, Trash2, Plus, Minus, Settings,
 } from 'lucide-react';
@@ -91,7 +91,6 @@ const FloatingControlPanel: React.FC = () => {
   const colCount = isColumns ? Number(selectedSection.props?.columns ?? 2) : 0;
   const colSpans = isColumns ? (selectedSection.props?.colSpans as number[] | undefined) : undefined;
   const rowCount = isRows ? Number(selectedSection.props?.rows ?? 1) : 0;
-  const rowSpans = isRows ? (selectedSection.props?.rowSpans as number[] | undefined) : undefined;
   // Determine visibility: initially hidden until layout effect fires
   const isVisible = pos !== UNSET;
   return (
@@ -215,7 +214,7 @@ const FloatingControlPanel: React.FC = () => {
               color="indigo"
               onClick={() =>
                 window.dispatchEvent(
-                  new CustomEvent('cms:addRow', { detail: { parentId: selectedSection.id } }),
+                  new CustomEvent('cms:addRowCell', { detail: { rowsId: selectedSection.id } }),
                 )
               }
             />
@@ -226,7 +225,7 @@ const FloatingControlPanel: React.FC = () => {
                 color="rose"
                 onClick={() =>
                   window.dispatchEvent(
-                    new CustomEvent('cms:removeLastRow', { detail: { parentId: selectedSection.id } }),
+                    new CustomEvent('cms:removeLastRow', { detail: { rowsId: selectedSection.id } }),
                   )
                 }
               />

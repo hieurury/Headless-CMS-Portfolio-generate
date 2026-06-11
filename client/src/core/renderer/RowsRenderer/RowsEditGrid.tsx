@@ -1,12 +1,10 @@
 import React from 'react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useCallback } from "react";
-import { useSortable, SortableContext, arrayMove as dndArrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, arrayMove as dndArrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Merge } from 'lucide-react';
 
 import type { LayoutSection } from "../../types/layout.types";
-import { SectionRenderer } from "../SectionRenderer";
 import RowCellDropZone from "./RowCellDropZone";
 import RowCellSortable from './RowCellSortable';
 

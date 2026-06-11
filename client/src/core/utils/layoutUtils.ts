@@ -257,3 +257,28 @@ export function insertIntoColumnsCell(
     return s;
   });
 }
+
+/**
+ * Insert a block into a Rows block's children at a specific cell index.
+ */
+export function insertIntoRowsCell(
+  sections: LayoutSection[],
+  rowsId: string,
+  block: LayoutSection,
+  cellIndex: number,
+): LayoutSection[] {
+  return sections.map((s) => {
+    if (!s) return s;                         // guard against null gaps
+    if (s.id === rowsId) {
+      const existing = s.children ?? [];
+      const length = Math.max(existing.length, cellIndex + 1);
+      const children = Array.from({ length }, (_, i) => existing[i] ?? null);
+      children[cellIndex] = block;
+      return { ...s, children: children as LayoutSection[] };
+    }
+    if (s.children?.length) {
+      return { ...s, children: insertIntoRowsCell(s.children, rowsId, block, cellIndex) };
+    }
+    return s;
+  });
+}

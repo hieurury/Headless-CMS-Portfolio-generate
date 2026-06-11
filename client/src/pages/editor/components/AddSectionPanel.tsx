@@ -160,7 +160,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                           : 'bg-white/5 text-slate-400 hover:bg-white/10',
                       )}
                     >
-                      {meta.icon} {meta.label}
+                      {meta?.icon} {meta?.label}
                     </button>
                   );
                 })}
