@@ -14,35 +14,35 @@ const EXAMPLES = [
     label: 'Full-Stack Dev',
     color: 'from-indigo-500/20 to-violet-500/10 border-indigo-500/30 text-indigo-300',
     prompt:
-      'Full stack developer named Alex with hero, about, skills (React, Node.js, Python, Docker), 4 projects with GitHub links, experience timeline, and contact form',
+      'Tạo portfolio cho Full Stack Developer tên là Alex. Sử dụng cấu trúc MODERN HERO (chia 2 cột với ảnh). Thêm section About, sau đó là section Skills dạng Feature Cards (chứa React, Node.js, Docker). Tiếp theo là Projects Grid (3 cột, dùng Card) và một Experience Timeline. Cuối trang là Footer có các nút liên hệ.',
   },
   {
     icon: Palette,
     label: 'UX / UI Designer',
     color: 'from-pink-500/20 to-rose-500/10 border-pink-500/30 text-pink-300',
     prompt:
-      'UX/UI designer portfolio for Sarah — projects-first layout with creative hero, 5 design projects, about me with design philosophy, tools (Figma, Adobe XD), and contact',
+      'Tạo portfolio cho UX/UI Designer. Bắt đầu với CREATIVE HERO có tiêu đề thật nổi bật và hiệu ứng gradient. Phần chính là BENTO GRID hiển thị các dự án thiết kế. Thêm section Kỹ năng sử dụng các Card dạng glass, và kết thúc với phần Contact có các nút mạng xã hội lớn.',
   },
   {
     icon: BarChart2,
     label: 'Data Scientist',
     color: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-300',
     prompt:
-      'Data scientist and ML engineer portfolio with technical skills (Python, TensorFlow, PyTorch, SQL), research projects with GitHub links, academic experience, and publications',
+      'Portfolio cho Data Scientist tên Sarah. Sử dụng cấu trúc thanh lịch. Thêm một thanh METRICS/STATS để hiển thị "5+ năm kinh nghiệm", "20+ mô hình ML". Danh sách các công trình nghiên cứu sử dụng cấu trúc Card Grid, và lịch sử học thuật sử dụng Timeline. Cần có phần giới thiệu kỹ năng (Python, SQL).',
   },
   {
     icon: Briefcase,
     label: 'Freelance Consultant',
     color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-300',
     prompt:
-      'Freelance web consultant with corporate layout: professional hero, 10 years of experience, education in Computer Science, key clients, services offered, and contact',
+      'Tạo trang web cho Freelance Web Consultant. Phong cách chuyên nghiệp. Bắt đầu với Hero section căn giữa kèm nút CTA lớn. Tiếp theo là các Dịch vụ cung cấp sử dụng Feature Cards trong lưới 3 cột. Cần có phần chia sẻ các khách hàng lớn và section Contact có viền gradient nổi bật.',
   },
   {
     icon: GraduationCap,
     label: 'Academic Researcher',
     color: 'from-sky-500/20 to-cyan-500/10 border-sky-500/30 text-sky-300',
     prompt:
-      'Academic researcher and professor portfolio with about, publications as projects, teaching experience, education (PhD), speaking engagements, and academic contact',
+      'Portfolio học thuật cho Giáo sư Đại học. Giao diện Minimalist, tập trung vào nội dung. Bắt đầu với Hero gọn gàng. Danh sách các bài báo khoa học xuất bản (dạng Card 2 cột), kinh nghiệm giảng dạy (dạng Timeline), và lịch sử học vấn. Footer đơn giản và chuyên nghiệp.',
   },
 ];
 
@@ -140,8 +140,8 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
               setError(null);
             }}
             className={`
-              flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-              border bg-gradient-to-r transition-all duration-200
+              flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-medium
+              border border-r-[4px] bg-gradient-to-r transition-all duration-200
               hover:scale-105 hover:shadow-lg active:scale-95
               ${color}
             `}
@@ -161,7 +161,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
               ? 'border-violet-500/40 shadow-lg shadow-violet-500/10'
               : 'border-white/10'
             }
-            bg-[#0d0d1a]
+            bg-white/5
           `}
         >
           <textarea

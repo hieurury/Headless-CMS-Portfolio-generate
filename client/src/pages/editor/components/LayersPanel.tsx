@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GripVertical, ChevronRight, Plus, Trash2, Eye, Settings } from 'lucide-react';
 import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
@@ -158,6 +158,14 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   const hasChildren = visibleChildren.length > 0;
   const isSelected = selectedId === section.id;
   const [expanded, setExpanded] = useState(true);
+  const nodeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isSelected && nodeRef.current) {
+      // scrollIntoView with block: 'nearest' avoids jumpy scrolling if already visible
+      nodeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [isSelected]);
 
   const {
     attributes,
@@ -168,15 +176,21 @@ const LayerNode: React.FC<LayerNodeProps> = ({
     isDragging,
   } = useSortable({ id: section.id, disabled: !isSortable });
 
+  const setRefs = (node: HTMLDivElement | null) => {
+    nodeRef.current = node;
+    if (isSortable && setNodeRef) {
+      setNodeRef(node);
+    }
+  };
+
   const style = isSortable
     ? { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
     : undefined;
 
   const indent = depth * 14;
 
-
   return (
-    <div ref={isSortable ? setNodeRef : undefined} style={style} className="w-full">
+    <div ref={setRefs} style={style} className="w-full">
       {/* ── Row ─────────────────────────────────────────────────── */}
       <div
         className={clsx(

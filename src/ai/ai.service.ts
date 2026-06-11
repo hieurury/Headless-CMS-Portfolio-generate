@@ -18,318 +18,122 @@ import { GenerateLayoutDto } from './dto/generate-layout.dto';
  * The AI generates a tree of section-wrappers containing blocks.
  */
 const COMPONENT_CONTEXT = `
-You are a world-class portfolio website layout designer. Generate DIVERSE, CREATIVE, and VISUALLY RICH portfolio layouts using a block composition system. Output ONLY valid JSON — no markdown, no text, no code blocks.
+You are a world-class portfolio website layout designer and UI architect. 
+Generate DIVERSE, CREATIVE, and VISUALLY RICH portfolio layouts using ONLY the 11 provided building blocks. 
+You MUST combine Layout Containers and Atomic Blocks to build complex, beautiful sections. Do NOT output flat lists of atomic blocks.
+Output ONLY valid JSON — no markdown, no text, no code blocks.
 
 ═══════════════════════════════════════════════════
-BLOCK SYSTEM — all available blocks
+BLOCK SYSTEM — ONLY these 11 blocks exist. DO NOT invent blocks.
 ═══════════════════════════════════════════════════
 
 ── NAVIGATION ───────────────────────────────────────────────────────────────
+[nav-bar-wrapper] — Sticky navigation bar. Always the FIRST block on any page.
+{ "type": "nav-bar-wrapper", "props": { "sticky": true, "transparent": true, "background": "dark", "padding": "lg", "maxWidth": "xl" }, "children": [...] }
 
-[navbar] — Sticky navigation bar. Always the FIRST block on any page.
-{
-  "type": "navbar",
-  "props": {
-    "logo": "Alex.dev",
-    "links": [{"label": "About", "href": "#about"}, {"label": "Work", "href": "#work"}, {"label": "Contact", "href": "#contact"}],
-    "ctaLabel": "Hire Me",
-    "ctaHref": "#contact",
-    "sticky": true,
-    "transparent": true
-  }
-}
+── LAYOUT CONTAINERS (MUST BE USED TO STRUCTURE CONTENT) ─────────────────────────
+[container] — Generic box container or full-width section wrapper. isContainer = true.
+{ "type": "container", "props": { "style": "none", "padding": "xl", "borderRadius": "none", "alignX": "center", "alignY": "middle" }, "children": [/* exactly 1 child, usually rows or columns */] }
+  style: "none" | "card" | "glass" | "outlined" | "filled"
+  padding: "none" | "sm" | "md" | "lg" | "xl"
+  alignX: "left" | "center" | "right"
 
-── LAYOUT CONTAINERS ────────────────────────────────────────────────────────
-
-[section-wrapper] — Full-width section container. isContainer = true. Wrap any blocks inside.
-{
-  "type": "section-wrapper",
-  "name": "hero",
-  "props": {
-    "label": "Hello World",
-    "title": "My Portfolio",
-    "subtitle": "Full-stack developer based in Vietnam",
-    "align": "center",
-    "padding": "xl",
-    "background": "gradient",
-    "maxWidth": "xl",
-    "showDivider": false
-  },
-  "children": [/* blocks */]
-}
-  background: "default" | "alternate" | "dark" | "gradient" | "none"
-  padding: "sm" | "md" | "lg" | "xl"
-  align: "left" | "center" | "right"
-  maxWidth: "sm" | "md" | "lg" | "xl" | "full"
-
-[columns] — Side-by-side grid. isContainer=true. Children MUST be _column blocks.
-{
-  "type": "columns",
-  "props": {"columns": "3", "gap": "md", "align": "start"},
-  "children": [
-    {"type": "_column", "props": {}, "children": [/* blocks */]},
-    {"type": "_column", "props": {}, "children": [/* blocks */]},
-    {"type": "_column", "props": {}, "children": [/* blocks */]}
-  ]
-}
+[columns] — Side-by-side grid. isContainer=true. Children are placed directly into each column cell.
+{ "type": "columns", "props": {"columns": "2", "gap": "md", "align": "stretch"}, "children": [ /* block 1 */, /* block 2 */ ] }
   columns: "2" | "3" | "4"
-  gap: "none" | "sm" | "md" | "lg" | "xl"
-
-[split] — Two-column split with ratio control. isContainer=true. Children MUST be exactly 2 _column blocks.
-{
-  "type": "split",
-  "props": {"leftWidth": "50", "verticalAlign": "center", "gap": "xl", "reverse": false},
-  "children": [
-    {"type": "_column", "props": {"align": "start"}, "children": [/* left blocks */]},
-    {"type": "_column", "props": {"align": "center"}, "children": [/* right blocks */]}
-  ]
-}
-  leftWidth: "33" | "40" | "50" | "60" | "67"
-
-[row] — Vertical stack of blocks. isContainer=true.
-{
-  "type": "row",
-  "props": {"gap": "lg", "align": "center", "padding": "none"},
-  "children": [/* blocks */]
-}
-  gap: "none" | "sm" | "md" | "lg" | "xl"
   align: "start" | "center" | "end" | "stretch"
 
-[card] — Styled card container. isContainer=true.
-{
-  "type": "card",
-  "props": {"variant": "glass", "padding": "md", "radius": "xl", "showHeader": true, "title": "Card Title", "subtitle": "Subtitle"},
-  "children": [/* blocks */]
-}
-  variant: "default" | "glass" | "outlined" | "elevated" | "gradient"
+[rows] — Vertical stack. isContainer=true. Children are placed directly into each row cell.
+{ "type": "rows", "props": {"rows": "3", "gap": "lg", "align": "center"}, "children": [ /* block 1 */, /* block 2 */, /* block 3 */ ] }
+  rows: "2" | "3" | "4"
 
-[container] — Generic box container. isContainer=true.
-{
-  "type": "container",
-  "props": {"padding": "md", "style": "glass", "maxWidth": "lg"},
-  "children": [/* blocks */]
-}
-
-── ATOMIC BLOCKS (no children) ──────────────────────────────────────────────
-
+── ATOMIC BLOCKS (NO CHILDREN ALLOWED) ──────────────────────────────────────────────
 [heading] — Title text
-{
-  "type": "heading",
-  "props": {"text": "Hi, I'm Alex", "level": "h1", "size": "5xl", "align": "center", "gradient": true}
-}
-  level: "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
-  size: "sm" | "base" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl"
+{ "type": "heading", "props": {"text": "Hello", "level": "h2", "size": "4xl", "alignX": "center", "gradient": true} }
 
-[text] — Paragraph / body text
-{
-  "type": "text",
-  "props": {"content": "I build scalable web apps with React & Node.js.", "size": "lg", "align": "center", "muted": true}
-}
+[description] — Paragraph / body text
+{ "type": "description", "props": {"text": "...", "size": "base", "alignX": "left"} }
 
-[button] — Call-to-action button
-{
-  "type": "button",
-  "props": {"label": "View My Work", "href": "#work", "variant": "primary", "size": "lg", "align": "center"}
-}
-  variant: "primary" | "secondary" | "ghost" | "danger"
+[button] — Call-to-action
+{ "type": "button", "props": {"label": "Click", "variant": "primary", "href": "#", "icon": "🚀"} }
+  variant: "primary" | "secondary" | "ghost" | "danger" | "success" | "warning" | "outline"
+
+[link] — Inline hyperlink
+{ "type": "link", "props": {"label": "About", "variant": "nav", "href": "#about"} }
 
 [badge] — Small colored label
-{
-  "type": "badge",
-  "props": {"label": "✨ Available for work", "variant": "indigo", "align": "center"}
-}
-  variant: "indigo" | "violet" | "emerald" | "amber" | "rose" | "sky" | "slate"
+{ "type": "badge", "props": {"text": "New", "variant": "subtle", "color": "indigo", "shape": "pill"} }
+
+[icon] — A Lucide icon
+{ "type": "icon", "props": {"name": "Sparkles", "size": "lg", "shape": "circle", "accent": "violet"} }
+  name: Any valid Lucide icon name (e.g. Star, Zap, Code2)
 
 [image] — Image block
-{
-  "type": "image",
-  "props": {"src": "", "alt": "Profile photo", "width": "100%", "borderRadius": "2xl", "align": "center"}
-}
-
-[stat] — Key metric counter
-{
-  "type": "stat",
-  "props": {"value": "5+", "label": "Years Experience", "icon": "🏆", "variant": "card", "accent": "indigo", "align": "center"}
-}
-  variant: "default" | "card" | "bordered" | "minimal"
-  accent: "indigo" | "violet" | "emerald" | "amber" | "rose" | "sky"
-
-[feature-card] — Icon + title + description
-{
-  "type": "feature-card",
-  "props": {"icon": "⚡", "title": "Performance", "description": "I build fast, accessible, production-ready apps.", "variant": "glass", "accent": "violet"}
-}
-  variant: "default" | "glass" | "outlined" | "gradient" | "minimal"
-
-[timeline-item] — Experience/education entry
-{
-  "type": "timeline-item",
-  "props": {
-    "role": "Senior Developer",
-    "company": "TechCorp",
-    "startDate": "Jan 2022",
-    "endDate": "Present",
-    "location": "Remote",
-    "description": "Led development of a B2B SaaS platform.",
-    "highlights": [{"value": "40% performance improvement"}, {"value": "Mentored 4 junior devs"}],
-    "variant": "card",
-    "accent": "indigo",
-    "showDot": true
-  }
-}
-
-[divider] — Horizontal line
-{
-  "type": "divider",
-  "props": {"style": "gradient", "spacing": "md"}
-}
-  style: "solid" | "dashed" | "dotted" | "gradient"
-
-[spacer] — Vertical spacing
-{
-  "type": "spacer",
-  "props": {"height": "md"}
-}
-  height: "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
+{ "type": "image", "props": {"url": "https://...", "alt": "image", "borderRadius": "xl", "objectFit": "cover"} }
 
 ═══════════════════════════════════════════════════
-COMPOSITION PATTERNS — how to build sections
+COMPOSITION PATTERNS — HOW TO BUILD COMPLETE, RICH SECTIONS
 ═══════════════════════════════════════════════════
 
-HERO SECTION (centered):
-  section-wrapper(background: "gradient", padding: "xl") →
-    badge + heading(h1, 5xl, gradient) + text(lg, muted) + row → [button(primary), button(secondary)]
+1. MODERN HERO (Split Layout):
+   container(style="none", padding="xl") ->
+     columns(columns="2", align="center") -> [
+       rows(rows="3", gap="md") -> [ badge, heading(level="h1"), description ],
+       image
+     ]
 
-HERO SECTION (split):
-  section-wrapper(background: "default", padding: "xl") →
-    split(leftWidth: "50") → [
-      _column → [badge + heading(h1) + text + button],
-      _column → [image]
-    ]
+2. CREATIVE HERO (Centered):
+   container(style="none", padding="xl", alignX="center") ->
+     rows(rows="4", gap="md", align="center") -> [ badge, heading, description, button ]
 
-ABOUT SECTION:
-  section-wrapper(name: "about", title: "About Me", background: "alternate") →
-    split(leftWidth: "40") → [
-      _column → [image(borderRadius: "2xl")],
-      _column → [heading(h3) + text + text + button]
-    ]
+3. BENTO GRID / PROJECTS (using Columns & Cards):
+   container(style="none", padding="lg") ->
+     rows(rows="2", gap="lg") -> [
+       heading(text="Featured Work"),
+       columns(columns="3", gap="md") -> [
+         container(style="card", padding="md") -> rows(rows="3") -> [ image, heading, description ],
+         container(style="card", padding="md") -> rows(rows="3") -> [ image, heading, description ],
+         container(style="card", padding="md") -> rows(rows="3") -> [ image, heading, description ]
+       ]
+     ]
 
-SKILLS SECTION:
-  section-wrapper(name: "skills", title: "Skills") →
-    columns(3) → [
-      _column → [feature-card(icon, title, description, variant: "glass")],
-      _column → [feature-card(...)],
-      _column → [feature-card(...)]
-    ]
+4. SKILLS / FEATURES (Custom Feature Cards):
+   container(style="none", padding="xl") ->
+     rows(rows="2", gap="xl") -> [
+       heading,
+       columns(columns="3", gap="lg") -> [
+         container(style="glass", padding="lg") -> rows(rows="3") -> [ icon, heading, description ],
+         container(style="glass", padding="lg") -> rows(rows="3") -> [ icon, heading, description ],
+         container(style="glass", padding="lg") -> rows(rows="3") -> [ icon, heading, description ]
+       ]
+     ]
 
-STATS BANNER:
-  section-wrapper(background: "alternate", padding: "md") →
-    columns(4) → [
-      _column → [stat(value, label, icon)],
-      _column → [stat(...)],
-      _column → [stat(...)],
-      _column → [stat(...)]
-    ]
-
-PROJECTS SECTION:
-  section-wrapper(name: "work", title: "My Projects", background: "alternate") →
-    columns(2 or 3) → [
-      _column → [card(glass, showHeader: true, title, subtitle) → [image + text + button]],
-      _column → [card(...) → [image + text + button]],
-      ...
-    ]
-
-EXPERIENCE SECTION:
-  section-wrapper(name: "experience", title: "Work Experience") →
-    row(gap: "lg") → [
-      timeline-item(role, company, dates, description, highlights, variant: "card"),
-      timeline-item(...),
-      ...
-    ]
-
-EDUCATION SECTION:
-  section-wrapper(name: "education", title: "Education") →
-    row(gap: "md") → [
-      timeline-item(role: degree+field, company: institution, startDate, endDate, description),
-      ...
-    ]
-
-CONTACT SECTION:
-  section-wrapper(name: "contact", title: "Let's Work Together", background: "gradient", padding: "xl") →
-    text(centered, lg) + row(align: "center") → [button(primary, mailto:), button(secondary, LinkedIn)]
-
-FOOTER:
-  section-wrapper(name: "footer", background: "dark", padding: "sm") →
-    row(align: "center") → [text(copyright, center, muted), divider, row → [button(ghost, Privacy), button(ghost, Terms)]]
+5. EXPERIENCE TIMELINE:
+   container(style="none", padding="xl") ->
+     rows(rows="2", gap="lg") -> [
+       heading,
+       columns(columns="2", gap="md") -> [
+         container(style="outlined", padding="md") -> rows(rows="2") -> [ heading, description ],
+         container(style="outlined", padding="md") -> rows(rows="2") -> [ heading, description ]
+       ]
+     ]
 
 ═══════════════════════════════════════════════════
-LAYOUT PERSONAS — pick based on user's role
+CRITICAL RULES FOR HIGH-QUALITY OUTPUT
 ═══════════════════════════════════════════════════
-
-DEVELOPER/ENGINEER:
-  navbar → hero(centered, gradient) → about(split) → skills(feature-cards) → stats(4-col) → experience(timeline) → work(project cards) → contact → footer
-
-DESIGNER/CREATIVE:
-  navbar → hero(split, bold heading) → work(large cards 2-col) → skills(feature-cards, minimal) → about(centered) → contact
-
-CONSULTANT/PROFESSIONAL:
-  navbar → hero(centered, dark) → stats(4-col) → skills(feature-cards) → experience(timeline) → about → contact
-
-MINIMALIST:
-  navbar → hero(centered, minimal) → about(split) → work(2-col cards) → contact
-
-═══════════════════════════════════════════════════
-ANCHOR IDs — use "name" field for smooth scroll
-═══════════════════════════════════════════════════
-
-Set the "name" field on section-wrapper and navbar to enable anchor navigation:
-  navbar links use "#" + section name
-  section-wrappers: name: "about" | "work" | "skills" | "experience" | "contact" | "footer" | etc.
-  
-Navbar links MUST point to section names you actually include.
-
-═══════════════════════════════════════════════════
-CONTENT RULES
-═══════════════════════════════════════════════════
-
-1. Use real-sounding names, companies, project names (never "Lorem ipsum")
-2. highlights array MUST always be [{value: "..."}, ...] format — NEVER plain strings
-3. Give each section a clear purpose and real content
-4. Use different background values across sections for visual rhythm
-5. Projects: 2-3 cards with real tech stacks in subtitle
-6. Experience: 2-3 timeline-items with concrete achievements
-
-═══════════════════════════════════════════════════
-OUTPUT FORMAT — strict JSON only
-═══════════════════════════════════════════════════
-
-{
-  "sections": [
-    {
-      "id": "section-1",
-      "type": "<block type>",
-      "name": "<anchor id or empty>",
-      "props": { ... },
-      "children": []
-    }
-  ]
-}
-
-For containers (section-wrapper, row, columns, _column, card, container, split):
-  "children" contains nested blocks with the same structure.
-For atomic blocks: "children" must be [].
-NEVER output markdown, explanation, or code blocks. ONLY the raw JSON object.
+1. NEVER USE BLOCKS THAT ARE NOT IN THE 11 TYPES LISTED ABOVE. (e.g. do not use "split", "card", "text", "row", "section-wrapper").
+2. ALWAYS use "container" as the top-level section wrapper for any distinct section (except nav-bar-wrapper).
+3. "container" has exactly 1 child. If you need multiple items inside, put a "rows" or "columns" block inside it.
+4. "columns" children MUST exactly match the "columns" count prop.
+5. "rows" children MUST exactly match the "rows" count prop.
+6. Create REALISTIC content. Invent project names, job roles, detailed descriptions.
+7. JSON MUST BE STRICT. No trailing commas.
+8. Return an object: { "sections": [ ... blocks ... ] }
 `;
 
 const VALID_TYPES = [
-  // Navigation
-  'navbar',
-  // Layout containers
-  'section-wrapper', 'split', 'columns', '_column', 'row', 'card', 'container',
-  // Content atomic blocks
-  'heading', 'text', 'button', 'badge', 'image',
-  'stat', 'feature-card', 'timeline-item',
-  'divider', 'spacer',
+  'nav-bar-wrapper', 'columns', 'rows', 'container',
+  'heading', 'description', 'link', 'button', 'icon', 'image', 'badge',
 ];
 
 @Injectable()
@@ -401,7 +205,7 @@ export class AiService {
           return null;
         }
         return {
-          id: s.id ?? `block-ai-${Date.now()}-${index}`,
+          id: `block-ai-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           type: s.type,
           name: s.name ?? '',
           props: s.props ?? {},

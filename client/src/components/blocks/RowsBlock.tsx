@@ -38,8 +38,8 @@ export const RowsBlock: React.FC<RowsBlockProps> = ({
         ? rowSpans
         : null;
     const gridTemplate = spans
-        ? spans.map(s => `${s}fr`).join(' ')
-        : `repeat(${rowCount}, minmax(0, 1fr))`;
+        ? spans.map(() => 'auto').join(' ')
+        : `repeat(${rowCount}, auto)`;
     return (
         <div
             id={sectionId}
