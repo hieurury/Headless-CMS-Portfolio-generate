@@ -1,12 +1,10 @@
 import React from 'react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useCallback } from "react";
-import { useSortable, SortableContext, arrayMove as dndArrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, arrayMove as dndArrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Merge } from 'lucide-react';
 
 import type { LayoutSection } from "../../types/layout.types";
-import { SectionRenderer } from "../SectionRenderer";
 import RowCellDropZone from "./RowCellDropZone";
 import RowCellSortable from './RowCellSortable';
 
@@ -33,6 +31,7 @@ const _RowsEditGrid: React.FC<{
     cumulativeSpans,
     ALIGN_MAP,
 }) => {
+
         const handleDragEnd = useCallback(
             (event: import('@dnd-kit/core').DragEndEvent) => {
                 const { active, over } = event;
@@ -57,13 +56,13 @@ const _RowsEditGrid: React.FC<{
         );
 
         const handleMerge = useCallback(
-            (leftIndex: number) => {
+            (aboveIndex: number) => {
                 window.dispatchEvent(
                     new CustomEvent('cms:mergeRowCells', {
                         detail: {
                             rowId: section.id,
-                            leftIndex,
-                            newSpan: rowSpans[leftIndex] + rowSpans[leftIndex + 1],
+                            aboveIndex,
+                            newSpan: rowSpans[aboveIndex] + rowSpans[aboveIndex + 1],
                             rowSpans,
                         },
                     }),
