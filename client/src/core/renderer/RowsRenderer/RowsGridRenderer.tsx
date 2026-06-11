@@ -24,7 +24,7 @@ const RowsGridRenderer: React.FC<{
     const totalSpan = rowSpans.reduce((a, b) => a + b, 0);
 
     // CSS grid template — use actual span weights
-    const gridTemplate = rowSpans.map(s => `${s}fr`).join(' ');
+    const gridTemplate = rowSpans.map(() => 'auto').join(' ');
 
     if (!isEditing) {
         return (
