@@ -13,6 +13,9 @@ import {
   MousePointerClick,
   Sparkles,
   Rows2,
+  Image as ImageIcon,
+  AlignLeft,
+  Tag,
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
@@ -25,6 +28,9 @@ import { LinkBlock } from '../../components/blocks/LinkBlock';
 import { ButtonBlock } from '../../components/blocks/ButtonBlock';
 import { IconBlock } from '../../components/blocks/IconBlock';
 import { RowsBlock } from '../../components/blocks/RowsBlock';
+import { ImageBlock } from '../../components/blocks/ImageBlock';
+import { DescriptionBlock } from '../../components/blocks/DescriptionBlock';
+import { BadgeBlock } from '../../components/blocks/BadgeBlock';
 
 // ─── NavBarWrapperBlock — composable sticky navbar container ──────────────────
 componentRegistry.register({
@@ -266,6 +272,87 @@ componentRegistry.register({
     shape: { type: 'select', label: 'Background Shape', options: ['none', 'circle', 'square', 'rounded'] },
     accent: { type: 'select', label: 'Accent Color', options: ['indigo', 'violet', 'emerald', 'amber', 'rose', 'sky', 'slate'] },
     color: { type: 'color', label: 'Custom Icon Color' },
+    alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
+    alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+  },
+});
+
+componentRegistry.register({
+  type: 'image',
+  component: ImageBlock as React.ComponentType<Record<string, unknown>>,
+  displayName: 'Image',
+  description: 'An image block with customizable aspect ratio, fit, and rounded corners',
+  icon: <ImageIcon size={16} />,
+  category: 'block',
+  isAtom: true,
+  defaultProps: {
+    url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
+    alt: 'Image',
+    aspectRatio: 'auto',
+    objectFit: 'cover',
+    borderRadius: 'md',
+    alignX: 'center',
+    alignY: 'middle',
+  },
+  schema: {
+    url: { type: 'image', label: 'Image URL', placeholder: 'https://...' },
+    alt: { type: 'string', label: 'Alt Text', placeholder: 'Description of the image' },
+    aspectRatio: { type: 'select', label: 'Aspect Ratio', options: ['auto', '16/9', '4/3', '1/1', '3/4'] },
+    objectFit: { type: 'select', label: 'Object Fit', options: ['cover', 'contain', 'fill'] },
+    borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'] },
+    alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
+    alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+  },
+});
+
+componentRegistry.register({
+  type: 'description',
+  component: DescriptionBlock as React.ComponentType<Record<string, unknown>>,
+  displayName: 'Description',
+  description: 'A block of text suitable for paragraphs, descriptions, or body copy',
+  icon: <AlignLeft size={16} />,
+  category: 'block',
+  isAtom: true,
+  defaultProps: {
+    text: 'Enter your description here. This block is perfect for paragraphs and longer text.',
+    size: 'base',
+    align: 'left',
+    alignX: 'left',
+    alignY: 'middle',
+  },
+  schema: {
+    text: { type: 'textarea', label: 'Text Content', placeholder: 'Write your description...' },
+    size: { type: 'select', label: 'Text Size', options: ['xs', 'sm', 'base', 'lg', 'xl'] },
+    align: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
+    alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
+    alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+    color: { type: 'color', label: 'Text Color' },
+  },
+});
+
+componentRegistry.register({
+  type: 'badge',
+  component: BadgeBlock as React.ComponentType<Record<string, unknown>>,
+  displayName: 'Badge',
+  description: 'A small tag or badge used to highlight status, tags, or features',
+  icon: <Tag size={16} />,
+  category: 'block',
+  isAtom: true,
+  defaultProps: {
+    text: 'New Feature',
+    variant: 'subtle',
+    color: 'indigo',
+    size: 'sm',
+    shape: 'pill',
+    alignX: 'left',
+    alignY: 'middle',
+  },
+  schema: {
+    text: { type: 'string', label: 'Badge Text', placeholder: 'New Feature' },
+    variant: { type: 'select', label: 'Style Variant', options: ['solid', 'outline', 'subtle'] },
+    color: { type: 'select', label: 'Color', options: ['indigo', 'rose', 'emerald', 'amber', 'sky', 'slate', 'violet'] },
+    size: { type: 'select', label: 'Size', options: ['sm', 'md', 'lg'] },
+    shape: { type: 'select', label: 'Shape', options: ['rounded', 'pill'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
   },

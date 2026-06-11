@@ -106,8 +106,16 @@ export const PageEditorPage: React.FC = () => {
   // -- Sync draft when page loads ---------------------------------------------
   useEffect(() => {
     if (page) {
-      setDraftLayout(page.layout ?? { sections: [] });
+      const layout = page.layout ?? { sections: [] };
+      setDraftLayout(layout);
       setIsDirty(false);
+      if (layout.sections.length === 0) {
+        setShowLeftPanel(false);
+        setShowRightPanel(false);
+      } else {
+        setShowLeftPanel(true);
+        setShowRightPanel(true);
+      }
     }
   }, [page]);
 
@@ -116,6 +124,19 @@ export const PageEditorPage: React.FC = () => {
     setDraftLayout((prev) => updater(prev));
     setIsDirty(true);
   }, []);
+
+  // -- Scroll Preview to Selected Block ---------------------------------------
+  useEffect(() => {
+    if (selectedId && !previewMode) {
+      const t = setTimeout(() => {
+        const el = document.getElementById(selectedId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [selectedId, previewMode]);
 
   // ── Listen for cms:addEmptySlot — "+" button on container control ──
   // For non-columns containers: adds an _empty placeholder child.
@@ -690,6 +711,8 @@ export const PageEditorPage: React.FC = () => {
     setSelectedId(null);
     setSelectedFieldKey(null);
     setLeftTab('sections');
+    setShowLeftPanel(true);
+    setShowRightPanel(true);
   };
 
   // ── Selection from preview ─────────────────────────────────────────
