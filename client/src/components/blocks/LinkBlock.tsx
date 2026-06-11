@@ -2,13 +2,34 @@ import React from 'react';
 import { ExternalLink, ArrowRight } from 'lucide-react';
 import { useEditorContext } from '../../core/context/EditorContext';
 
+// ─── Shared position maps ─────────────────────────────────────────────────────
+type AlignX = 'left' | 'center' | 'right';
+type AlignY = 'top'  | 'middle' | 'bottom';
+
+const JUSTIFY_MAP: Record<AlignX, string> = {
+  left:   'flex-start',
+  center: 'center',
+  right:  'flex-end',
+};
+const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
+  top:    'flex-start',
+  middle: 'center',
+  bottom: 'flex-end',
+};
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 interface LinkBlockProps {
   label?: string;
   href?: string;
   /** inline = plain text link | nav = subtle nav-style | underline = underlined | pill = pill button style */
   variant?: 'inline' | 'nav' | 'underline' | 'pill';
   size?: 'sm' | 'base' | 'lg';
+  /** @deprecated Use alignX instead */
   align?: 'left' | 'center' | 'right';
+  /** Horizontal position within the cell */
+  alignX?: AlignX;
+  /** Vertical position within the cell */
+  alignY?: AlignY;
   color?: string;
   external?: boolean;
   showIcon?: boolean;
@@ -16,6 +37,7 @@ interface LinkBlockProps {
   [key: string]: unknown;
 }
 
+// ─── Style Maps ───────────────────────────────────────────────────────────────
 const VARIANT_STYLES: Record<string, string> = {
   inline:
     'text-indigo-400 hover:text-indigo-300 transition-colors',
@@ -28,35 +50,30 @@ const VARIANT_STYLES: Record<string, string> = {
 };
 
 const SIZE_STYLES: Record<string, string> = {
-  sm: 'text-sm',
-  base: 'text-base',
-  lg: 'text-lg',
-};
-
-const ALIGN_MAP: Record<string, string> = {
-  left: 'justify-start',
-  center: 'justify-center',
-  right: 'justify-end',
+  sm: 'text-sm', base: 'text-base', lg: 'text-lg',
 };
 
 export const LinkBlock: React.FC<LinkBlockProps> = ({
-  label = 'Link',
-  href = '#',
-  variant = 'nav',
-  size = 'base',
-  align = 'left',
+  label    = 'Link',
+  href     = '#',
+  variant  = 'nav',
+  size     = 'base',
+  align    = 'left',
+  alignX,
+  alignY   = 'middle',
   external = false,
   showIcon = false,
   sectionId,
 }) => {
   const { isEditorMode, previewMode } = useEditorContext();
 
+  const resolvedX: AlignX = alignX ?? (align as AlignX) ?? 'left';
+
   const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.nav;
-  const sizeClass = SIZE_STYLES[size] ?? SIZE_STYLES.base;
-  const alignClass = ALIGN_MAP[align] ?? 'justify-start';
+  const sizeClass    = SIZE_STYLES[size]        ?? SIZE_STYLES.base;
 
   const isExternalHref = external || href?.startsWith('http');
-  const isAnchor = href?.startsWith('#');
+  const isAnchor       = href?.startsWith('#');
 
   const handleClick = (e: React.MouseEvent) => {
     if (isEditorMode && !previewMode) return;
@@ -68,7 +85,16 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
   };
 
   return (
-    <div className={`flex ${alignClass}`} id={sectionId}>
+    <div
+      id={sectionId}
+      style={{
+        width:          '100%',
+        height:         '100%',
+        display:        'flex',
+        justifyContent: JUSTIFY_MAP[resolvedX]  ?? 'flex-start',
+        alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+      }}
+    >
       <a
         href={href}
         data-cms-field="label"

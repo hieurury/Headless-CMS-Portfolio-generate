@@ -18,8 +18,9 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable';
-import { findParent, findSectionById } from '../utils/layoutUtils';
+import { findParent, findSectionById, isDescendant } from '../utils/layoutUtils';
 
 interface PageRendererProps {
   layout: PageLayout;
@@ -111,6 +112,12 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
     const activeId = active.id as string;
     const overId = over.id as string;
 
+    // Reject drop if trying to drop a section into itself or its descendants
+    const targetIdCheck = isDropId(overId) ? fromDropId(overId).split(':')[0].replace(COL_CELL_PREFIX, '') : overId;
+    if (isDescendant(layout.sections, activeId, targetIdCheck)) {
+      return;
+    }
+
     // ── Case 1: Dropped onto a droppable zone ─────────────────────────────────
     if (isDropId(overId)) {
       const targetId = fromDropId(overId);
@@ -169,7 +176,20 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         const parent = activeParentInfo.parent!;
         const oldIdx = parent.children?.findIndex((c) => c.id === activeId) ?? -1;
         const newIdx = parent.children?.findIndex((c) => c.id === overId) ?? -1;
-        if (oldIdx !== -1 && newIdx !== -1) onReorderChildren(activeParentId!, oldIdx, newIdx);
+        if (oldIdx !== -1 && newIdx !== -1) {
+          if (parent.type === 'columns') {
+            const currentSpans = (parent.props.colSpans as number[]) || Array(Number(parent.props.columns || 2)).fill(1);
+            const reorderedSpans = arrayMove(currentSpans, oldIdx, newIdx);
+            const reorderedChildren = arrayMove(parent.children || [], oldIdx, newIdx);
+            window.dispatchEvent(
+              new CustomEvent('cms:reorderColCells', {
+                detail: { columnsId: parent.id, children: reorderedChildren, colSpans: reorderedSpans },
+              }),
+            );
+            return;
+          }
+          onReorderChildren(activeParentId!, oldIdx, newIdx);
+        }
       }
     } else {
       // Different parent — only valid cross-container move is via an explicit _empty slot.
