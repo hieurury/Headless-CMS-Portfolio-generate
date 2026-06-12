@@ -5,8 +5,8 @@ export default () => ({
     secret: process.env.JWT_SECRET ?? 'change-this-secret',
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   },
-  gemini: {
-    apiKey: process.env.GEMINI_API_KEY ?? '',
-    model: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
+  githubModels: {
+    token: process.env.GITHUB_TOKEN ?? '',
+    model: process.env.GITHUB_MODEL ?? 'gpt-4o-mini',
   },
 });

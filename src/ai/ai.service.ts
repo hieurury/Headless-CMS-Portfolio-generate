@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { GenerateLayoutDto } from './dto/generate-layout.dto';
 
 /**
@@ -18,8 +18,9 @@ import { GenerateLayoutDto } from './dto/generate-layout.dto';
  * The AI generates a tree of section-wrappers containing blocks.
  */
 const COMPONENT_CONTEXT = `
-You are a world-class portfolio website layout designer and UI architect. 
-Generate DIVERSE, CREATIVE, and VISUALLY RICH portfolio layouts using ONLY the 11 provided building blocks. 
+You are a world-class portfolio website layout designer, creative director, and UI architect. 
+Generate EXTREMELY DIVERSE, NOVEL, and CREATIVE portfolio layouts using ONLY the 11 provided building blocks.
+CRITICAL: DO NOT REPEAT BOILERPLATE LAYOUTS. Think like a human designer composing unique, dynamic UI structures. Vary your use of columns, rows, cards, glassmorphism, background colors, alignments, and sizes drastically based on the user's prompt. 
 You MUST combine Layout Containers and Atomic Blocks to build complex, beautiful sections. Do NOT output flat lists of atomic blocks.
 Output ONLY valid JSON — no markdown, no text, no code blocks.
 
@@ -28,31 +29,46 @@ BLOCK SYSTEM — ONLY these 11 blocks exist. DO NOT invent blocks.
 ═══════════════════════════════════════════════════
 
 ── NAVIGATION ───────────────────────────────────────────────────────────────
-[nav-bar-wrapper] — Sticky navigation bar. Always the FIRST block on any page.
+[nav-bar-wrapper] — Sticky navigation bar. Always the FIRST block on any page. To split content left and right, drop exactly ONE columns(columns="2") inside it. Put Logo/Title in the left column, and Nav Links/Buttons in the right column.
 { "type": "nav-bar-wrapper", "props": { "sticky": true, "transparent": true, "background": "dark", "padding": "lg", "maxWidth": "xl" }, "children": [...] }
 
 ── LAYOUT CONTAINERS (MUST BE USED TO STRUCTURE CONTENT) ─────────────────────────
 [container] — Generic box container or full-width section wrapper. isContainer = true.
-{ "type": "container", "props": { "style": "none", "padding": "xl", "borderRadius": "none", "alignX": "center", "alignY": "middle" }, "children": [/* exactly 1 child, usually rows or columns */] }
+{ "type": "container", "props": { "style": "none", "padding": "xl", "borderRadius": "none", "alignX": "center", "alignY": "middle", "textColor": "#ffffff", "backgroundColor": "#000000" }, "children": [/* exactly 1 child, usually rows or columns */] }
   style: "none" | "card" | "glass" | "outlined" | "filled"
   padding: "none" | "sm" | "md" | "lg" | "xl"
+  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "2xl"
   alignX: "left" | "center" | "right"
+  alignY: "top" | "middle" | "bottom"
+  backgroundColor: string (hex or CSS color)
+  textColor: string (hex or CSS color)
 
-[columns] — Side-by-side grid. isContainer=true. Children are placed directly into each column cell.
+[columns] — HORIZONTAL side-by-side grid (Left-to-Right). isContainer=true. Children are placed directly into each column cell. Use this when you want items next to each other horizontally.
 { "type": "columns", "props": {"columns": "2", "gap": "md", "align": "stretch"}, "children": [ /* block 1 */, /* block 2 */ ] }
   columns: "2" | "3" | "4"
   align: "start" | "center" | "end" | "stretch"
+  gap: "none" | "sm" | "md" | "lg" | "xl"
 
-[rows] — Vertical stack. isContainer=true. Children are placed directly into each row cell.
+[rows] — VERTICAL stack (Top-to-Bottom). isContainer=true. Children are placed directly into each row cell. Use this when you want items stacked vertically.
 { "type": "rows", "props": {"rows": "3", "gap": "lg", "align": "center"}, "children": [ /* block 1 */, /* block 2 */, /* block 3 */ ] }
   rows: "2" | "3" | "4"
+  align: "start" | "center" | "end" | "stretch"
+  gap: "none" | "sm" | "md" | "lg" | "xl"
 
 ── ATOMIC BLOCKS (NO CHILDREN ALLOWED) ──────────────────────────────────────────────
 [heading] — Title text
-{ "type": "heading", "props": {"text": "Hello", "level": "h2", "size": "4xl", "alignX": "center", "gradient": true} }
+{ "type": "heading", "props": {"text": "Hello", "level": "h2", "size": "4xl", "alignX": "center", "gradient": true, "color": "#ffffff"} }
+  size: "sm" | "base" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl"
+  alignX: "left" | "center" | "right"
+  color: string (hex or CSS color)
+  backgroundColor: string (hex or CSS color)
 
 [description] — Paragraph / body text
-{ "type": "description", "props": {"text": "...", "size": "base", "alignX": "left"} }
+{ "type": "description", "props": {"text": "...", "size": "base", "alignX": "left", "color": "#aaaaaa"} }
+  size: "sm" | "base" | "lg" | "xl"
+  alignX: "left" | "center" | "right"
+  color: string (hex or CSS color)
+  backgroundColor: string (hex or CSS color)
 
 [button] — Call-to-action
 { "type": "button", "props": {"label": "Click", "variant": "primary", "href": "#", "icon": "🚀"} }
@@ -74,6 +90,13 @@ BLOCK SYSTEM — ONLY these 11 blocks exist. DO NOT invent blocks.
 ═══════════════════════════════════════════════════
 COMPOSITION PATTERNS — HOW TO BUILD COMPLETE, RICH SECTIONS
 ═══════════════════════════════════════════════════
+
+0. HEADER / NAVBAR (Left: Logo+Title, Right: Links):
+   nav-bar-wrapper(background="dark", padding="lg") -> 
+     columns(columns="2", align="center") -> [
+       columns(columns="2", gap="sm", align="center") -> [ icon(name="Code2"), heading(text="MyBrand") ],
+       columns(columns="3", gap="sm") -> [ link, link, button ]
+     ]
 
 1. MODERN HERO (Split Layout):
    container(style="none", padding="xl") ->
@@ -119,16 +142,73 @@ COMPOSITION PATTERNS — HOW TO BUILD COMPLETE, RICH SECTIONS
      ]
 
 ═══════════════════════════════════════════════════
+STRUCTURAL CONSTRAINTS — MEMORIZE THESE
+═══════════════════════════════════════════════════
+
+NAV-BAR-WRAPPER internal structure:
+  nav-bar-wrapper → exactly ONE columns(columns="2") child
+  Left column  → logo area:  columns(columns="2", gap="sm", align="center") → [icon, heading]
+  Right column → links area: columns(columns="3", gap="sm") or columns(columns="4") → [link, link, ..., button]
+  NEVER put nav links and logo in the same column.
+  NEVER use rows as the direct child of nav-bar-wrapper.
+
+CONTAINER children:
+  container MUST have exactly 1 direct child.
+  Need 2+ things inside? → wrap them in rows or columns first.
+
+COLUMNS children count (STRICT):
+  columns(columns="2") → EXACTLY 2 children — no more, no less
+  columns(columns="3") → EXACTLY 3 children
+  columns(columns="4") → EXACTLY 4 children
+
+ROWS children count (STRICT):
+  rows(rows="2") → EXACTLY 2 children
+  rows(rows="3") → EXACTLY 3 children
+  rows(rows="4") → EXACTLY 4 children
+
+ATOMIC BLOCKS have NO children:
+  heading, description, button, link, badge, icon, image
+  → Never add a "children" array to these types.
+
+═══════════════════════════════════════════════════
 CRITICAL RULES FOR HIGH-QUALITY OUTPUT
 ═══════════════════════════════════════════════════
 1. NEVER USE BLOCKS THAT ARE NOT IN THE 11 TYPES LISTED ABOVE. (e.g. do not use "split", "card", "text", "row", "section-wrapper").
 2. ALWAYS use "container" as the top-level section wrapper for any distinct section (except nav-bar-wrapper).
 3. "container" has exactly 1 child. If you need multiple items inside, put a "rows" or "columns" block inside it.
-4. "columns" children MUST exactly match the "columns" count prop.
-5. "rows" children MUST exactly match the "rows" count prop.
-6. Create REALISTIC content. Invent project names, job roles, detailed descriptions.
-7. JSON MUST BE STRICT. No trailing commas.
-8. Return an object: { "sections": [ ... blocks ... ] }
+4. ONLY modify properties that are EXPLICITLY documented in the schemas above. DO NOT invent CSS properties (e.g., do not use 'fontSize', 'margin' directly). Use 'size', 'padding', 'color', 'backgroundColor', 'textColor' as shown in the schemas.
+5. NEVER output empty containers. Always put content inside them.
+6. JSON MUST BE STRICT. No trailing commas.
+7. Return an object: { "sections": [ ... blocks ... ] }
+
+═══════════════════════════════════════════════════
+STRUCTURAL CONSTRAINTS — MEMORIZE THESE
+═══════════════════════════════════════════════════
+
+NAV-BAR-WRAPPER children rule:
+  nav-bar-wrapper MUST contain exactly ONE columns(columns="2") child.
+  Left column: logo area → columns(columns="2", gap="sm") → [icon, heading]
+  Right column: links area → columns(columns="3" or "4", gap="sm") → [link, link, ..., button]
+  NEVER put links and logo in the same column.
+  NEVER use rows inside nav-bar-wrapper as direct child.
+
+CONTAINER children rule:
+  container MUST have exactly 1 direct child.
+  If you need 2+ things inside a container, wrap them in a rows or columns block first.
+
+COLUMNS children count rule:
+  columns(columns="2") → EXACTLY 2 children
+  columns(columns="3") → EXACTLY 3 children
+  columns(columns="4") → EXACTLY 4 children
+  Mismatched count = broken layout. Count carefully.
+
+ROWS children count rule:
+  rows(rows="2") → EXACTLY 2 children
+  rows(rows="3") → EXACTLY 3 children
+  rows(rows="4") → EXACTLY 4 children
+
+ATOMIC BLOCKS (heading, description, button, link, badge, icon, image):
+  These NEVER have children. Do not add a "children" field to them.
 `;
 
 const VALID_TYPES = [
@@ -139,17 +219,20 @@ const VALID_TYPES = [
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly genAI: GoogleGenerativeAI;
+  private readonly openai: OpenAI;
 
   constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.get<string>('gemini.apiKey');
-    if (!apiKey) {
+    const token = this.configService.get<string>('githubModels.token');
+    if (!token) {
       throw new Error(
-        'GEMINI_API_KEY is not configured. Add it to your .env file.',
+        'GITHUB_TOKEN is not configured. Add it to your .env file.',
       );
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.logger.log('✅ Gemini AI initialized');
+    this.openai = new OpenAI({
+      baseURL: 'https://models.inference.ai.azure.com',
+      apiKey: token
+    });
+    this.logger.log('✅ GitHub Models AI initialized');
   }
 
   async generateLayout(dto: GenerateLayoutDto): Promise<{
@@ -157,24 +240,90 @@ export class AiService {
     sectionsGenerated: number;
   }> {
     try {
-      this.logger.log(`[Gemini] Generating layout for: "${dto.prompt}"`);
+      this.logger.log(`[GitHub Models] Generating layout for: "${dto.prompt}"`);
 
       const modelName =
-        this.configService.get<string>('gemini.model') ?? 'gemini-2.0-flash';
+        this.configService.get<string>('githubModels.model') ?? 'gpt-4o-mini';
 
-      const model = this.genAI.getGenerativeModel({
+      // Use lower temperature for modifications to reduce hallucination
+      const isModification = !!dto.currentLayout;
+      const temperature = isModification ? 0.3 : 0.9;
+
+      let fullPrompt = `${COMPONENT_CONTEXT}\n\n`;
+
+      if (dto.currentLayout) {
+        fullPrompt += `
+═══════════════════════════════════════════════════
+MODIFICATION MODE — READ ALL RULES BEFORE ACTING
+═══════════════════════════════════════════════════
+
+CURRENT LAYOUT (the exact JSON tree currently rendered on screen):
+${JSON.stringify(dto.currentLayout, null, 2)}
+
+YOUR TASK:
+The user wants a SURGICAL modification. Think of this like a code diff:
+- Identify WHICH block(s) need to change based on the user's request
+- Change ONLY those block(s) — keep everything else IDENTICAL (same props, same children, same order)
+- Do NOT add new sections unless the user explicitly says "add a new section for..."
+- Do NOT remove sections unless the user explicitly says "remove..."
+- Do NOT rename, reorder, or restyle anything the user did not mention
+
+MODIFICATION WORKFLOW (follow in order):
+Step 1 — LOCATE: Find the exact block(s) in CURRENT LAYOUT that match the user's request.
+Step 2 — PLAN: Describe in one sentence what you will change and what you will keep.
+Step 3 — BUILD: Output the full updated "sections" array. Unchanged sections must be COPIED EXACTLY (same props, same children, same structure).
+
+MODIFICATION EXAMPLES:
+
+Example A — "Add a logo icon to the left of the navbar brand name"
+Before (left column of navbar):
+  { "type": "heading", "props": { "text": "MyPortfolio" } }
+After (left column of navbar):
+  { "type": "columns", "props": { "columns": "2", "gap": "sm", "align": "center" }, "children": [
+    { "type": "icon", "props": { "name": "Code2", "size": "md", "accent": "violet" } },
+    { "type": "heading", "props": { "text": "MyPortfolio", "size": "xl" } }
+  ]}
+→ ONLY the left column inner structure changes. Nav links, all other sections = unchanged.
+
+Example B — "Change the hero heading text to 'I Build Digital Experiences'"
+Before: { "type": "heading", "props": { "text": "Hello World", "level": "h1" } }
+After:  { "type": "heading", "props": { "text": "I Build Digital Experiences", "level": "h1" } }
+→ ONLY that one heading's text changes. Props like size, gradient, alignX stay identical.
+
+ANTI-PATTERNS (things you must NEVER do in modification mode):
+❌ Inventing new nav links that weren't in the original
+❌ Changing background color of containers the user didn't mention
+❌ Restructuring columns/rows layout when user only asked to add a child element
+❌ Replacing a heading+icon columns pattern with a rows pattern
+❌ Adding a Hero, Footer, or Projects section when user only asked to modify navbar
+
+`;
+      }
+
+      fullPrompt += `[USER REQUEST]\n${dto.prompt}\n\nAnalyze the user's request carefully. ${isModification
+          ? 'Apply the SURGICAL modification described above. Copy all unchanged sections exactly as they appear in CURRENT LAYOUT.'
+          : 'Be highly creative and avoid generic templates unless specifically requested. Generate a complete, unique, and content-rich portfolio page layout.'
+        } Output ONLY valid JSON: { "sections": [ ... ] }`;
+
+      if (dto.currentLayout) {
+        fullPrompt += `
+Before finalizing your JSON, do a mental diff check:
+- How many top-level sections does CURRENT LAYOUT have? → Your output must have the SAME count (unless user asked to add/remove).
+- Which section did the user ask to modify? → Only that section's subtree should differ.
+- Are all nav links from the original still present with the same href and label? → They must be.
+`;
+      }
+
+
+
+      const result = await this.openai.chat.completions.create({
+        messages: [{ role: 'user', content: fullPrompt }],
         model: modelName,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.9,
-          maxOutputTokens: 8192,
-        },
+        temperature: temperature,
+        max_tokens: 8192,
+        response_format: { type: 'json_object' },
       });
-
-      const fullPrompt = `${COMPONENT_CONTEXT}\n\nUser request: ${dto.prompt}\n\nAnalyze the user's request carefully. Choose the best LAYOUT PERSONA for their role. Generate a complete, unique, and content-rich portfolio page layout JSON using ONLY the block system above. Make the content specific, realistic, and compelling:`;
-
-      const result = await model.generateContent(fullPrompt);
-      const text = result.response.text();
+      const text = result.choices[0]?.message?.content || '{}';
 
       let parsed: { sections: unknown[] };
       try {
@@ -211,8 +360,8 @@ export class AiService {
           props: s.props ?? {},
           children: Array.isArray(s.children)
             ? (s.children as typeof s[])
-                .map((c, i) => normalizeSection(c, i))
-                .filter(Boolean)
+              .map((c, i) => normalizeSection(c, i))
+              .filter(Boolean)
             : [],
         };
       };
@@ -235,7 +384,7 @@ export class AiService {
         );
       }
 
-      this.logger.log(`[Gemini] ✅ Generated ${validSections.length} top-level blocks`);
+      this.logger.log(`[GitHub Models] ✅ Generated ${validSections.length} top-level blocks`);
 
       return {
         layout: { sections: validSections },
@@ -249,7 +398,7 @@ export class AiService {
         throw error;
       }
       const message = (error as Error).message ?? 'Unknown AI error';
-      this.logger.error(`[Gemini] Error: ${message}`);
+      this.logger.error(`[GitHub Models] Error: ${message}`);
       throw new BadRequestException(`AI generation failed: ${message}`);
     }
   }

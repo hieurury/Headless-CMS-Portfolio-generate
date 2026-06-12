@@ -76,7 +76,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
     setError(null);
     setGenerated(null);
     try {
-      const result = await aiService.generateLayout(finalPrompt, portfolioId, pageId);
+      const result = await aiService.generateLayout(finalPrompt, portfolioId, pageId, undefined);
       onLayoutGenerated(result.layout);
       setGenerated(result.sectionsGenerated);
     } catch (err: unknown) {

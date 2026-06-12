@@ -11,11 +11,13 @@ export const aiService = {
     prompt: string,
     portfolioId: string,
     pageId?: string,
+    currentLayout?: PageLayout,
   ): Promise<GenerateLayoutResponse> => {
     const res = await api.post<GenerateLayoutResponse>('/ai/generate-layout', {
       prompt,
       portfolioId,
       pageId,
+      currentLayout,
     });
     return res.data;
   },

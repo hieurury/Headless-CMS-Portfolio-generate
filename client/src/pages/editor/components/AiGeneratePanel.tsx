@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2, AlertCircle, Zap } from 'lucide-react';
 import { aiService } from '../../../services/ai.service';
+import { usePageStore } from '../../../store/pageStore';
 import type { PageLayout } from '../../../core/types/layout.types';
 
 interface AiGeneratePanelProps {
@@ -20,6 +21,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSectionsCount, setLastSectionsCount] = useState<number | null>(null);
+  const { current } = usePageStore();
 
   const handleGenerate = async () => {
     if (!prompt.trim() || prompt.trim().length < 10) {
@@ -30,7 +32,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
     setError(null);
     setLastSectionsCount(null);
     try {
-      const result = await aiService.generateLayout(prompt, portfolioId, pageId);
+      const result = await aiService.generateLayout(prompt, portfolioId, pageId, current?.layout);
       onLayoutGenerated(result.layout);
       setLastSectionsCount(result.sectionsGenerated);
       setPrompt('');
@@ -106,7 +108,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
       </button>
 
       <p className="text-xs text-[var(--color-text-faint)] text-center">
-        ⚠ This will replace the current layout
+        💡 This will modify or append to your current layout intelligently.
       </p>
     </div>
   );

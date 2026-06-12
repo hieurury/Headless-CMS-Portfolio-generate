@@ -12,4 +12,7 @@ export class GenerateLayoutDto {
   @IsOptional()
   @IsString()
   pageId?: string;
+
+  @IsOptional()
+  currentLayout?: { sections: unknown[] };
 }
