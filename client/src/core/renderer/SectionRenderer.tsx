@@ -132,7 +132,8 @@ const ColumnsGridRenderer: React.FC<{
 }> = ({ section, depth }) => {
   const { isEditorMode, previewMode } = useEditorContext();
   const colCount = Number(section.props?.columns ?? 2);
-  const align = (section.props?.align as string) ?? 'stretch';
+  const alignX = (section.props?.alignX as string) ?? 'stretch';
+  const alignY = (section.props?.alignY as string) ?? 'stretch';
 
   const ALIGN_MAP: Record<string, string> = {
     start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch',
@@ -161,7 +162,8 @@ const ColumnsGridRenderer: React.FC<{
           display: 'grid',
           gridTemplateColumns: gridTemplate,
           gap: 0,
-          alignItems: ALIGN_MAP[align] ?? 'stretch',
+          justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+          alignItems: ALIGN_MAP[alignY] ?? 'stretch',
           width: '100%',
         }}
       >
@@ -198,7 +200,8 @@ const ColumnsGridRenderer: React.FC<{
       section={section}
       depth={depth}
       colCount={colCount}
-      align={align}
+      alignX={alignX}
+      alignY={alignY}
       colSpans={colSpans}
       totalSpan={totalSpan}
       gridTemplate={gridTemplate}
@@ -214,14 +217,15 @@ const _ColumnsEditGrid: React.FC<{
   section: LayoutSection;
   depth: number;
   colCount: number;
-  align: string;
+  alignX: string;
+  alignY: string;
   colSpans: number[];
   totalSpan: number;
   gridTemplate: string;
   cells: { index: number; span: number; child: LayoutSection | null; isEmpty: boolean }[];
   cumulativeSpans: number[];
   ALIGN_MAP: Record<string, string>;
-}> = ({ section, depth, colCount, align, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
+}> = ({ section, depth, colCount, alignX, alignY, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
 
   // ── Merge: two adjacent empty cells → one with combined span ─────────
   const handleMerge = useCallback(
@@ -251,7 +255,8 @@ const _ColumnsEditGrid: React.FC<{
               display: 'grid',
               gridTemplateColumns: gridTemplate,
               gap: 0,
-              alignItems: ALIGN_MAP[align] ?? 'stretch',
+              justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+              alignItems: ALIGN_MAP[alignY] ?? 'stretch',
               width: '100%',
             }}
           >

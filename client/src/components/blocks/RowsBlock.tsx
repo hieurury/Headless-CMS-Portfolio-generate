@@ -19,7 +19,8 @@ export interface RowsBlockProps {
     rows?: number | string;
     rowSpans?: number[];
     gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
-    align?: 'start' | 'center' | 'end' | 'stretch';
+    alignX?: 'start' | 'center' | 'end' | 'stretch';
+    alignY?: 'start' | 'center' | 'end' | 'stretch';
     children?: React.ReactNode;
     sectionId?: string;
     [key: string]: unknown;
@@ -29,7 +30,8 @@ export const RowsBlock: React.FC<RowsBlockProps> = ({
     rows,
     rowSpans,
     gap,
-    align,
+    alignX = 'stretch',
+    alignY = 'stretch',
     children,
     sectionId
 }: RowsBlockProps) => {
@@ -49,7 +51,8 @@ export const RowsBlock: React.FC<RowsBlockProps> = ({
                 display: 'grid',
                 gridTemplateRows: gridTemplate,
                 gap: GAP_MAP[gap as string] ?? '12px',
-                alignItems: ALIGN_MAP[align as string] ?? 'stretch',
+                justifyItems: ALIGN_MAP[alignX as string] ?? 'stretch',
+                alignItems: ALIGN_MAP[alignY as string] ?? 'stretch',
                 width: '100%',
             }}
         >

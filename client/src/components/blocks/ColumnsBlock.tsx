@@ -7,7 +7,8 @@ export interface ColumnsBlockProps {
    *  Falls back to equal widths if not provided or length mismatch. */
   colSpans?: number[];
   gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
-  align?: 'start' | 'center' | 'end' | 'stretch';
+  alignX?: 'start' | 'center' | 'end' | 'stretch';
+  alignY?: 'start' | 'center' | 'end' | 'stretch';
   children?: React.ReactNode;
   textColor?: string;
   backgroundColor?: string;
@@ -35,7 +36,8 @@ const ALIGN_MAP: Record<string, string> = {
 export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
   columns = 2,
   colSpans,
-  align = 'stretch',
+  alignX = 'stretch',
+  alignY = 'stretch',
   textColor,
   backgroundColor,
   children,
@@ -58,7 +60,8 @@ export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
         display: 'grid',
         gridTemplateColumns: gridTemplate,
         gap: 0,
-        alignItems: ALIGN_MAP[align as string] ?? 'stretch',
+        justifyItems: ALIGN_MAP[alignX as string] ?? 'stretch',
+        alignItems: ALIGN_MAP[alignY as string] ?? 'stretch',
         width: '100%',
         backgroundColor: backgroundColor,
         color: textColor,

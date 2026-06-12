@@ -24,8 +24,7 @@ interface ButtonBlockProps {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'outline';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   shape?: 'default' | 'pill' | 'square' | 'icon-only';
-  /** @deprecated Use alignX instead */
-  align?: 'left' | 'center' | 'right';
+
   /** Horizontal position within the cell */
   alignX?: AlignX;
   /** Vertical position within the cell */
@@ -79,8 +78,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   variant      = 'primary',
   size         = 'md',
   shape        = 'default',
-  align        = 'left',
-  alignX,
+  alignX       = 'left',
   alignY       = 'middle',
   icon,
   iconPosition = 'right',
@@ -90,7 +88,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   backgroundColor,
   sectionId,
 }) => {
-  const resolvedX: AlignX = alignX ?? (align as AlignX) ?? 'left';
+
 
   const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.primary;
   const baseSize     = SIZE_BASE[size]          ?? SIZE_BASE.md;
@@ -126,7 +124,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
         width:          '100%',
         height:         '100%',
         display:        'flex',
-        justifyContent: JUSTIFY_MAP[resolvedX]  ?? 'flex-start',
+        justifyContent: JUSTIFY_MAP[alignX]  ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
         backgroundColor: backgroundColor,
         color: textColor,

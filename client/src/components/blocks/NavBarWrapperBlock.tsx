@@ -12,6 +12,8 @@ interface NavBarWrapperBlockProps {
   maxWidth?: 'lg' | 'xl' | '2xl' | 'full';
   /** Background style */
   background?: 'dark' | 'glass' | 'light' | 'none';
+  alignX?: 'left' | 'center' | 'right';
+  alignY?: 'top' | 'middle' | 'bottom';
   textColor?: string;
   backgroundColor?: string;
   children?: React.ReactNode;
@@ -40,6 +42,19 @@ const BG_STYLES: Record<string, React.CSSProperties> = {
   none:  {},
 };
 
+const JUSTIFY_MAP: Record<string, string> = {
+  left:   'flex-start',
+  center: 'center',
+  right:  'flex-end',
+};
+
+const ALIGN_ITEMS_MAP: Record<string, string> = {
+  top:    'flex-start',
+  middle: 'center',
+  bottom: 'flex-end',
+};
+
+
 /**
  * NavBarWrapperBlock — composable sticky navigation container.
  *
@@ -52,6 +67,8 @@ export const NavBarWrapperBlock: React.FC<NavBarWrapperBlockProps> = ({
   padding = 'lg',
   maxWidth = 'xl',
   background = 'dark',
+  alignX = 'center',
+  alignY = 'middle',
   textColor,
   backgroundColor,
   children,
@@ -93,7 +110,8 @@ export const NavBarWrapperBlock: React.FC<NavBarWrapperBlockProps> = ({
           paddingRight: PADDING_X[padding] ?? '40px',
           height: '64px',
           display: 'flex',
-          alignItems: 'center',
+          justifyContent: JUSTIFY_MAP[alignX] ?? 'center',
+          alignItems: ALIGN_ITEMS_MAP[alignY] ?? 'center',
         }}
       >
         {children ?? (

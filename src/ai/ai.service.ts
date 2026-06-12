@@ -44,35 +44,43 @@ BLOCK SYSTEM — ONLY these 11 blocks exist. DO NOT invent blocks.
   textColor: string (hex or CSS color)
 
 [columns] — HORIZONTAL side-by-side grid (Left-to-Right). isContainer=true. Children are placed directly into each column cell. Use this when you want items next to each other horizontally.
-{ "type": "columns", "props": {"columns": "2", "gap": "md", "align": "stretch"}, "children": [ /* block 1 */, /* block 2 */ ] }
+{ "type": "columns", "props": {"columns": "2", "gap": "md", "alignX": "stretch", "alignY": "stretch"}, "children": [ /* block 1 */, /* block 2 */ ] }
   columns: "2" | "3" | "4"
-  align: "start" | "center" | "end" | "stretch"
+  alignX: "start" | "center" | "end" | "stretch"
+  alignY: "start" | "center" | "end" | "stretch"
   gap: "none" | "sm" | "md" | "lg" | "xl"
 
 [rows] — VERTICAL stack (Top-to-Bottom). isContainer=true. Children are placed directly into each row cell. Use this when you want items stacked vertically.
-{ "type": "rows", "props": {"rows": "3", "gap": "lg", "align": "center"}, "children": [ /* block 1 */, /* block 2 */, /* block 3 */ ] }
+{ "type": "rows", "props": {"rows": "3", "gap": "lg", "alignX": "stretch", "alignY": "stretch"}, "children": [ /* block 1 */, /* block 2 */, /* block 3 */ ] }
   rows: "2" | "3" | "4"
-  align: "start" | "center" | "end" | "stretch"
+  alignX: "start" | "center" | "end" | "stretch"
+  alignY: "start" | "center" | "end" | "stretch"
   gap: "none" | "sm" | "md" | "lg" | "xl"
 
 ── ATOMIC BLOCKS (NO CHILDREN ALLOWED) ──────────────────────────────────────────────
 [heading] — Title text
-{ "type": "heading", "props": {"text": "Hello", "level": "h2", "size": "4xl", "alignX": "center", "gradient": true, "color": "#ffffff"} }
+{ "type": "heading", "props": {"text": "Hello", "level": "h2", "size": "4xl", "textAlign": "center", "alignX": "center", "alignY": "middle", "gradient": true, "color": "#ffffff"} }
   size: "sm" | "base" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl"
+  textAlign: "left" | "center" | "right"
   alignX: "left" | "center" | "right"
+  alignY: "top" | "middle" | "bottom"
   color: string (hex or CSS color)
   backgroundColor: string (hex or CSS color)
 
 [description] — Paragraph / body text
-{ "type": "description", "props": {"text": "...", "size": "base", "alignX": "left", "color": "#aaaaaa"} }
+{ "type": "description", "props": {"text": "...", "size": "base", "textAlign": "left", "alignX": "left", "alignY": "middle", "color": "#aaaaaa"} }
   size: "sm" | "base" | "lg" | "xl"
+  textAlign: "left" | "center" | "right"
   alignX: "left" | "center" | "right"
+  alignY: "top" | "middle" | "bottom"
   color: string (hex or CSS color)
   backgroundColor: string (hex or CSS color)
 
 [button] — Call-to-action
-{ "type": "button", "props": {"label": "Click", "variant": "primary", "href": "#", "icon": "🚀"} }
+{ "type": "button", "props": {"label": "Click", "variant": "primary", "href": "#", "icon": "🚀", "alignX": "center", "alignY": "middle"} }
   variant: "primary" | "secondary" | "ghost" | "danger" | "success" | "warning" | "outline"
+  alignX: "left" | "center" | "right"
+  alignY: "top" | "middle" | "bottom"
 
 [link] — Inline hyperlink
 { "type": "link", "props": {"label": "About", "variant": "nav", "href": "#about"} }
@@ -92,22 +100,22 @@ COMPOSITION PATTERNS — HOW TO BUILD COMPLETE, RICH SECTIONS
 ═══════════════════════════════════════════════════
 
 0. HEADER / NAVBAR (Left: Logo+Title, Right: Links):
-   nav-bar-wrapper(background="dark", padding="lg") -> 
-     columns(columns="2", align="center") -> [
-       columns(columns="2", gap="sm", align="center") -> [ icon(name="Code2"), heading(text="MyBrand") ],
-       columns(columns="3", gap="sm") -> [ link, link, button ]
+   nav-bar-wrapper(background="dark", padding="lg", alignX="center") -> 
+     columns(columns="2", alignY="center") -> [
+       columns(columns="2", gap="sm", alignY="center") -> [ icon(name="Code2"), heading(text="MyBrand") ],
+       columns(columns="3", gap="sm", alignY="center", alignX="end") -> [ link, link, button ]
      ]
 
 1. MODERN HERO (Split Layout):
-   container(style="none", padding="xl") ->
-     columns(columns="2", align="center") -> [
+   container(style="none", padding="xl", alignX="center") ->
+     columns(columns="2", alignY="center") -> [
        rows(rows="3", gap="md") -> [ badge, heading(level="h1"), description ],
        image
      ]
 
 2. CREATIVE HERO (Centered):
    container(style="none", padding="xl", alignX="center") ->
-     rows(rows="4", gap="md", align="center") -> [ badge, heading, description, button ]
+     rows(rows="4", gap="md", alignX="center", alignY="center") -> [ badge, heading, description, button ]
 
 3. BENTO GRID / PROJECTS (using Columns & Cards):
    container(style="none", padding="lg") ->

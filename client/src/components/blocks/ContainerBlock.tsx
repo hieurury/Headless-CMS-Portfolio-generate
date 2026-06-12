@@ -5,12 +5,6 @@ import React from 'react';
 type AlignX = 'left' | 'center' | 'right';
 type AlignY = 'top' | 'middle' | 'bottom';
 
-/** Legacy combined align value — still accepted for backwards compat */
-type LegacyAlign =
-  | 'top-left'    | 'top-center'    | 'top-right'
-  | 'middle-left' | 'center'        | 'middle-right'
-  | 'bottom-left' | 'bottom-center' | 'bottom-right';
-
 type StyleValue    = 'none' | 'card' | 'glass' | 'outlined' | 'filled';
 type PaddingValue  = 'none' | 'sm' | 'md' | 'lg' | 'xl';
 type RadiusValue   = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -31,14 +25,8 @@ export interface ContainerBlockProps {
   alignX?: AlignX;
   /**
    * Vertical position of the child — top | middle | bottom.
-   * Replaces the old combined `align` prop.
    */
   alignY?: AlignY;
-  /**
-   * @deprecated Use alignX + alignY instead.
-   * Legacy single-value align is still parsed for backwards compatibility.
-   */
-  align?: LegacyAlign;
   textColor?: string;
   backgroundColor?: string;
   children?: React.ReactNode;
@@ -87,27 +75,7 @@ const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
   bottom: 'flex-end',
 };
 
-// ─── Legacy → split helper ────────────────────────────────────────────────────
-/**
- * Parse a legacy combined `align` value (e.g. "top-right", "middle-left",
- * "center") into separate { x, y } components.
- */
-function parseLegacyAlign(legacy: string): { x: AlignX; y: AlignY } {
-  const MAP: Record<string, { x: AlignX; y: AlignY }> = {
-    'top-left':      { x: 'left',   y: 'top'    },
-    'top-center':    { x: 'center', y: 'top'    },
-    'top-right':     { x: 'right',  y: 'top'    },
-    'middle-left':   { x: 'left',   y: 'middle' },
-    'center':        { x: 'center', y: 'middle' },
-    'middle-right':  { x: 'right',  y: 'middle' },
-    'bottom-left':   { x: 'left',   y: 'bottom' },
-    'bottom-center': { x: 'center', y: 'bottom' },
-    'bottom-right':  { x: 'right',  y: 'bottom' },
-  };
-  return MAP[legacy] ?? { x: 'center', y: 'middle' };
-}
 
-// ─── ContainerBlock ───────────────────────────────────────────────────────────
 
 /**
  * ContainerBlock — a full-size position wrapper.
@@ -116,9 +84,6 @@ function parseLegacyAlign(legacy: string): { x: AlignX; y: AlignY } {
  * single child using two independent axes:
  *   - `alignX`: horizontal (left / center / right)
  *   - `alignY`: vertical   (top  / middle / bottom)
- *
- * Legacy `align` prop (e.g. "top-right") is still accepted and silently
- * converted to the equivalent `alignX` + `alignY` values.
  */
 export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   style      = 'none',
@@ -127,21 +92,14 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   background,
   alignX,
   alignY,
-  align,       // legacy
   textColor,
   backgroundColor,
   children,
   sectionId,
 }) => {
-  // Resolve x/y — new props take priority; fall back to parsed legacy align
-  let resolvedX: AlignX = alignX ?? 'center';
-  let resolvedY: AlignY = alignY ?? 'middle';
-
-  if (align && !alignX && !alignY) {
-    const parsed = parseLegacyAlign(align);
-    resolvedX = parsed.x;
-    resolvedY = parsed.y;
-  }
+  // Resolve x/y
+  const resolvedX: AlignX = alignX ?? 'center';
+  const resolvedY: AlignY = alignY ?? 'middle';
 
   const styleClass     = STYLE_MAP[style]            ?? '';
   const paddingClass   = PADDING_MAP[padding]        ?? '';
