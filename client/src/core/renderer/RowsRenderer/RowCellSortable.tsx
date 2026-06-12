@@ -6,7 +6,8 @@ import { CSS } from '@dnd-kit/utilities';
 const RowCellSortable: React.FC<{
     child: LayoutSection;
     depth: number;
-}> = ({ child, depth }) => {
+    span?: number;
+}> = ({ child, depth, span }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
         useSortable({ id: child.id });
 
@@ -19,7 +20,7 @@ const RowCellSortable: React.FC<{
                 opacity: isDragging ? 0.4 : 1,
                 width: '100%',
                 height: '100%',
-                minHeight: 0,
+                minHeight: 48 * span,
                 display: 'flex',
                 flexDirection: 'column',
                 cursor: isDragging ? 'grabbing' : undefined,
