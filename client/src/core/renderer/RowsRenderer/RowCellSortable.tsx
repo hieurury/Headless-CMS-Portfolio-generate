@@ -20,7 +20,7 @@ const RowCellSortable: React.FC<{
                 opacity: isDragging ? 0.4 : 1,
                 width: '100%',
                 height: '100%',
-                minHeight: 48 * span,
+                minHeight: 48 * (span || 1),
                 display: 'flex',
                 flexDirection: 'column',
                 cursor: isDragging ? 'grabbing' : undefined,

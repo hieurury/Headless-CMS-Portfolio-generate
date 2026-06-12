@@ -25,7 +25,7 @@ const ICONS = [
 
 export const DashboardPage: React.FC = () => {
   const { portfolios, fetchAll, create, remove, isLoading, error } = usePortfolioStore();
-  const { user, logout } = useAuthStore();
+  const { logout } = useAuthStore();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
