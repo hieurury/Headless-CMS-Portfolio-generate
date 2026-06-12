@@ -16,7 +16,7 @@ export class PagesService {
     @InjectModel(Page.name) private readonly pageModel: Model<PageDocument>,
     @InjectModel(Portfolio.name)
     private readonly portfolioModel: Model<PortfolioDocument>,
-  ) {}
+  ) { }
 
   /**
    * Verify the portfolio exists and belongs to the owner.
@@ -47,7 +47,7 @@ export class PagesService {
     dto: CreatePageDto,
   ): Promise<PageDocument> {
     const portfolio = await this.getPortfolio(portfolioId, ownerId);
-
+    console.log("portfolio", portfolio);
     const portfolioOid = new Types.ObjectId(portfolioId);
 
     const existing = await this.pageModel

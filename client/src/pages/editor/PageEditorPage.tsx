@@ -154,7 +154,37 @@ export const PageEditorPage: React.FC = () => {
     window.addEventListener('cms:addEmptySlot', handler);
     return () => window.removeEventListener('cms:addEmptySlot', handler);
   }, [updateLayout]);
-  // ── Listen for cms:addRowCell
+  // ── Listen for cms:removeLastRow
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
+      updateLayout((layout) => {
+        const rowBlock = findSectionById(layout.sections, rowsId);
+        if (!rowBlock) return layout;
+        const current = Number(rowBlock.props['rows'] ?? 2);
+        if (current <= 1) return layout;
+        const newCount = current - 1;
+        // Also remove the last child so it doesn’t reappear on next add
+        const children = rowBlock.children ?? [];
+        const newChildren = children.length > newCount
+          ? children.slice(0, newCount)
+          : children;
+        return {
+          ...layout,
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, rowsId, { children: newChildren })),
+            rowsId,
+            { ...rowBlock.props, rows: String(newCount) },
+          ),
+        };
+      });
+    };
+    window.addEventListener('cms:removeLastRow', handler);
+    return () => window.removeEventListener('cms:removeLastRow', handler);
+  }, [updateLayout]);
+
+  // ── Listen for cms:addRowCell — "+" on Rows control bar ──────────────
+  // Increments rows count by 1. No child added — new row is an empty drop zone.
   useEffect(() => {
     const handler = (e: Event) => {
       const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
@@ -167,33 +197,12 @@ export const PageEditorPage: React.FC = () => {
           sections: updateSectionProps(layout.sections, rowsId, {
             ...rowBlock.props,
             rows: String(current + 1),
-          })
-        }
-      })
-    }
+          }),
+        };
+      });
+    };
     window.addEventListener('cms:addRowCell', handler);
     return () => window.removeEventListener('cms:addRowCell', handler);
-  }, [updateLayout]);
-  // ── Listen for cms:removeLastRow
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
-      updateLayout((layout) => {
-        const rowBlock = findSectionById(layout.sections, rowsId);
-        if (!rowBlock) return layout;
-        const current = Number(rowBlock.props['rows'] ?? 1);
-        if (current <= 1) return layout;
-        return {
-          ...layout,
-          sections: updateSectionProps(layout.sections, rowsId, {
-            ...rowBlock.props,
-            rows: String(current - 1),
-          })
-        }
-      })
-    }
-    window.addEventListener('cms:removeLastRow', handler);
-    return () => window.removeEventListener('cms:removeLastRow', handler);
   }, [updateLayout]);
   // ── Listen for cms:addColCell — "+" on Columns control bar ────────────
   // Increments columns count (adds 1 more empty cell).

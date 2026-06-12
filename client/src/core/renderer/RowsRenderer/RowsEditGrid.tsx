@@ -104,7 +104,7 @@ const _RowsEditGrid: React.FC<{
                                     );
                                 }
                                 return (
-                                    <RowCellSortable key={child!.id} child={child!} depth={depth} />
+                                    <RowCellSortable key={child!.id} child={child!} depth={depth} span={span} />
                                 );
                             })}
                         </div>
