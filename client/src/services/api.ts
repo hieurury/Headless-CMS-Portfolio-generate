@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'https://headless-cms-portfolio-generate-899157291449.asia-southeast1.run.app/api/v1',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
 });
