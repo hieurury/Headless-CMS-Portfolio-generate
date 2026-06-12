@@ -34,7 +34,7 @@ const RowCellDropZone: React.FC<{
         <div
             ref={setNodeRef}
             onClick={handleClick}
-            style={{ width: '100%', height: '100%', minHeight: 48, position: 'relative' }}
+            style={{ width: '100%', height: '100%', minHeight: 48 * span, position: 'relative' }}
             className={`
         group relative select-none cursor-pointer
         flex items-center justify-center transition-all duration-150

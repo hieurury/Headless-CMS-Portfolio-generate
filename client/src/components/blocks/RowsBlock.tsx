@@ -37,6 +37,8 @@ export const RowsBlock: React.FC<RowsBlockProps> = ({
     const spans = Array.isArray(rowSpans) && rowSpans.length === rowCount
         ? rowSpans
         : null;
+    // Use 'auto' so each row is only as tall as its own content.
+    // Avoid 'fr' which equalises all rows to the tallest one (e.g. an image).
     const gridTemplate = spans
         ? spans.map(() => 'auto').join(' ')
         : `repeat(${rowCount}, auto)`;
