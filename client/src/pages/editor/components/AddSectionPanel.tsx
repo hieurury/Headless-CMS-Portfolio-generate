@@ -248,13 +248,13 @@ const TemplateCard: React.FC<{ template: TemplateEntry; onAdd: () => void }> = (
       className="flex flex-col gap-3 p-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] hover:border-[var(--color-border)] hover:brightness-110 text-left transition-all group"
     >
       {/* Lucide icon preview */}
-      <div className="w-12 h-12 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] group-hover:text-[var(--color-text)] transition-colors">
+      <div className="w-12 h-12 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] font-semibold group-hover:border-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors">
         {template.icon}
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
           <p className="text-sm font-semibold text-[var(--color-text)] truncate">{template.name}</p>
-          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold font-mono shrink-0">
+          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono shrink-0">
             {meta?.icon} {meta?.label}
           </span>
         </div>
@@ -270,17 +270,17 @@ const ComponentCard: React.FC<{ entry: RegistryEntry; onAdd: () => void; isConta
   <button
     onClick={onAdd}
     className={clsx(
-      'flex items-start gap-3 p-3 rounded-md border text-left transition-all group',
+      'flex items-start gap-3 p-3 rounded-md text-left transition-all group',
       isContainer
-        ? 'border-violet-500/20 bg-violet-500/5 hover:border-violet-500/40 hover:bg-violet-500/10'
-        : 'border-[var(--color-border)] bg-white/2 hover:border-[var(--color-border)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]',
+        ? 'border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] hover:border-solid hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
+        : 'border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
     )}
   >
     <div className={clsx(
       'w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
       isContainer
-        ? 'bg-violet-500/15 text-violet-400 group-hover:bg-violet-500/25'
-        : 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold group-hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]',
+        ? 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20'
+        : 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20',
     )}>
       {entry.icon ?? <Settings size={16} />}
     </div>
@@ -288,7 +288,7 @@ const ComponentCard: React.FC<{ entry: RegistryEntry; onAdd: () => void; isConta
       <div className="flex items-center gap-1.5">
         <p className="text-sm font-medium text-[var(--color-text)] truncate">{entry.displayName}</p>
         {isContainer && (
-          <span className="text-[9px] px-1 py-0.5 rounded bg-violet-500/20 text-violet-400 font-mono uppercase tracking-wide shrink-0">
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono uppercase tracking-wide shrink-0">
             container
           </span>
         )}

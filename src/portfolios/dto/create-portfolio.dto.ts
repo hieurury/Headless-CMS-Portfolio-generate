@@ -22,6 +22,10 @@ export class PortfolioMetaDto {
   @IsOptional()
   @IsString()
   fontFamily?: string;
+
+  @IsOptional()
+  @IsString()
+  icon?: string;
 }
 
 export class CreatePortfolioDto {

@@ -46,7 +46,7 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = (
     type="button"
     onClick={() => onChange(!checked)}
     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none
-      ${checked ? 'bg-[var(--color-accent)] text-[var(--color-bg)]' : 'bg-[var(--color-surface-2)] hover:brightness-110'}`}
+      ${checked ? 'bg-emerald-500/80' : 'bg-[var(--color-surface-2)] hover:brightness-110'}`}
   >
     <span
       className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform
@@ -353,7 +353,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
               type="button"
               onClick={addItem}
               className="flex items-center gap-2 w-full px-3 py-2 rounded-md border border-dashed border-[var(--color-border)]
-                text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:border-[var(--color-border)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs transition-all"
+                text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:border-[var(--color-border)] hover:bg-[var(--color-text)]/5 text-xs transition-all"
             >
               <Plus size={13} /> Add {schema.itemLabel ?? 'Item'}
             </button>
@@ -545,7 +545,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       </div>
 
       {/* Section Name (Anchor) */}
-      <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)] text-[var(--color-bg)] p-3 space-y-1.5">
+      <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 space-y-1.5">
         <label className="text-xs font-medium text-[var(--color-text)] font-semibold flex items-center gap-1.5">
           <span>#</span> Section Anchor Name
         </label>
@@ -640,7 +640,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           )}
           <button
             onClick={applyJson}
-            className="w-full py-2.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-sm font-semibold
+            className="w-full py-2.5 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-sm font-semibold
               transition-all hover:shadow-lg hover:shadow-black/10"
           >
             Apply JSON

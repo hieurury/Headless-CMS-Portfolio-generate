@@ -23,12 +23,12 @@ import {
 // ─── Colour palette per category ─────────────────────────────────────────────
 
 const CAT_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
-  navigation: { dot: 'bg-sky-400',     bg: 'bg-sky-500/10',    text: 'text-sky-400' },
-  layout:     { dot: 'bg-violet-400',  bg: 'bg-violet-500/10', text: 'text-violet-400' },
-  content:    { dot: 'bg-emerald-400', bg: 'bg-emerald-500/10',text: 'text-emerald-400' },
-  form:       { dot: 'bg-amber-400',   bg: 'bg-amber-500/10',  text: 'text-amber-400' },
-  media:      { dot: 'bg-pink-400',    bg: 'bg-pink-500/10',   text: 'text-pink-400' },
-  block:      { dot: 'bg-[var(--color-text)]',  bg: 'bg-[var(--color-accent)] text-[var(--color-bg)]', text: 'text-[var(--color-text)] font-semibold' },
+  navigation: { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
+  layout:     { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
+  content:    { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
+  form:       { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
+  media:      { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
+  block:      { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
 };
 
 const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
@@ -196,7 +196,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
         className={clsx(
           'group flex items-center gap-1 rounded-md py-1 pr-1 cursor-pointer transition-all duration-150',
           isSelected
-            ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
+            ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold'
             : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]',
           isDragging && 'shadow-md shadow-black/40',
         )}
@@ -208,7 +208,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
           <button
             {...attributes}
             {...listeners}
-            className="p-0.5 text-slate-700 hover:text-[var(--color-text-muted)] cursor-grab active:cursor-grabbing shrink-0 touch-none opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-0.5 opacity-0 group-hover:opacity-50 hover:!opacity-100 cursor-grab active:cursor-grabbing shrink-0 touch-none transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical size={12} />
@@ -245,11 +245,11 @@ const LayerNode: React.FC<LayerNodeProps> = ({
 
         {/* Label */}
         <div className="flex-1 min-w-0">
-          <p className={clsx('text-xs font-medium truncate leading-tight', isSelected ? 'text-[var(--color-text)]' : '')}>
+          <p className="text-xs font-medium truncate leading-tight">
             {entry?.displayName ?? section.type}
           </p>
           {section.name && (
-            <p className="text-[10px] text-[var(--color-text)] font-semibold font-mono truncate opacity-70">
+            <p className={clsx('text-[10px] font-semibold font-mono truncate opacity-70', !isSelected && 'text-[var(--color-text)]')}>
               #{section.name}
             </p>
           )}
@@ -267,7 +267,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
             <button
               title="Add block inside"
               onClick={() => onAddChild(section.id)}
-              className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] transition-all"
+              className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold hover:bg-[var(--color-text)]/10 transition-all"
             >
               <Plus size={10} />
             </button>
@@ -351,7 +351,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         </span>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all"
+          className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
         >
           <Plus size={11} /> Add
         </button>

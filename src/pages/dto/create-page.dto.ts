@@ -6,7 +6,15 @@ import {
   IsObject,
   MinLength,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class PageMetaDto {
+  @IsOptional()
+  @IsString()
+  icon?: string;
+}
 
 export class CreatePageDto {
   @IsString()
@@ -31,8 +39,9 @@ export class CreatePageDto {
   isPublished?: boolean;
 
   @IsOptional()
-  @IsObject()
-  meta?: { icon?: string };
+  @ValidateNested()
+  @Type(() => PageMetaDto)
+  meta?: PageMetaDto;
 
   /**
    * The JSON layout object.

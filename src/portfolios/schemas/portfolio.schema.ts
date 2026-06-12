@@ -12,6 +12,9 @@ export class PortfolioMeta {
 
   @Prop({ default: 'Inter' })
   fontFamily: string;
+
+  @Prop()
+  icon?: string;
 }
 
 @Schema({ timestamps: true })

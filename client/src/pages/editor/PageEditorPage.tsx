@@ -821,7 +821,7 @@ export const PageEditorPage: React.FC = () => {
             title="Toggle left panel"
             className={clsx(
               'p-1.5 rounded-md transition-all',
-              showLeftPanel ? 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
+              showLeftPanel ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
             )}
           >
             <PanelLeft size={15} />
@@ -835,7 +835,7 @@ export const PageEditorPage: React.FC = () => {
               className={clsx(
                 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
                 !previewMode
-                  ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
+                  ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
               )}
             >
@@ -848,7 +848,7 @@ export const PageEditorPage: React.FC = () => {
               className={clsx(
                 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
                 previewMode
-                  ? 'bg-slate-700 text-[var(--color-text)]'
+                  ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
               )}
             >
@@ -858,7 +858,7 @@ export const PageEditorPage: React.FC = () => {
           </div>
           <button
             onClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
           >
             <Plus size={11} /> Add
           </button>
@@ -867,7 +867,7 @@ export const PageEditorPage: React.FC = () => {
             title="Toggle right panel"
             className={clsx(
               'p-1.5 rounded-md transition-all',
-              showRightPanel ? 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
+              showRightPanel ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
             )}
           >
             <PanelRight size={15} />
@@ -879,7 +879,7 @@ export const PageEditorPage: React.FC = () => {
             className={clsx(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all',
               isDirty
-                ? 'bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:shadow-lg hover:shadow-black/10'
+                ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-black/10'
                 : 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-not-allowed',
             )}
           >
