@@ -233,7 +233,7 @@ export class AiService {
     const token = this.configService.get<string>('githubModels.token');
     if (!token) {
       throw new Error(
-        'GITHUB_TOKEN is not configured. Add it to your .env file.',
+        'AI_TOKEN is not configured. Add it to your .env file.',
       );
     }
     this.openai = new OpenAI({
