@@ -156,7 +156,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
               </div>
               
               <div className="grid gap-3">
-                {data.pages.map((page, i) => {
+                {data.pages.map((page) => {
                   const PageIcon = ICONS.find(ic => ic.name === page.meta?.icon)?.component || FileText;
                   return (
                   <Link
