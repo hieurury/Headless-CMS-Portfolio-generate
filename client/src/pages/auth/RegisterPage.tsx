@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore';
+import { t } from '../../i18n';
 import { Loader2 } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 
 export const RegisterPage: React.FC = () => {
+  const { language } = useUIStore();
+  const lang = t(language).auth;
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const { register, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
@@ -53,17 +57,17 @@ export const RegisterPage: React.FC = () => {
 
       <div className="w-full max-w-md animate-slide-up mt-12">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">Create account</h1>
-          <p className="text-[var(--color-text-muted)]">Start building your portfolio</p>
+          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">{lang.registerTitle}</h1>
+          <p className="text-[var(--color-text-muted)]">{lang.registerSubtitle}</p>
         </div>
 
         <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl shadow-xl rounded-xl p-8 space-y-5">
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {[
-              { key: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe', id: 'register-name' },
-              { key: 'email', label: 'Email', type: 'email', placeholder: 'you@example.com', id: 'register-email' },
-              { key: 'password', label: 'Password', type: 'password', placeholder: '••••••••', id: 'register-password' },
+              { key: 'name', label: lang.fullNameLabel, type: 'text', placeholder: lang.fullNamePlaceholder, id: 'register-name' },
+              { key: 'email', label: lang.emailLabel, type: 'email', placeholder: lang.emailPlaceholder, id: 'register-email' },
+              { key: 'password', label: lang.passwordLabel, type: 'password', placeholder: lang.passwordPlaceholder, id: 'register-password' },
             ].map(({ key, label, type, placeholder, id }) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">{label}</label>
@@ -86,15 +90,15 @@ export const RegisterPage: React.FC = () => {
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-lg shadow-md bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
-              {isLoading ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : 'Create Account'}
+              {isLoading ? <><Loader2 size={18} className="animate-spin" /> {lang.creatingBtn}</> : lang.createAccountBtn}
             </button>
           </form>
 
           <div className="text-center pt-2">
             <p className="text-[var(--color-text-muted)] text-sm">
-              Already have an account?{' '}
+              {lang.alreadyHaveAccount}{' '}
               <Link to="/login" className="text-[var(--color-text)] hover:opacity-80 font-medium transition-colors underline">
-                Sign in
+                {lang.signInLink}
               </Link>
             </p>
           </div>

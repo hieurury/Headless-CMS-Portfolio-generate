@@ -45,10 +45,10 @@ export const PublicPortfolioPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="animate-spin text-indigo-400" />
-          <p className="text-slate-400 text-sm">Loading portfolio...</p>
+          <Loader2 size={40} className="animate-spin text-indigo-500" />
+          <p className="text-[var(--color-text-muted)] text-sm">Loading portfolio...</p>
         </div>
       </div>
     );
@@ -56,18 +56,18 @@ export const PublicPortfolioPage: React.FC = () => {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-slate-800 flex items-center justify-center">
-            <Lock size={28} className="text-slate-500" />
+          <div className="w-16 h-16 mx-auto mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center shadow-sm">
+            <Lock size={28} className="text-[var(--color-text-muted)]" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-3">Not Available</h1>
-          <p className="text-slate-400 text-sm mb-6">
+          <h1 className="text-2xl font-bold text-[var(--color-text)] mb-3">Not Available</h1>
+          <p className="text-[var(--color-text-muted)] text-sm mb-6">
             {error ?? 'This portfolio page could not be found.'}
           </p>
           <Link
             to="/explore"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-500 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold hover:opacity-85 transition-opacity shadow-sm"
           >
             ← Explore Portfolios
           </Link>
@@ -77,17 +77,17 @@ export const PublicPortfolioPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       {/* SEO title */}
       <title>{`${data.page.title} — ${data.portfolio.title}`}</title>
 
       {/* ── Top navigation bar — always shown when portfolio has pages ── */}
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#08080f]/95 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-12 flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {/* Back to portfolio hub */}
           <Link
             to={`/p/${portfolioSlug}`}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all shrink-0"
+            className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-1.5 rounded-lg hover:bg-[var(--color-surface-2)] transition-all shrink-0 font-medium"
           >
             <LayoutGrid size={12} />
             <span className="truncate max-w-[120px]">{data.portfolio.title}</span>
@@ -95,7 +95,7 @@ export const PublicPortfolioPage: React.FC = () => {
 
           {data.allPages.length > 1 && (
             <>
-              <ChevronRight size={12} className="text-slate-700 shrink-0" />
+              <ChevronRight size={12} className="text-[var(--color-border)] shrink-0 mx-1" />
               {/* Page tabs — use urlSlug (no leading slash) for correct URL matching */}
               <div className="flex items-center gap-1 ml-1 overflow-x-auto">
                 {data.allPages.map((p) => (
@@ -105,8 +105,8 @@ export const PublicPortfolioPage: React.FC = () => {
                     className={({ isActive }) =>
                       `shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         isActive
-                          ? 'bg-indigo-600/90 text-white shadow-md shadow-indigo-500/20'
-                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          ? 'bg-indigo-500 text-white shadow-sm'
+                          : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                       }`
                     }
                   >
