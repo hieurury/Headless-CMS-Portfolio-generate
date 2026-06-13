@@ -64,7 +64,9 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   gradient  = false,
   sectionId,
 }) => {
-  const Tag        = level as React.ElementType;
+  const safeLevel = String(level).startsWith('h') ? String(level).toLowerCase() : `h${level}`;
+  const validLevels = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  const Tag        = (validLevels.includes(safeLevel) ? safeLevel : 'h2') as React.ElementType;
   const sizeClass  = SIZE_MAP[size]           ?? 'text-xl';
   const textAlignClass = TEXT_ALIGN_MAP[textAlign] ?? 'text-left';
   const textClass = gradient ? 'gradient-text' : '';

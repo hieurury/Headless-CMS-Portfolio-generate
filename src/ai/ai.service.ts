@@ -81,7 +81,7 @@ export class AiService {
       baseURL: 'https://models.inference.ai.azure.com',
       apiKey: token
     });
-    this.logger.log('✅ GitHub Models AI initialized');
+    this.logger.log('GitHub Models AI initialized');
   }
 
   async generateLayout(dto: GenerateLayoutDto): Promise<{
