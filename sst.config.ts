@@ -35,13 +35,13 @@ export default $config({
       },
     });
 
-    new gcp.cloudrunv2.ServiceIamBinding("MyServicePublicAccess", {
-      project: myService.project,
-      location: myService.location,
-      name: myService.name,
-      role: "roles/run.invoker",
-      members: ["allUsers"],
-    });
+    // new gcp.cloudrunv2.ServiceIamBinding("MyServicePublicAccess", {
+    //   project: myService.project,
+    //   location: myService.location,
+    //   name: myService.name,
+    //   role: "roles/run.invoker",
+    //   members: ["allUsers"],
+    // });
 
     // 3. Xuất URL ra màn hình Terminal sau khi chạy xong
     return {
