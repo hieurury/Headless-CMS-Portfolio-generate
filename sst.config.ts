@@ -25,7 +25,7 @@ export default $config({
           egress: "ALL_TRAFFIC",
           networkInterfaces: [{
             network: "headless-vpc",
-            subnetwork: "headless-subnet",
+            subnetwork: "headless-subnet-v2",
           }]
         },
         containers: [{
