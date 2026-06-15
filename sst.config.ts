@@ -44,7 +44,7 @@ export default $config({
 
     // 3. Xuất URL ra màn hình Terminal sau khi chạy xong
     return {
-      ServiceURL: myService,
+      url: myService.uri,
     };
   },
 });
