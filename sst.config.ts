@@ -20,6 +20,7 @@ export default $config({
       project: project, // <--- Thêm dòng này
       ingress: "INGRESS_TRAFFIC_ALL", // Cho phép nhận traffic từ bên ngoài
       template: {
+        serviceAccount: "headless-cms-test@n8nproject-461516.iam.gserviceaccount.com",
         containers: [{
           image: `asia-southeast1-docker.pkg.dev/n8nproject-461516/my-repo/headless-cms-portfolio-generate:${imageTag}`,
           ports: { containerPort: 3000 },
