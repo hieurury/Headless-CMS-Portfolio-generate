@@ -8,7 +8,6 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // ─── Global Prefix ───────────────────────────────────────────────
-  app.setGlobalPrefix('api/v1');
 
   // ─── CORS ────────────────────────────────────────────────────────
   app.enableCors({
