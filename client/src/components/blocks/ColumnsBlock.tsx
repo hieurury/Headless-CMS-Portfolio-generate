@@ -17,17 +17,24 @@ export interface ColumnsBlockProps {
 }
 
 const ALIGN_MAP: Record<string, string> = {
-  start: 'flex-start',
+  start: 'start',
   center: 'center',
-  end: 'flex-end',
+  end: 'end',
   stretch: 'stretch',
+};
+
+const GAP_MAP: Record<string, string> = {
+  none: '0',
+  sm: '0.5rem',
+  md: '1rem',
+  lg: '2rem',
+  xl: '3rem',
 };
 
 /**
  * ColumnsBlock — N-column grid layout with optional non-uniform column widths.
  *
- * Gap between columns is always 0. Content spacing is the responsibility
- * of wrapper or child elements.
+ * Content spacing is the responsibility of wrapper or child elements.
  *
  * If `colSpans` is provided and matches `columns` count, each entry defines
  * the relative width of that column in `fr` units.
@@ -36,6 +43,7 @@ const ALIGN_MAP: Record<string, string> = {
 export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
   columns = 2,
   colSpans,
+  gap = 'none',
   alignX = 'stretch',
   alignY = 'stretch',
   textColor,
@@ -59,7 +67,7 @@ export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
       style={{
         display: 'grid',
         gridTemplateColumns: gridTemplate,
-        gap: 0,
+        gap: GAP_MAP[gap as string] || 0,
         justifyItems: ALIGN_MAP[alignX as string] ?? 'stretch',
         alignItems: ALIGN_MAP[alignY as string] ?? 'stretch',
         width: '100%',

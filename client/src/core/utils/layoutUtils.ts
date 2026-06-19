@@ -282,3 +282,31 @@ export function insertIntoRowsCell(
     return s;
   });
 }
+
+/**
+ * Insert a block as a child of a Flex container at the given index.
+ * Unlike Columns/Rows which replace at a fixed slot, Flex splices into
+ * the children array (appending at the end if index >= length).
+ */
+export function insertIntoFlexCell(
+  sections: LayoutSection[],
+  flexId: string,
+  block: LayoutSection,
+  cellIndex: number,
+): LayoutSection[] {
+  return sections.map((s) => {
+    if (!s) return s;
+    if (s.id === flexId) {
+      const existing = (s.children ?? []).filter(Boolean);
+      const children = [...existing];
+      // Clamp index to valid range
+      const idx = Math.min(cellIndex, children.length);
+      children.splice(idx, 0, block);
+      return { ...s, children };
+    }
+    if (s.children?.length) {
+      return { ...s, children: insertIntoFlexCell(s.children, flexId, block, cellIndex) };
+    }
+    return s;
+  });
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { PageLayout } from '../types/layout.types';
-import { SectionRenderer, isDropId, fromDropId, EMPTY_SLOT_TYPE, COL_CELL_PREFIX } from './SectionRenderer';
+import { SectionRenderer, isDropId, fromDropId, EMPTY_SLOT_TYPE, COL_CELL_PREFIX, FLEX_CELL_PREFIX } from './SectionRenderer';
 import { useEditorContext } from '../context/EditorContext';
 import {
   DndContext,
@@ -39,12 +39,12 @@ interface PageRendererProps {
 function customCollisionDetection(args: Parameters<typeof pointerWithin>[0]) {
   const pointerCollisions = pointerWithin(args);
 
-  // Priority 1: ColCell drop zones (empty Columns cells)
-  const colCellCollisions = pointerCollisions.filter(
+  // Priority 1: ColCell / FlexCell drop zones (empty cells)
+  const cellCollisions = pointerCollisions.filter(
     (c) => typeof c.id === 'string' && isDropId(c.id as string) &&
-      fromDropId(c.id as string).startsWith(COL_CELL_PREFIX),
+      (fromDropId(c.id as string).startsWith(COL_CELL_PREFIX) || fromDropId(c.id as string).startsWith(FLEX_CELL_PREFIX)),
   );
-  if (colCellCollisions.length > 0) return colCellCollisions;
+  if (cellCollisions.length > 0) return cellCollisions;
 
   // Priority 2: _empty slot droppables (innermost, most specific)
   const emptySlotCollisions = pointerCollisions.filter(
@@ -113,7 +113,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
     const overId = over.id as string;
 
     // Reject drop if trying to drop a section into itself or its descendants
-    const targetIdCheck = isDropId(overId) ? fromDropId(overId).split(':')[0].replace(COL_CELL_PREFIX, '') : overId;
+    const targetIdCheck = isDropId(overId) ? fromDropId(overId).split(':')[0].replace(COL_CELL_PREFIX, '').replace(FLEX_CELL_PREFIX, '') : overId;
     if (isDescendant(layout.sections, activeId, targetIdCheck)) {
       return;
     }
@@ -131,6 +131,19 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         const cellIndex = parseInt(rest.slice(colonIdx + 1), 10);
         if (activeId !== columnsId) {
           onMoveToContainer(activeId, columnsId, cellIndex);
+        }
+        return;
+      }
+
+      // Sub-case A2: Dropped onto a FlexCell drop zone
+      // targetId format: `_flexcell-<flexId>:<cellIndex>`
+      if (targetId.startsWith(FLEX_CELL_PREFIX)) {
+        const rest = targetId.slice(FLEX_CELL_PREFIX.length);
+        const colonIdx = rest.lastIndexOf(':');
+        const flexId = rest.slice(0, colonIdx);
+        const cellIndex = parseInt(rest.slice(colonIdx + 1), 10);
+        if (activeId !== flexId) {
+          onMoveToContainer(activeId, flexId, cellIndex);
         }
         return;
       }
