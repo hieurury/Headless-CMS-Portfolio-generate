@@ -12,13 +12,12 @@ export default $config({
   async run() {
     const gcp = await import("@pulumi/gcp");
 
-    // Đặt tên project của bạn vào đây (yêu cầu bắt buộc từ Pulumi)
     const project = "n8nproject-461516";
     const imageTag = process.env.IMAGE_TAG || "latest";
     const myService = new gcp.cloudrunv2.Service("MyBackendService", {
       location: "asia-southeast1", // Region Singapore
-      project: project, // <--- Thêm dòng này
-      ingress: "INGRESS_TRAFFIC_ALL", // Cho phép nhận traffic từ bên ngoài
+      project: project,
+      ingress: "INGRESS_TRAFFIC_ALL", // allow traffic all from internet
       template: {
         serviceAccount: "headless-cms-test@n8nproject-461516.iam.gserviceaccount.com",
         vpcAccess: {
@@ -50,7 +49,6 @@ export default $config({
       members: ["allUsers"],
     });
 
-    // 3. Xuất URL ra màn hình Terminal sau khi chạy xong
     return {
       url: myService.uri,
     };
