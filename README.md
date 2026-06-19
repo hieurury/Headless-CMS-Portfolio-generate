@@ -96,3 +96,53 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+# 🚀 Headless CMS Backend - Secure Serverless Architecture
+
+A high-performance, secure, and scalable Headless CMS backend. Designed with a microservices mindset, deployed as a serverless container on Google Cloud Platform (GCP), and provisioned using Infrastructure-as-Code (SST).
+
+## 🛠 Tech Stack & Infrastructure
+* **Compute:** Node.js, Express.js (Stateless Container on Google Cloud Run)
+* **Database:** MongoDB Atlas (Stateful)
+* **Infrastructure-as-Code (IaC):** SST (Pulumi/Terraform under the hood)
+* **Cloud Security & Networking:** GCP IAM, Google Front End (GFE), Direct VPC Egress, Cloud NAT.
+* **CI/CD:** GitHub Actions (Automated zero-downtime deployment)
+
+---
+
+## 🏛 System Architecture & Design Patterns
+
+The system is designed with a strict focus on security (Zero-Trust), network isolation, and high availability.
+
+### 1. Security & Ingress Layer (Identity-Aware Proxy)
+* **IAM-based Invocation:** The Cloud Run service is configured as a **Private Service**. It completely rejects unauthenticated public internet traffic.
+* **Google Front End (GFE):** Acts as the gatekeeper. Clients must provide a valid OIDC Identity Token (`Authorization: Bearer <token>`). GFE verifies the token signature and IAM policies (`roles/run.invoker`) before routing the traffic. This prevents DDOS and unauthorized access at the platform edge (returning `401 Unauthorized` or `403 Forbidden`).
+
+### 2. Compute Layer (Stateless Scaling)
+* **Stateless Design:** The Express.js application is completely stateless, storing no local sessions. This allows Google Cloud Run to horizontally scale from 0 to N containers in milliseconds during traffic spikes.
+* **Zero-Downtime Deployment:** CI/CD pipeline ensures new revisions are health-checked before traffic is smoothly migrated from the old containers.
+
+### 3. Data & Egress Layer (Network Isolation)
+To protect the database from public exposure, egress traffic is strictly routed through a custom Virtual Private Cloud (VPC):
+* **Direct VPC Egress:** Cloud Run is connected to a custom subnet (`/24` to prevent IP Exhaustion during autoscaling).
+* **Cloud NAT & Static IP:** All outbound traffic to MongoDB is forced through a Cloud NAT, which masks the dynamic container IPs with a single **Static External IP**.
+* **IP Whitelisting:** The MongoDB Atlas firewall is locked down. The `0.0.0.0/0` rule is removed, and it only accepts connections originating exclusively from the GCP Cloud NAT Static IP.
+
+### 4. Failure Patterns & Resiliency
+* **Exponential Backoff:** The MongoDB connection utilizes `retryWrites=true` to automatically retry dropped packets or temporary network glitches without failing the user request.
+* **Circuit Breaker (Planned):** Prevents cascading failures by short-circuiting database requests if the stateful storage becomes unresponsive, preserving compute resources and returning a fallback response.
+
+---
+
+## 💻 Local Development & Deployment
+
+### Prerequisites
+* Node.js v18+
+* Google Cloud CLI (`gcloud`) authenticated with a project owner account.
+* SST CLI
+
+### 1. Local Setup
+Clone the repository and install dependencies:
+```bash
+npm install

@@ -185,6 +185,9 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Listen for cms:addRowCell — "+" on Rows control bar ──────────────
   // Increments rows count by 1. No child added — new row is an empty drop zone.
+  // IMPORTANT: also append 1 to rowSpans so its length stays in sync with `rows`.
+  // Without this, RowsGridRenderer detects length mismatch and resets ALL spans to 1,
+  // causing merged cells to lose their span value.
   useEffect(() => {
     const handler = (e: Event) => {
       const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
@@ -192,11 +195,19 @@ export const PageEditorPage: React.FC = () => {
         const rowBlock = findSectionById(layout.sections, rowsId);
         if (!rowBlock) return layout;
         const current = Number(rowBlock.props['rows'] ?? 1);
+        const rawSpans = rowBlock.props['rowSpans'] as number[] | undefined;
+        // Preserve existing spans; append 1 for the new empty row
+        const existingSpans: number[] =
+          Array.isArray(rawSpans) && rawSpans.length === current
+            ? rawSpans
+            : Array(current).fill(1);
+        const newRowSpans = [...existingSpans, 1];
         return {
           ...layout,
           sections: updateSectionProps(layout.sections, rowsId, {
             ...rowBlock.props,
             rows: String(current + 1),
+            rowSpans: newRowSpans,
           }),
         };
       });
