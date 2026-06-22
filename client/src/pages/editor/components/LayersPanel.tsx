@@ -57,12 +57,10 @@ interface ChildNodeSharedProps {
  * top level — not inside conditionals or render loops.
  */
 const SortableChildrenList: React.FC<{
-  parentId: string;
   children: LayoutSection[];
   depth: number;
   indent: number;
 } & ChildNodeSharedProps> = ({
-  parentId,
   children,
   depth,
   indent,
@@ -268,7 +266,6 @@ const LayerNode: React.FC<LayerNodeProps> = ({
       {/* ── Children (sortable tree) ──────────────────────────────── */}
       {expanded && hasChildren && (
         <SortableChildrenList
-          parentId={section.id}
           children={visibleChildren}
           depth={depth}
           indent={indent}

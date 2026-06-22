@@ -271,4 +271,41 @@ export class PublicService {
       })),
     };
   }
+  /**
+   * Fetch all published portfolios and their published pages for sitemap generation.
+   * Returns an array of paths and their last modified dates.
+   */
+  async getSitemapData(): Promise<{ urlPath: string; lastmod: Date }[]> {
+    const portfolios = await this.portfolioModel
+      .find({ isPublished: true })
+      .select('_id slug updatedAt')
+      .lean()
+      .exec();
+
+    const result: { urlPath: string; lastmod: Date }[] = [];
+
+    for (const p of portfolios) {
+      // Portfolio Hub page
+      result.push({
+        urlPath: `/p/${p.slug}`,
+        lastmod: (p as any).updatedAt as Date || new Date(),
+      });
+
+      // Individual pages within the portfolio
+      const pages = await this.pageModel
+        .find({ portfolio: p._id, isPublished: true })
+        .select('slug updatedAt')
+        .lean()
+        .exec();
+
+      for (const page of pages) {
+        result.push({
+          urlPath: `/p/${p.slug}/${normalizeSlug(page.slug)}`,
+          lastmod: (page as any).updatedAt as Date || new Date(),
+        });
+      }
+    }
+
+    return result;
+  }
 }
