@@ -6,7 +6,7 @@ export default () => ({
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   },
   githubModels: {
-    token: process.env.GITHUB_TOKEN ?? '',
-    model: process.env.GITHUB_MODEL ?? 'gpt-4o-mini',
+    token: process.env.AI_TOKEN ?? '',
+    model: process.env.AI_MODEL ?? 'gpt-4o-mini',
   },
 });

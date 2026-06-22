@@ -24,8 +24,7 @@ interface LinkBlockProps {
   /** inline = plain text link | nav = subtle nav-style | underline = underlined | pill = pill button style */
   variant?: 'inline' | 'nav' | 'underline' | 'pill';
   size?: 'sm' | 'base' | 'lg';
-  /** @deprecated Use alignX instead */
-  align?: 'left' | 'center' | 'right';
+
   /** Horizontal position within the cell */
   alignX?: AlignX;
   /** Vertical position within the cell */
@@ -60,8 +59,7 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
   href     = '#',
   variant  = 'nav',
   size     = 'base',
-  align    = 'left',
-  alignX,
+  alignX   = 'left',
   alignY   = 'middle',
   external = false,
   showIcon = false,
@@ -71,7 +69,7 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
 }) => {
   const { isEditorMode, previewMode } = useEditorContext();
 
-  const resolvedX: AlignX = alignX ?? (align as AlignX) ?? 'left';
+
 
   const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.nav;
   const sizeClass    = SIZE_STYLES[size]        ?? SIZE_STYLES.base;
@@ -95,7 +93,7 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
         width:          '100%',
         height:         '100%',
         display:        'flex',
-        justifyContent: JUSTIFY_MAP[resolvedX]  ?? 'flex-start',
+        justifyContent: JUSTIFY_MAP[alignX]  ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
         backgroundColor: backgroundColor,
         color: textColor,

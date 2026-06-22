@@ -20,10 +20,14 @@ export const EMPTY_SLOT_TYPE = '_empty';
 
 import RowsGridRenderer from './RowsRenderer/RowsGridRenderer';
 import RowsEditorWrapper from './RowsRenderer/RowsEditorWrapper';
+import FlexGridRenderer from './FlexRenderer/FlexGridRenderer';
+import FlexEditorWrapper from './FlexRenderer/FlexEditorWrapper';
 
 
 /** ID prefix used for per-cell empty zones inside a Columns block */
 export const COL_CELL_PREFIX = '_colcell-';
+/** ID prefix used for drop zones inside a Flex block */
+export const FLEX_CELL_PREFIX = '_flexcell-';
 
 /** Create a new empty slot section */
 export function makeEmptySlot(): LayoutSection {
@@ -132,11 +136,17 @@ const ColumnsGridRenderer: React.FC<{
 }> = ({ section, depth }) => {
   const { isEditorMode, previewMode } = useEditorContext();
   const colCount = Number(section.props?.columns ?? 2);
-  const align = (section.props?.align as string) ?? 'stretch';
+  const gap = (section.props?.gap as string) ?? 'none';
+  const alignX = (section.props?.alignX as string) ?? 'stretch';
+  const alignY = (section.props?.alignY as string) ?? 'stretch';
 
   const ALIGN_MAP: Record<string, string> = {
-    start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch',
+    start: 'start', center: 'center', end: 'end', stretch: 'stretch',
   };
+  const GAP_MAP: Record<string, string> = {
+    none: '0', sm: '0.5rem', md: '1rem', lg: '2rem', xl: '3rem',
+  };
+  const gapValue = GAP_MAP[gap] || 0;
 
   const isEditing = isEditorMode && !previewMode;
 
@@ -160,8 +170,9 @@ const ColumnsGridRenderer: React.FC<{
         style={{
           display: 'grid',
           gridTemplateColumns: gridTemplate,
-          gap: 0,
-          alignItems: ALIGN_MAP[align] ?? 'stretch',
+          gap: gapValue,
+          justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+          alignItems: ALIGN_MAP[alignY] ?? 'stretch',
           width: '100%',
         }}
       >
@@ -198,7 +209,9 @@ const ColumnsGridRenderer: React.FC<{
       section={section}
       depth={depth}
       colCount={colCount}
-      align={align}
+      gapValue={gapValue}
+      alignX={alignX}
+      alignY={alignY}
       colSpans={colSpans}
       totalSpan={totalSpan}
       gridTemplate={gridTemplate}
@@ -214,14 +227,16 @@ const _ColumnsEditGrid: React.FC<{
   section: LayoutSection;
   depth: number;
   colCount: number;
-  align: string;
+  gapValue: string | number;
+  alignX: string;
+  alignY: string;
   colSpans: number[];
   totalSpan: number;
   gridTemplate: string;
   cells: { index: number; span: number; child: LayoutSection | null; isEmpty: boolean }[];
   cumulativeSpans: number[];
   ALIGN_MAP: Record<string, string>;
-}> = ({ section, depth, colCount, align, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
+}> = ({ section, depth, colCount, gapValue, alignX, alignY, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
 
   // ── Merge: two adjacent empty cells → one with combined span ─────────
   const handleMerge = useCallback(
@@ -250,8 +265,9 @@ const _ColumnsEditGrid: React.FC<{
             style={{
               display: 'grid',
               gridTemplateColumns: gridTemplate,
-              gap: 0,
-              alignItems: ALIGN_MAP[align] ?? 'stretch',
+              gap: gapValue,
+              justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+              alignItems: ALIGN_MAP[alignY] ?? 'stretch',
               width: '100%',
             }}
           >
@@ -678,6 +694,14 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       return <RowsGridRenderer section={section} depth={depth} />;
     }
     return <RowsEditorWrapper section={section} depth={depth} />;
+  }
+
+  // ── Flex block: flexbox renderer ────────────
+  if (section.type === 'flex') {
+    if (!effectiveEditorMode || effectivePreviewMode) {
+      return <FlexGridRenderer section={section} depth={depth} />;
+    }
+    return <FlexEditorWrapper section={section} depth={depth} />;
   }
 
   const Component = componentRegistry.resolve(section.type);

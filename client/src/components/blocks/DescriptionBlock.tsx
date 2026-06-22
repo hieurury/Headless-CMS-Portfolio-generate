@@ -17,7 +17,7 @@ const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
 export interface DescriptionBlockProps {
   text?: string;
   size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
-  align?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right';
   alignX?: AlignX;
   alignY?: AlignY;
   textColor?: string;
@@ -44,7 +44,7 @@ const TEXT_ALIGN_MAP: Record<string, string> = {
 export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
   text      = 'Enter your description here. This block is perfect for paragraphs and longer text.',
   size      = 'base',
-  align     = 'left',
+  textAlign = 'left',
   alignX    = 'left',
   alignY    = 'middle',
   textColor,
@@ -53,7 +53,7 @@ export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
   sectionId,
 }) => {
   const sizeClass  = SIZE_MAP[size]           ?? 'text-base';
-  const textAlign  = TEXT_ALIGN_MAP[align]    ?? 'text-left';
+  const textAlignClass = TEXT_ALIGN_MAP[textAlign] ?? 'text-left';
 
   return (
     <div
@@ -67,7 +67,7 @@ export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
         backgroundColor: backgroundColor,
       }}
     >
-      <div className={`py-1 w-full ${textAlign}`}>
+      <div className={`py-1 w-full ${textAlignClass}`}>
         <p
           data-cms-field="text"
           className={`leading-relaxed ${sizeClass} cursor-text`}

@@ -21,7 +21,7 @@ interface HeadingBlockProps {
   level?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   size?: 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
   /** Text alignment within the heading element */
-  align?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right';
   /** Horizontal position of the block within its cell (left / center / right) */
   alignX?: AlignX;
   /** Vertical position of the block within its cell (top / middle / bottom) */
@@ -55,7 +55,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   text      = 'Your Heading Here',
   level     = 'h2',
   size      = 'xl',
-  align     = 'left',
+  textAlign = 'left',
   alignX    = 'left',
   alignY    = 'middle',
   textColor,
@@ -64,9 +64,11 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   gradient  = false,
   sectionId,
 }) => {
-  const Tag        = level as React.ElementType;
+  const safeLevel = String(level).startsWith('h') ? String(level).toLowerCase() : `h${level}`;
+  const validLevels = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  const Tag        = (validLevels.includes(safeLevel) ? safeLevel : 'h2') as React.ElementType;
   const sizeClass  = SIZE_MAP[size]           ?? 'text-xl';
-  const textAlign  = TEXT_ALIGN_MAP[align]    ?? 'text-left';
+  const textAlignClass = TEXT_ALIGN_MAP[textAlign] ?? 'text-left';
   const textClass = gradient ? 'gradient-text' : '';
 
   return (
@@ -81,7 +83,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
         backgroundColor: backgroundColor,
       }}
     >
-      <div className={`py-2 ${textAlign}`}>
+      <div className={`py-2 ${textAlignClass}`}>
         <Tag
           data-cms-field="text"
           className={`font-bold leading-tight ${sizeClass} ${textClass} cursor-text`}

@@ -26,8 +26,7 @@ interface IconBlockProps {
   shape?: 'none' | 'circle' | 'square' | 'rounded';
   /** Accent palette for background + icon tint */
   accent?: 'indigo' | 'violet' | 'emerald' | 'amber' | 'rose' | 'sky' | 'slate' | 'custom';
-  /** @deprecated Use alignX instead */
-  align?: 'left' | 'center' | 'right';
+
   /** Horizontal position within the cell */
   alignX?: AlignX;
   /** Vertical position within the cell */
@@ -69,15 +68,13 @@ export const IconBlock: React.FC<IconBlockProps> = ({
   color,
   shape   = 'rounded',
   accent  = 'indigo',
-  align   = 'left',
-  alignX,
+  alignX  = 'left',
   alignY  = 'middle',
   textColor,
   backgroundColor,
   sectionId,
 }) => {
-  // Resolve X: new alignX wins, fall back to legacy align
-  const resolvedX: AlignX = alignX ?? (align as AlignX) ?? 'left';
+
 
   const iconKey = Object.keys(LucideIcons).find(
     (k) => k.toLowerCase() === (name ?? 'sparkles').toLowerCase(),
@@ -101,7 +98,7 @@ export const IconBlock: React.FC<IconBlockProps> = ({
         width:          '100%',
         height:         '100%',
         display:        'flex',
-        justifyContent: JUSTIFY_MAP[resolvedX]  ?? 'flex-start',
+        justifyContent: JUSTIFY_MAP[alignX]  ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
       }}
     >

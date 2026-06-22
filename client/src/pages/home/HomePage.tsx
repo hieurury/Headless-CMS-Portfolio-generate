@@ -14,16 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 export const HomePage: React.FC = () => {
   const { theme } = useUIStore();
 
-  // Enable scroll snapping on HomePage
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.scrollSnapType = 'y mandatory';
-    
-    return () => {
-      root.style.scrollSnapType = '';
-    };
-  }, []);
-
+  // Removed scroll snapping to fix scroll trapping issue
   // Init ScrollTrigger refresh on mount
   useEffect(() => {
     ScrollTrigger.refresh();

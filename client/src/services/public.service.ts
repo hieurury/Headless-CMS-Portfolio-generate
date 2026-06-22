@@ -27,6 +27,7 @@ export interface PublicPageEntry {
   /** Normalized slug safe for use in URLs — strips leading /, converts "/" to "home" */
   urlSlug: string;
   order: number;
+  meta?: { icon?: string };
 }
 
 export interface PublicPortfolioHub {

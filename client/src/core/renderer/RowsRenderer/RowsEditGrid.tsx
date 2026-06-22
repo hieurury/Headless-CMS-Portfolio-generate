@@ -12,7 +12,8 @@ const _RowsEditGrid: React.FC<{
     section: LayoutSection;
     depth: number;
     rowCount: number;
-    align: string;
+    alignX: string;
+    alignY: string;
     rowSpans: number[];
     totalSpan: number;
     gridTemplate: string;
@@ -23,7 +24,8 @@ const _RowsEditGrid: React.FC<{
     section,
     depth,
     rowCount,
-    align,
+    alignX,
+    alignY,
     rowSpans,
     totalSpan,
     gridTemplate,
@@ -87,7 +89,8 @@ const _RowsEditGrid: React.FC<{
                                 display: 'grid',
                                 gridTemplateRows: gridTemplate,
                                 gap: 0,
-                                alignItems: ALIGN_MAP[align] ?? 'stretch',
+                                justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+                                alignItems: ALIGN_MAP[alignY] ?? 'stretch',
                                 width: '100%',
                                 height: '100%',
                             }}

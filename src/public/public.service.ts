@@ -191,7 +191,7 @@ export class PublicService {
 
     const pages = await this.pageModel
       .find({ portfolio: portfolio._id, isPublished: true })
-      .select('_id title slug order')
+      .select('_id title slug order meta')
       .sort({ order: 1, createdAt: 1 })
       .lean()
       .exec();

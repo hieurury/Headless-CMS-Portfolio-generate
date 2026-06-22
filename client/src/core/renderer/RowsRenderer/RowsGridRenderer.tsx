@@ -13,7 +13,8 @@ const RowsGridRenderer: React.FC<{
         start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch',
     };
     const isEditing = isEditorMode && !previewMode;
-    const align = (section.props?.align as string) ?? 'stretch';
+    const alignX = (section.props?.alignX as string) ?? 'stretch';
+    const alignY = (section.props?.alignY as string) ?? 'stretch';
 
     // ── rowSpans: per-cell height weights ─────────────────────────────────
     const rawSpans = section.props?.rowSpans as number[] | undefined;
@@ -35,7 +36,8 @@ const RowsGridRenderer: React.FC<{
                     display: 'grid',
                     gridTemplateRows: gridTemplate,
                     gap: 0,
-                    alignItems: ALIGN_MAP[align] ?? 'stretch',
+                    justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+                    alignItems: ALIGN_MAP[alignY] ?? 'stretch',
                     width: '100%',
                     height: '100%',
                 }}
@@ -71,7 +73,8 @@ const RowsGridRenderer: React.FC<{
         section={section}
         depth={depth}
         rowCount={rowCount}
-        align={align}
+        alignX={alignX}
+        alignY={alignY}
         rowSpans={rowSpans}
         totalSpan={totalSpan}
         gridTemplate={gridTemplate}

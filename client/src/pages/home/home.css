@@ -52,7 +52,7 @@
   color: var(--home-text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
@@ -258,14 +258,13 @@
    ============================================================ */
 .hero-section {
   position: relative;
-  min-height: 100svh;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   background: var(--home-bg);
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .hero-canvas {
@@ -430,8 +429,6 @@
   align-items: center;
   background: var(--home-bg-alt);
   padding: 6rem 0;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .features-section__inner {
@@ -613,9 +610,7 @@
 .community-section {
   background: var(--home-bg);
   padding: 6rem 0 5rem;
-  overflow: hidden;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+  position: relative;
 }
 
 .community-header {
@@ -804,7 +799,6 @@
   background: var(--home-bg-alt);
   border-top: 1px solid var(--home-border);
   padding: 4rem 0 0;
-  scroll-snap-align: start;
 }
 
 .home-footer__inner {

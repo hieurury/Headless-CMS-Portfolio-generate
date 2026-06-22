@@ -32,6 +32,7 @@ export const DashboardPage: React.FC = () => {
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [form, setForm] = useState({ title: '', slug: '', description: '', icon: 'Folder' });
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const lang = t(language).dashboard;
@@ -49,16 +50,21 @@ export const DashboardPage: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
+    setCreateError(null);
     try {
+      const cleanSlug = form.slug.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
       const p = await create({
         title: form.title,
-        slug: form.slug,
+        slug: cleanSlug,
         description: form.description,
         meta: { icon: form.icon },
       });
       setShowCreate(false);
       setForm({ title: '', slug: '', description: '', icon: 'Folder' });
       navigate(`/dashboard/portfolios/${p._id}`);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      setCreateError(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setCreating(false);
     }
@@ -253,6 +259,11 @@ export const DashboardPage: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-bold text-[var(--color-text)] mb-6">{lang.createPortfolio}</h2>
+            {createError && (
+              <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                {createError}
+              </div>
+            )}
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="flex gap-4">
                 <div className="relative shrink-0">

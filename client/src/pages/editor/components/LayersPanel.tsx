@@ -3,6 +3,7 @@ import { GripVertical, ChevronRight, Plus, Trash2, Eye, Settings } from 'lucide-
 import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
+import { findParent, findSectionById } from '../../../core/utils/layoutUtils';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -71,22 +72,6 @@ const SortableChildrenList: React.FC<{
   onAddChild,
   onReorderChildren,
 }) => {
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const valid = validChildren(children);
-    const oldIndex = valid.findIndex((c) => c.id === active.id);
-    const newIndex = valid.findIndex((c) => c.id === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) {
-      onReorderChildren(parentId, oldIndex, newIndex);
-    }
-  };
-
   const valid = validChildren(children);
 
   return (
@@ -96,32 +81,26 @@ const SortableChildrenList: React.FC<{
         className="absolute top-0 bottom-0 w-px bg-white/6"
         style={{ left: `${Math.max(6, indent) + 16}px` }}
       />
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
+      <SortableContext
+        items={valid.map((c) => c.id)}
+        strategy={verticalListSortingStrategy}
       >
-        <SortableContext
-          items={valid.map((c) => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-0.5 mt-0.5">
-            {valid.map((child) => (
-              <LayerNode
-                key={child.id}
-                section={child}
-                depth={depth + 1}
-                selectedId={selectedId}
-                onSelect={onSelect}
-                onDelete={onDelete}
-                onAddChild={onAddChild}
-                onReorderChildren={onReorderChildren}
-                isSortable
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+        <div className="space-y-0.5 mt-0.5">
+          {valid.map((child) => (
+            <LayerNode
+              key={child.id}
+              section={child}
+              depth={depth + 1}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              onDelete={onDelete}
+              onAddChild={onAddChild}
+              onReorderChildren={onReorderChildren}
+              isSortable
+            />
+          ))}
+        </div>
+      </SortableContext>
     </div>
   );
 };
@@ -315,6 +294,8 @@ interface LayersPanelProps {
   onAddChild: (parentId: string) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
   onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
+  onMoveToContainer: (sectionId: string, containerId: string | null, index?: number) => void;
+  onReplaceEmptySlot: (sectionId: string, slotId: string) => void;
 }
 
 export const LayersPanel: React.FC<LayersPanelProps> = ({
@@ -326,6 +307,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   onAddChild,
   onReorder,
   onReorderChildren,
+  onMoveToContainer,
+  onReplaceEmptySlot,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -335,9 +318,45 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = sections.findIndex((s) => s.id === active.id);
-    const newIndex = sections.findIndex((s) => s.id === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) onReorder(oldIndex, newIndex);
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const activeParentInfo = findParent(sections, activeId);
+    const overParentInfo = findParent(sections, overId);
+
+    if (!activeParentInfo || !overParentInfo) return;
+
+    const activeParentId = activeParentInfo.parent?.id ?? null;
+    const overParentId = overParentInfo.parent?.id ?? null;
+
+    if (activeParentId === overParentId) {
+      // Same parent
+      if (activeParentId === null) {
+        const oldIndex = sections.findIndex((s) => s.id === activeId);
+        const newIndex = sections.findIndex((s) => s.id === overId);
+        if (oldIndex !== -1 && newIndex !== -1) onReorder(oldIndex, newIndex);
+      } else {
+        const parent = activeParentInfo.parent!;
+        const valid = validChildren(parent.children);
+        const oldIndex = valid.findIndex((c) => c.id === activeId);
+        const newIndex = valid.findIndex((c) => c.id === overId);
+        if (oldIndex !== -1 && newIndex !== -1) onReorderChildren(activeParentId, oldIndex, newIndex);
+      }
+    } else {
+      // Different parents -> move cross-container
+      const targetSection = findSectionById(sections, overId);
+      if (targetSection?.type === '_empty') {
+        onReplaceEmptySlot(activeId, overId);
+        return;
+      }
+
+      const newIdx = overParentId === null
+        ? sections.findIndex(s => s.id === overId)
+        : validChildren(overParentInfo.parent!.children).findIndex(c => c.id === overId);
+
+      onMoveToContainer(activeId, overParentId, Math.max(0, newIdx));
+    }
   };
 
   return (

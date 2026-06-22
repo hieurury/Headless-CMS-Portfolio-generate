@@ -16,6 +16,7 @@ import {
   Image as ImageIcon,
   AlignLeft,
   Tag,
+  LayoutList,
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
@@ -31,6 +32,7 @@ import { RowsBlock } from '../../components/blocks/RowsBlock';
 import { ImageBlock } from '../../components/blocks/ImageBlock';
 import { DescriptionBlock } from '../../components/blocks/DescriptionBlock';
 import { BadgeBlock } from '../../components/blocks/BadgeBlock';
+import { FlexBlock } from '../../components/blocks/FlexBlock';
 
 // ─── NavBarWrapperBlock — composable sticky navbar container ──────────────────
 componentRegistry.register({
@@ -57,6 +59,8 @@ componentRegistry.register({
     padding: 'lg',
     maxWidth: 'xl',
     background: 'dark',
+    alignX: 'center',
+    alignY: 'middle',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -66,6 +70,8 @@ componentRegistry.register({
     background: { type: 'select', label: 'Background Style', options: ['dark', 'glass', 'light', 'none'] },
     padding: { type: 'select', label: 'Horizontal Padding', options: ['sm', 'md', 'lg', 'xl'] },
     maxWidth: { type: 'select', label: 'Content Max Width', options: ['lg', 'xl', '2xl', 'full'] },
+    alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
+    alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
   },
 });
 
@@ -85,14 +91,16 @@ componentRegistry.register({
   defaultProps: {
     columns: '2',
     gap: 'md',
-    align: 'stretch',
+    alignX: 'stretch',
+    alignY: 'stretch',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
     columns: { type: 'select', label: 'Number of Columns', options: ['2', '3', '4'] },
     gap: { type: 'select', label: 'Column Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
-    align: { type: 'select', label: 'Vertical Align', options: ['start', 'center', 'end', 'stretch'] },
+    alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
+    alignY: { type: 'select', label: 'Vertical Align (Y)', options: ['start', 'center', 'end', 'stretch'] },
   },
 });
 componentRegistry.register({
@@ -106,14 +114,42 @@ componentRegistry.register({
   defaultProps: {
     rows: '2',
     gap: 'md',
-    align: 'stretch',
+    alignX: 'stretch',
+    alignY: 'stretch',
   },
   schema: {
     rows: { type: 'select', label: 'Number of Rows', options: ['2', '3', '4'] },
     gap: { type: 'select', label: 'Row Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
-    align: { type: 'select', label: 'Vertical Align', options: ['start', 'center', 'end', 'stretch'] },
+    alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
+    alignY: { type: 'select', label: 'Vertical Align (Y)', options: ['start', 'center', 'end', 'stretch'] },
   }
 })
+
+componentRegistry.register({
+  type: 'flex',
+  component: FlexBlock as React.ComponentType<Record<string, unknown>>,
+  displayName: 'Flex',
+  description: 'Flexible container — children auto-size to content. Perfect for button groups, icon rows, tags, and any layout where items should not be forced into equal-width cells.',
+  icon: <LayoutList size={16} />,
+  category: 'layout',
+  isContainer: true,
+  defaultProps: {
+    direction: 'row',
+    gap: 'md',
+    justify: 'start',
+    align: 'center',
+    wrap: 'wrap',
+  },
+  schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
+    direction: { type: 'select', label: 'Direction', options: ['row', 'column', 'row-reverse', 'column-reverse'] },
+    gap: { type: 'select', label: 'Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
+    justify: { type: 'select', label: 'Justify (main axis)', options: ['start', 'center', 'end', 'between', 'around', 'evenly'] },
+    align: { type: 'select', label: 'Align (cross axis)', options: ['start', 'center', 'end', 'stretch', 'baseline'] },
+    wrap: { type: 'select', label: 'Wrap', options: ['nowrap', 'wrap', 'wrap-reverse'] },
+  },
+});
 componentRegistry.register({
   type: 'container',
   component: ContainerBlock as React.ComponentType<Record<string, unknown>>,
@@ -174,7 +210,7 @@ componentRegistry.register({
     text: 'Your Heading Here',
     level: 'h2',
     size: 'xl',
-    align: 'left',
+    textAlign: 'left',
     alignX: 'left',
     alignY: 'middle',
     gradient: false,
@@ -185,7 +221,7 @@ componentRegistry.register({
     text: { type: 'string', label: 'Heading Text', placeholder: 'Your Heading Here' },
     level: { type: 'select', label: 'HTML Level', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
     size: { type: 'select', label: 'Size', options: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'] },
-    align: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
+    textAlign: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
     gradient: { type: 'boolean', label: 'Gradient Effect' },
@@ -330,7 +366,7 @@ componentRegistry.register({
   defaultProps: {
     text: 'Enter your description here. This block is perfect for paragraphs and longer text.',
     size: 'base',
-    align: 'left',
+    textAlign: 'left',
     alignX: 'left',
     alignY: 'middle',
   },
@@ -339,7 +375,7 @@ componentRegistry.register({
     backgroundColor: { type: 'color', label: 'Background Color' },
     text: { type: 'textarea', label: 'Text Content', placeholder: 'Write your description...' },
     size: { type: 'select', label: 'Text Size', options: ['xs', 'sm', 'base', 'lg', 'xl'] },
-    align: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
+    textAlign: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
   },

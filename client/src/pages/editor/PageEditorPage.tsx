@@ -32,6 +32,7 @@ import {
   findParent,
   insertIntoColumnsCell,
   insertIntoRowsCell,
+  insertIntoFlexCell,
 } from '../../core/utils/layoutUtils';
 import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
@@ -186,6 +187,9 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Listen for cms:addRowCell — "+" on Rows control bar ──────────────
   // Increments rows count by 1. No child added — new row is an empty drop zone.
+  // IMPORTANT: also append 1 to rowSpans so its length stays in sync with `rows`.
+  // Without this, RowsGridRenderer detects length mismatch and resets ALL spans to 1,
+  // causing merged cells to lose their span value.
   useEffect(() => {
     const handler = (e: Event) => {
       const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
@@ -193,11 +197,19 @@ export const PageEditorPage: React.FC = () => {
         const rowBlock = findSectionById(layout.sections, rowsId);
         if (!rowBlock) return layout;
         const current = Number(rowBlock.props['rows'] ?? 1);
+        const rawSpans = rowBlock.props['rowSpans'] as number[] | undefined;
+        // Preserve existing spans; append 1 for the new empty row
+        const existingSpans: number[] =
+          Array.isArray(rawSpans) && rawSpans.length === current
+            ? rawSpans
+            : Array(current).fill(1);
+        const newRowSpans = [...existingSpans, 1];
         return {
           ...layout,
           sections: updateSectionProps(layout.sections, rowsId, {
             ...rowBlock.props,
             rows: String(current + 1),
+            rowSpans: newRowSpans,
           }),
         };
       });
@@ -487,6 +499,41 @@ export const PageEditorPage: React.FC = () => {
     return () => window.removeEventListener('cms:fillRowCell', handler);
   }, []);
 
+  // ── Listen for cms:fillFlexCell — click on empty flex cell ───────────
+  const [fillFlexCell, setFillFlexCell] = useState<{ flexId: string; cellIndex: number } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ flexId: string; cellIndex: number }>).detail;
+      setFillFlexCell(detail);
+      setFillColCell(null);
+      setFillRowCell(null);
+      setFillSlotId(null);
+      setAddChildParentId(null);
+      setShowAddPanel(true);
+    };
+    window.addEventListener('cms:fillFlexCell', handler);
+    return () => window.removeEventListener('cms:fillFlexCell', handler);
+  }, []);
+
+  // ── Listen for cms:reorderFlexCells — drag reorder inside Flex ──────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { flexId, children } =
+        (e as CustomEvent<{ flexId: string; children: LayoutSection[] }>).detail;
+      updateLayout((layout) => {
+        const flexBlock = findSectionById(layout.sections, flexId);
+        if (!flexBlock) return layout;
+        return {
+          ...layout,
+          sections: layout.sections.map((s) => patchSection(s, flexId, { children })),
+        };
+      });
+    };
+    window.addEventListener('cms:reorderFlexCells', handler);
+    return () => window.removeEventListener('cms:reorderFlexCells', handler);
+  }, [updateLayout]);
+
   // ── Listen for cms:fillEmptySlot — click on an empty slot ─────────
   // Opens AddPanel; the chosen block REPLACES the _empty slot.
   useEffect(() => {
@@ -527,6 +574,13 @@ export const PageEditorPage: React.FC = () => {
       }));
       setSelectedId(newSection.id);
       setFillRowCell(null);
+    } else if (fillFlexCell) {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: insertIntoFlexCell(layout.sections, fillFlexCell.flexId, newSection, fillFlexCell.cellIndex),
+      }));
+      setSelectedId(newSection.id);
+      setFillFlexCell(null);
     } else if (fillSlotId) {
       // Replace the _empty placeholder with the real block
       updateLayout((layout) => ({
@@ -556,7 +610,7 @@ export const PageEditorPage: React.FC = () => {
     setSelectedFieldKey(null);
     setShowRightPanel(true);
     setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [fillColCell, fillRowCell, fillSlotId, addChildParentId, updateLayout, draftLayout.sections]);
+  }, [fillColCell, fillRowCell, fillFlexCell, fillSlotId, addChildParentId, updateLayout, draftLayout.sections]);
 
   // ── Add template (inject full tree) ───────────────────────────────
   const handleAddTemplate = useCallback((tree: LayoutSection) => {
@@ -574,6 +628,13 @@ export const PageEditorPage: React.FC = () => {
       }));
       setSelectedId(tree.id);
       setFillRowCell(null);
+    } else if (fillFlexCell) {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: insertIntoFlexCell(layout.sections, fillFlexCell.flexId, tree, fillFlexCell.cellIndex),
+      }));
+      setSelectedId(tree.id);
+      setFillFlexCell(null);
     } else if (fillSlotId) {
       // Replace _empty placeholder with the template root
       updateLayout((layout) => ({
@@ -600,7 +661,7 @@ export const PageEditorPage: React.FC = () => {
     setSelectedFieldKey(null);
     setShowRightPanel(true);
     setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [fillSlotId, addChildParentId, updateLayout]);
+  }, [fillSlotId, fillFlexCell, addChildParentId, updateLayout]);
 
   // ── Top-level reorder ──────────────────────────────────────────────
   const handleTopLevelReorder = useCallback((oldIndex: number, newIndex: number) => {
@@ -660,41 +721,15 @@ export const PageEditorPage: React.FC = () => {
   }, [updateLayout]);
 
   // ── Replace an _empty slot with a dragged block ───────────────────────────
-  // Called by PageRenderer when a block is dropped onto an _empty slot.
-  //
-  // Cross-container move:
-  //   1. Find the block and note its parent.
-  //   2. Swap: put a new _empty slot where the block was.
-  //   3. Put the block where the _empty slot was.
-  //
-  // Same-container move (block and slot are siblings):
-  //   Just replace the slot with the block — no new empty slot needed.
+  // Called by PageRenderer (or LayersPanel) when a block is dropped onto an _empty slot.
+  // We simply remove the block from its old location and put it where the slot was.
   const handleReplaceEmptySlot = useCallback((sectionId: string, slotId: string) => {
     updateLayout((layout) => {
-      const movedBlock = findSectionById(layout.sections, sectionId);
-      if (!movedBlock) return layout;
+      const [withoutBlock, movedBlockOut] = removeSection(layout.sections, sectionId);
+      if (!movedBlockOut) return layout;
 
-      const sourceParent = findParent(layout.sections, sectionId);
-      const targetParent = findParent(layout.sections, slotId);
-
-      const sourceParentId = sourceParent?.parent?.id ?? null;
-      const targetParentId = targetParent?.parent?.id ?? null;
-
-      const isCrossContainer = sourceParentId !== targetParentId;
-
-      if (isCrossContainer) {
-        // Step 1: replace block at old position with a new _empty slot
-        const newSlot = makeEmptySlot();
-        const withSlotAtSource = replaceSection(layout.sections, sectionId, newSlot);
-        // Step 2: replace target empty slot with the block
-        const final = replaceSection(withSlotAtSource, slotId, movedBlock);
-        return { ...layout, sections: final };
-      } else {
-        // Same container: simply remove slot and put block there
-        const [withoutBlock] = removeSection(layout.sections, sectionId);
-        const final = replaceSection(withoutBlock, slotId, movedBlock);
-        return { ...layout, sections: final };
-      }
+      const final = replaceSection(withoutBlock, slotId, movedBlockOut);
+      return { ...layout, sections: final };
     });
   }, [updateLayout]);
 
@@ -951,6 +986,8 @@ export const PageEditorPage: React.FC = () => {
                     }}
                     onReorder={handleTopLevelReorder}
                     onReorderChildren={handleReorderChildren}
+                    onMoveToContainer={handleMoveToContainer}
+                    onReplaceEmptySlot={handleReplaceEmptySlot}
                   />
                 )}
                 {leftTab === 'settings' && <SeoSettingsPanel />}
@@ -1049,8 +1086,8 @@ export const PageEditorPage: React.FC = () => {
           <AddSectionPanel
             onAdd={handleAddSection}
             onAddTemplate={handleAddTemplate}
-            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); setFillSlotId(null); setFillColCell(null); }}
-            addingToContainer={addChildParentId !== null || fillSlotId !== null || fillColCell !== null}
+            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); setFillSlotId(null); setFillColCell(null); setFillRowCell(null); setFillFlexCell(null); }}
+            addingToContainer={addChildParentId !== null || fillSlotId !== null || fillColCell !== null || fillRowCell !== null || fillFlexCell !== null}
           />
         )}
       </div>
