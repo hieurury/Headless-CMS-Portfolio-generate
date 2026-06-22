@@ -4,6 +4,7 @@ import { publicService, type PublicPortfolioHub } from '../../services/public.se
 import {
   Loader2, Lock, FileText, ArrowRight, Globe, Users, LayoutGrid,
 } from 'lucide-react';
+import { SeoHelmet } from '../../core/renderer/SeoHelmet';
 
 export const PublicPortfolioHubPage: React.FC = () => {
   const { portfolioSlug } = useParams<{ portfolioSlug: string }>();
@@ -59,6 +60,11 @@ export const PublicPortfolioHubPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#08080f]">
+      <SeoHelmet 
+        portfolioTitle={data.title}
+        pageTitle="Hub"
+        meta={data.meta}
+      />
       {/* ── Nav ────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center gap-3">

@@ -17,11 +17,27 @@ export interface PageLayout {
 
 // ─── CMS Data Models ─────────────────────────────────────────────────────────
 
+export interface SeoMeta {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  keywords?: string[];
+}
+
+export interface AioMeta {
+  authorName?: string;
+  jobTitle?: string;
+  bio?: string;
+  socialLinks?: string[];
+}
+
 export interface PortfolioMeta {
   theme?: string;
   primaryColor?: string;
   fontFamily?: string;
   icon?: string;
+  seo?: SeoMeta;
+  aio?: AioMeta;
 }
 
 export interface Portfolio {

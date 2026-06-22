@@ -3,6 +3,34 @@ import { Document, Types } from 'mongoose';
 
 export type PortfolioDocument = Portfolio & Document;
 
+export class SeoMeta {
+  @Prop()
+  title?: string;
+
+  @Prop()
+  description?: string;
+
+  @Prop()
+  ogImage?: string;
+
+  @Prop({ type: [String], default: [] })
+  keywords?: string[];
+}
+
+export class AioMeta {
+  @Prop()
+  authorName?: string;
+
+  @Prop()
+  jobTitle?: string;
+
+  @Prop()
+  bio?: string;
+
+  @Prop({ type: [String], default: [] })
+  socialLinks?: string[];
+}
+
 export class PortfolioMeta {
   @Prop({ default: 'default' })
   theme: string;
@@ -15,6 +43,12 @@ export class PortfolioMeta {
 
   @Prop()
   icon?: string;
+
+  @Prop({ type: SeoMeta, default: () => ({}) })
+  seo?: SeoMeta;
+
+  @Prop({ type: AioMeta, default: () => ({}) })
+  aio?: AioMeta;
 }
 
 @Schema({ timestamps: true })

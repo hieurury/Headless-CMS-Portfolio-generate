@@ -9,13 +9,14 @@ import { LayersPanel } from './components/LayersPanel';
 import { AddSectionPanel } from './components/AddSectionPanel';
 import { SmartPropEditor } from './components/SmartPropEditor';
 import { AiGeneratePanel } from './components/AiGeneratePanel';
+import { SeoSettingsPanel } from './components/SeoSettingsPanel';
 import { EmptyCanvasPrompt } from './components/EmptyCanvasPrompt';
 import type { LayoutSection, PageLayout } from '../../core/types/layout.types';
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import {
   Save, ArrowLeft, Sparkles, Layers,
   Loader2, Check, ChevronRight, Plus, X,
-  PanelLeft, PanelRight, Settings, Eye, PenLine,
+  PanelLeft, PanelRight, Settings, Eye, PenLine, Globe
 } from 'lucide-react';
 import clsx from 'clsx';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -34,7 +35,7 @@ import {
 } from '../../core/utils/layoutUtils';
 import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
-type LeftTab = 'ai' | 'sections';
+type LeftTab = 'ai' | 'sections' | 'settings';
 
 const HEADER_H = 56;
 
@@ -910,6 +911,7 @@ export const PageEditorPage: React.FC = () => {
                 {([
                   { key: 'ai' as LeftTab, label: 'AI', icon: Sparkles },
                   { key: 'sections' as LeftTab, label: 'Layers', icon: Layers },
+                  { key: 'settings' as LeftTab, label: 'Settings', icon: Globe },
                 ] as const).map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
@@ -951,6 +953,7 @@ export const PageEditorPage: React.FC = () => {
                     onReorderChildren={handleReorderChildren}
                   />
                 )}
+                {leftTab === 'settings' && <SeoSettingsPanel />}
               </div>
 
               <div className="px-3 py-2 border-t border-[var(--color-border)] text-xs text-slate-700 shrink-0 flex justify-between">

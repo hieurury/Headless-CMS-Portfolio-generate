@@ -4,6 +4,7 @@ import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { publicService, type PublicPageResponse } from '../../services/public.service';
 import type { PageLayout } from '../../core/types/layout.types';
 import { Loader2, Lock, LayoutGrid, ChevronRight } from 'lucide-react';
+import { SeoHelmet } from '../../core/renderer/SeoHelmet';
 
 /**
  * PublicPortfolioPage — the public-facing runtime renderer.
@@ -78,8 +79,12 @@ export const PublicPortfolioPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
-      {/* SEO title */}
-      <title>{`${data.page.title} — ${data.portfolio.title}`}</title>
+      {/* SEO & AIO */}
+      <SeoHelmet 
+        portfolioTitle={data.portfolio.title}
+        pageTitle={data.page.title}
+        meta={data.portfolio.meta}
+      />
 
       {/* ── Top navigation bar — always shown when portfolio has pages ── */}
       <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#08080f]/95 backdrop-blur-md">
