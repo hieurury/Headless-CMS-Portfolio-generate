@@ -35,10 +35,25 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
       setMetaTag('property', 'og:image', meta.seo.ogImage);
     }
 
-    // 4. Set Keywords
+    // 4. Set Keywords & Auto-generate AIO keywords
+    const keywords = new Set<string>();
     if (meta?.seo?.keywords && meta.seo.keywords.length > 0) {
-      setMetaTag('name', 'keywords', meta.seo.keywords.join(', '));
+      meta.seo.keywords.forEach(k => keywords.add(k));
     }
+    if (meta?.aio?.authorName) {
+      keywords.add(meta.aio.authorName);
+      keywords.add(`${meta.aio.authorName} portfolio`);
+    }
+    if (meta?.aio?.jobTitle) {
+      keywords.add(meta.aio.jobTitle);
+      keywords.add(`Hire ${meta.aio.jobTitle}`);
+    }
+    if (keywords.size > 0) {
+      setMetaTag('name', 'keywords', Array.from(keywords).join(', '));
+    }
+
+    // 4b. Set OG Type
+    setMetaTag('property', 'og:type', meta?.aio ? 'profile' : 'website');
 
     // 5. Inject JSON-LD (AIO Context)
     let jsonLdScript = document.querySelector('script[id="portfolio-json-ld"]');
@@ -53,12 +68,16 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
       const { authorName, jobTitle, bio, socialLinks } = meta.aio;
       const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'Person',
-        name: authorName || portfolioTitle,
-        jobTitle: jobTitle || undefined,
-        description: bio || meta?.seo?.description || undefined,
-        sameAs: socialLinks || [],
-        url: window.location.href,
+        '@type': 'ProfilePage',
+        mainEntity: {
+          '@type': 'Person',
+          name: authorName || portfolioTitle,
+          jobTitle: jobTitle || undefined,
+          description: bio || meta?.seo?.description || undefined,
+          sameAs: socialLinks || [],
+          url: window.location.href,
+          knowsAbout: meta?.seo?.keywords || [],
+        }
       };
       jsonLdScript.textContent = JSON.stringify(jsonLd);
     } else {

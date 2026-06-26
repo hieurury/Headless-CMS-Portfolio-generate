@@ -214,7 +214,8 @@ export class PublicService {
   async findPublicPage(portfolioSlug: string, pageSlug: string) {
     const portfolio = await this.portfolioModel
       .findOne({ slug: portfolioSlug, isPublished: true })
-      .select('_id title slug meta isPublished')
+      .select('_id title slug description meta isPublished owner')
+      .populate('owner', 'name')
       .lean()
       .exec();
 
@@ -255,6 +256,8 @@ export class PublicService {
       portfolio: {
         title: portfolio.title,
         slug: portfolio.slug,
+        description: portfolio.description,
+        ownerName: (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
         meta: portfolio.meta,
       },
       page: {
