@@ -97,7 +97,8 @@ export class AiService {
       // Use lower temperature for modifications to reduce hallucination
       const isModification = !!dto.currentLayout;
       const temperature = isModification ? 0.3 : 0.9;
-
+      // console.log("is modification", isModification);
+      // console.log("currentLayout", dto.currentLayout);
       let fullPrompt = `${COMPONENT_CONTEXT}\n\n`;
 
       if (dto.currentLayout) {
