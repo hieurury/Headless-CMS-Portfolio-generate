@@ -966,6 +966,7 @@ export const PageEditorPage: React.FC = () => {
                   <AiGeneratePanel
                     portfolioId={portfolioId}
                     pageId={pageId}
+                    currentLayout={draftLayout}
                     onLayoutGenerated={handleAiLayout}
                   />
                 )}
