@@ -4,15 +4,15 @@ import { useEditorContext } from '../../core/context/EditorContext';
 
 // ─── Shared position maps ─────────────────────────────────────────────────────
 type AlignX = 'left' | 'center' | 'right';
-type AlignY = 'top'  | 'middle' | 'bottom';
+type AlignY = 'top' | 'middle' | 'bottom';
 
 const JUSTIFY_MAP: Record<AlignX, string> = {
-  left:   'flex-start',
+  left: 'flex-start',
   center: 'center',
-  right:  'flex-end',
+  right: 'flex-end',
 };
 const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
-  top:    'flex-start',
+  top: 'flex-start',
   middle: 'center',
   bottom: 'flex-end',
 };
@@ -66,24 +66,24 @@ const SIZE_BASE: Record<string, string> = {
 };
 
 const SHAPE_RADIUS: Record<string, string> = {
-  default:    'rounded-xl',
-  pill:       'rounded-full',
-  square:     'rounded-none',
-  'icon-only':'rounded-xl aspect-square p-0 flex items-center justify-center',
+  default: 'rounded-xl',
+  pill: 'rounded-full',
+  square: 'rounded-none',
+  'icon-only': 'rounded-xl aspect-square p-0 flex items-center justify-center',
 };
 
 export const ButtonBlock: React.FC<ButtonBlockProps> = ({
-  label        = 'Click Me',
-  href         = '#',
-  variant      = 'primary',
-  size         = 'md',
-  shape        = 'default',
-  alignX       = 'left',
-  alignY       = 'middle',
+  label = 'Click Me',
+  href = '#',
+  variant = 'primary',
+  size = 'md',
+  shape = 'default',
+  alignX = 'left',
+  alignY = 'middle',
   icon,
   iconPosition = 'right',
-  fullWidth    = false,
-  external     = false,
+  fullWidth = false,
+  external = false,
   textColor,
   backgroundColor,
   sectionId,
@@ -91,12 +91,12 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
 
 
   const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.primary;
-  const baseSize     = SIZE_BASE[size]          ?? SIZE_BASE.md;
-  const shapeClass   = SHAPE_RADIUS[shape]      ?? SHAPE_RADIUS.default;
+  const baseSize = SIZE_BASE[size] ?? SIZE_BASE.md;
+  const shapeClass = SHAPE_RADIUS[shape] ?? SHAPE_RADIUS.default;
 
-  const isIconOnly     = shape === 'icon-only';
+  const isIconOnly = shape === 'icon-only';
   const isExternalHref = external || href?.startsWith('http');
-  const isAnchor       = href?.startsWith('#');
+  const isAnchor = href?.startsWith('#');
 
   const { isEditorMode, previewMode } = useEditorContext();
 
@@ -117,35 +117,55 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
     <ExternalLink size={14} className="shrink-0 opacity-70" />
   ) : null;
 
+  const hasUrl = Boolean(href && href !== '#');
+  const sharedClasses = `
+    group inline-flex items-center gap-2 font-semibold transition-all duration-300
+    ${variantClass} ${baseSize} ${shapeClass}
+    ${fullWidth ? 'w-full justify-center' : ''}
+  `.trim();
+
+  const content = (
+    <>
+      {iconPosition === 'left' && iconEl}
+      {!isIconOnly && label}
+      {(iconPosition === 'right' || isIconOnly) && iconEl}
+    </>
+  );
+
   return (
     <div
       id={sectionId}
       style={{
-        width:          '100%',
-        height:         '100%',
-        display:        'flex',
-        justifyContent: JUSTIFY_MAP[alignX]  ?? 'flex-start',
-        alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: JUSTIFY_MAP[alignX] ?? 'flex-start',
+        alignItems: ALIGN_ITEMS_MAP[alignY] ?? 'center',
         backgroundColor: backgroundColor,
         color: textColor,
       }}
     >
-      <a
-        href={href}
-        data-cms-field="label"
-        target={isExternalHref ? '_blank' : undefined}
-        rel={isExternalHref ? 'noopener noreferrer' : undefined}
-        onClick={handleClick}
-        className={`
-          group inline-flex items-center gap-2 font-semibold transition-all duration-300
-          ${variantClass} ${baseSize} ${shapeClass}
-          ${fullWidth ? 'w-full justify-center' : ''}
-        `}
-      >
-        {iconPosition === 'left' && iconEl}
-        {!isIconOnly && label}
-        {(iconPosition === 'right' || isIconOnly) && iconEl}
-      </a>
+      {hasUrl ? (
+        <a
+          href={href}
+          data-cms-field="label"
+          target={isExternalHref ? '_blank' : undefined}
+          rel={isExternalHref ? 'noopener noreferrer' : undefined}
+          onClick={handleClick}
+          className={sharedClasses}
+        >
+          {content}
+        </a>
+      ) : (
+        <button
+          type="button"
+          data-cms-field="label"
+          onClick={handleClick}
+          className={sharedClasses}
+        >
+          {content}
+        </button>
+      )}
     </div>
   );
 };
