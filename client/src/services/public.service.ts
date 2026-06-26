@@ -46,7 +46,7 @@ export interface PublicPageNavEntry {
 }
 
 export interface PublicPageResponse {
-  portfolio: { title: string; slug: string; meta: Record<string, unknown> };
+  portfolio: { title: string; slug: string; description?: string; ownerName?: string; meta: Record<string, unknown> };
   page: { _id: string; title: string; slug: string; layout: { sections: unknown[] } };
   /** All published pages in this portfolio with normalized slugs for navigation */
   allPages: PublicPageNavEntry[];

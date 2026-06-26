@@ -77,13 +77,27 @@ export const PublicPortfolioPage: React.FC = () => {
     );
   }
 
+  // Enrich meta for better AIO context
+  const enrichedMeta = {
+    ...(data.portfolio.meta as any),
+    aio: {
+      ...(data.portfolio.meta as any)?.aio,
+      authorName: (data.portfolio.meta as any)?.aio?.authorName || data.portfolio.ownerName,
+      bio: (data.portfolio.meta as any)?.aio?.bio || data.portfolio.description,
+    },
+    seo: {
+      ...(data.portfolio.meta as any)?.seo,
+      description: (data.portfolio.meta as any)?.seo?.description || data.portfolio.description,
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       {/* SEO & AIO */}
       <SeoHelmet 
         portfolioTitle={data.portfolio.title}
         pageTitle={data.page.title}
-        meta={data.portfolio.meta}
+        meta={enrichedMeta}
       />
 
       {/* ── Top navigation bar — always shown when portfolio has pages ── */}

@@ -73,12 +73,27 @@ export const PublicPortfolioHubPage: React.FC = () => {
 
   const PortfolioIcon = ICONS.find(ic => ic.name === data.meta?.icon)?.component || Folder;
 
+  // Enrich meta for better AIO context
+  const metaAny = data.meta as any;
+  const enrichedMeta = {
+    ...metaAny,
+    aio: {
+      ...metaAny?.aio,
+      authorName: metaAny?.aio?.authorName || data.ownerName,
+      bio: metaAny?.aio?.bio || data.description,
+    },
+    seo: {
+      ...metaAny?.seo,
+      description: metaAny?.seo?.description || data.description,
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <SeoHelmet 
         portfolioTitle={data.title}
         pageTitle="Hub"
-        meta={data.meta}
+        meta={enrichedMeta}
       />
       {/* ── Nav ────────────────────────────────────────────────────── */}
       <nav className="home-navbar home-navbar--scrolled sticky top-0 z-40">
