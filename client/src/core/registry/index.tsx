@@ -17,6 +17,7 @@ import {
   AlignLeft,
   Tag,
   LayoutList,
+  Table as TableIcon,
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
@@ -33,6 +34,7 @@ import { ImageBlock } from '../../components/blocks/ImageBlock';
 import { DescriptionBlock } from '../../components/blocks/DescriptionBlock';
 import { BadgeBlock } from '../../components/blocks/BadgeBlock';
 import { FlexBlock } from '../../components/blocks/FlexBlock';
+import { TableBlock } from '../../components/blocks/TableBlock';
 
 // ─── NavBarWrapperBlock — composable sticky navbar container ──────────────────
 componentRegistry.register({
@@ -406,6 +408,40 @@ componentRegistry.register({
     color: { type: 'select', label: 'Color', options: ['indigo', 'rose', 'emerald', 'amber', 'sky', 'slate', 'violet'] },
     size: { type: 'select', label: 'Size', options: ['sm', 'md', 'lg'] },
     shape: { type: 'select', label: 'Shape', options: ['rounded', 'pill'] },
+    alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
+    alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+  },
+});
+
+componentRegistry.register({
+  type: 'table',
+  component: TableBlock as React.ComponentType<Record<string, unknown>>,
+  displayName: 'Table',
+  description: 'A data table with rows and columns',
+  icon: <TableIcon size={16} />,
+  category: 'block',
+  isAtom: true,
+  defaultProps: {
+    tableData: {
+      headers: ['Column 1', 'Column 2', 'Column 3'],
+      rows: [
+        ['Row 1, Cell 1', 'Row 1, Cell 2', 'Row 1, Cell 3'],
+        ['Row 2, Cell 1', 'Row 2, Cell 2', 'Row 2, Cell 3'],
+      ],
+    },
+    alignX: 'left',
+    alignY: 'middle',
+    striped: true,
+    bordered: true,
+  },
+  schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
+    headerBackgroundColor: { type: 'color', label: 'Header Background Color' },
+    borderColor: { type: 'color', label: 'Border Color' },
+    striped: { type: 'boolean', label: 'Striped Rows' },
+    bordered: { type: 'boolean', label: 'Bordered' },
+    tableData: { type: 'table', label: 'Table Data' },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
   },

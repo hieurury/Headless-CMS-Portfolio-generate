@@ -13,7 +13,8 @@ export interface FieldSchema {
     | 'image'
     | 'link'
     | 'textarea'
-    | 'array';
+    | 'array'
+    | 'table';
   label: string;
   description?: string;
   placeholder?: string;

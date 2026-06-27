@@ -363,6 +363,20 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     );
   }
 
+  // TABLE
+  if (schema.type === 'table') {
+    return (
+      <div className="space-y-2">
+        <Label>{schema.label}</Label>
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md">
+          <p className="text-xs text-blue-400 font-medium">
+            💡 Nhấp trực tiếp vào bảng trên khung thiết kế để sửa nội dung và thêm/xóa hàng cột.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Fallback JSON
   return (
     <div>

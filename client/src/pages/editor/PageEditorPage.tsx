@@ -860,17 +860,6 @@ export const PageEditorPage: React.FC = () => {
             <span className="text-xs text-amber-400 font-medium animate-pulse hidden sm:block">Unsaved</span>
           )}
 
-          <button
-            onClick={() => setShowLeftPanel((p) => !p)}
-            title="Toggle left panel"
-            className={clsx(
-              'p-1.5 rounded-md transition-all',
-              showLeftPanel ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
-            )}
-          >
-            <PanelLeft size={15} />
-          </button>
-
           {/* ── Preview / Edit Mode Toggle ─────────────────────────────── */}
           <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
             <button
@@ -906,16 +895,6 @@ export const PageEditorPage: React.FC = () => {
           >
             <Plus size={11} /> Add
           </button>
-          <button
-            onClick={() => setShowRightPanel((p) => !p)}
-            title="Toggle right panel"
-            className={clsx(
-              'p-1.5 rounded-md transition-all',
-              showRightPanel ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
-            )}
-          >
-            <PanelRight size={15} />
-          </button>
 
           <button
             onClick={handleSave}
@@ -933,7 +912,39 @@ export const PageEditorPage: React.FC = () => {
         </header>
 
         {/* ── 3-column body ───────────────────────────────────────── */}
-        <div className="flex flex-1 min-h-0" style={{ height: `calc(100dvh - ${HEADER_H}px)` }}>
+        <div className="flex flex-1 min-h-0 relative" style={{ height: `calc(100dvh - ${HEADER_H}px)` }}>
+
+          {/* Left panel toggle button */}
+          {!previewMode && (
+            <button
+              onClick={() => setShowLeftPanel((p) => !p)}
+              title="Toggle left panel"
+              className="absolute left-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-r border-[var(--color-border)] rounded-r-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
+              style={{
+                transform: `translateY(-50%) translateX(${showLeftPanel ? '240px' : '0'})`,
+                width: 24,
+                height: 48,
+              }}
+            >
+              <PanelLeft size={15} />
+            </button>
+          )}
+
+          {/* Right panel toggle button */}
+          {!previewMode && (
+            <button
+              onClick={() => setShowRightPanel((p) => !p)}
+              title="Toggle right panel"
+              className="absolute right-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-l border-[var(--color-border)] rounded-l-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
+              style={{
+                transform: `translateY(-50%) translateX(${showRightPanel ? '-300px' : '0'})`,
+                width: 24,
+                height: 48,
+              }}
+            >
+              <PanelRight size={15} />
+            </button>
+          )}
 
           {/* LEFT: AI + Layers */}
           {showLeftPanel && !previewMode && (

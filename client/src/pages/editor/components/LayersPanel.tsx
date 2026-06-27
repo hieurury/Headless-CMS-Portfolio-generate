@@ -62,7 +62,7 @@ const SortableChildrenList: React.FC<{
   depth: number;
   indent: number;
 } & ChildNodeSharedProps> = ({
-  parentId,
+  // parentId,
   children,
   depth,
   indent,
