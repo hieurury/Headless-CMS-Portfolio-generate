@@ -40,6 +40,13 @@ export default $config({
         }],
       },
     });
+    const myPubSub = new gcp.pubsub.Topic("MyPubSub", {
+      name: "MyPubSub",
+      project: project,
+      labels: {
+        "deployment-tool": "sst",
+      },
+    });
 
     new gcp.cloudrunv2.ServiceIamBinding("MyServicePublicAccess", {
       project: myService.project,

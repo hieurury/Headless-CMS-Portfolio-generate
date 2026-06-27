@@ -4,6 +4,7 @@ import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { publicService, type PublicPageResponse } from '../../services/public.service';
 import type { PageLayout } from '../../core/types/layout.types';
 import { Loader2, Lock, LayoutGrid, ChevronRight } from 'lucide-react';
+import { SeoHelmet } from '../../core/renderer/SeoHelmet';
 
 /**
  * PublicPortfolioPage — the public-facing runtime renderer.
@@ -76,10 +77,28 @@ export const PublicPortfolioPage: React.FC = () => {
     );
   }
 
+  // Enrich meta for better AIO context
+  const enrichedMeta = {
+    ...(data.portfolio.meta as any),
+    aio: {
+      ...(data.portfolio.meta as any)?.aio,
+      authorName: (data.portfolio.meta as any)?.aio?.authorName || data.portfolio.ownerName,
+      bio: (data.portfolio.meta as any)?.aio?.bio || data.portfolio.description,
+    },
+    seo: {
+      ...(data.portfolio.meta as any)?.seo,
+      description: (data.portfolio.meta as any)?.seo?.description || data.portfolio.description,
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
-      {/* SEO title */}
-      <title>{`${data.page.title} — ${data.portfolio.title}`}</title>
+      {/* SEO & AIO */}
+      <SeoHelmet 
+        portfolioTitle={data.portfolio.title}
+        pageTitle={data.page.title}
+        meta={enrichedMeta}
+      />
 
       {/* ── Top navigation bar — always shown when portfolio has pages ── */}
       <nav className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">

@@ -10,6 +10,42 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class SeoMetaDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  ogImage?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  keywords?: string[];
+}
+
+export class AioMetaDto {
+  @IsOptional()
+  @IsString()
+  authorName?: string;
+
+  @IsOptional()
+  @IsString()
+  jobTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  socialLinks?: string[];
+}
+
 export class PortfolioMetaDto {
   @IsOptional()
   @IsString()
@@ -26,6 +62,16 @@ export class PortfolioMetaDto {
   @IsOptional()
   @IsString()
   icon?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SeoMetaDto)
+  seo?: SeoMetaDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AioMetaDto)
+  aio?: AioMetaDto;
 }
 
 export class CreatePortfolioDto {

@@ -214,7 +214,8 @@ export class PublicService {
   async findPublicPage(portfolioSlug: string, pageSlug: string) {
     const portfolio = await this.portfolioModel
       .findOne({ slug: portfolioSlug, isPublished: true })
-      .select('_id title slug meta isPublished')
+      .select('_id title slug description meta isPublished owner')
+      .populate('owner', 'name')
       .lean()
       .exec();
 
@@ -255,6 +256,8 @@ export class PublicService {
       portfolio: {
         title: portfolio.title,
         slug: portfolio.slug,
+        description: portfolio.description,
+        ownerName: (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
         meta: portfolio.meta,
       },
       page: {
@@ -270,5 +273,42 @@ export class PublicService {
         urlSlug: normalizeSlug(p.slug),
       })),
     };
+  }
+  /**
+   * Fetch all published portfolios and their published pages for sitemap generation.
+   * Returns an array of paths and their last modified dates.
+   */
+  async getSitemapData(): Promise<{ urlPath: string; lastmod: Date }[]> {
+    const portfolios = await this.portfolioModel
+      .find({ isPublished: true })
+      .select('_id slug updatedAt')
+      .lean()
+      .exec();
+
+    const result: { urlPath: string; lastmod: Date }[] = [];
+
+    for (const p of portfolios) {
+      // Portfolio Hub page
+      result.push({
+        urlPath: `/p/${p.slug}`,
+        lastmod: (p as any).updatedAt as Date || new Date(),
+      });
+
+      // Individual pages within the portfolio
+      const pages = await this.pageModel
+        .find({ portfolio: p._id, isPublished: true })
+        .select('slug updatedAt')
+        .lean()
+        .exec();
+
+      for (const page of pages) {
+        result.push({
+          urlPath: `/p/${p.slug}/${normalizeSlug(page.slug)}`,
+          lastmod: (page as any).updatedAt as Date || new Date(),
+        });
+      }
+    }
+
+    return result;
   }
 }

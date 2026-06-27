@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Header } from '@nestjs/common';
 import { PublicService } from './public.service';
 
 /**
@@ -27,6 +27,44 @@ export class PublicController {
       limit ? parseInt(limit, 10) : 12,
       excludeOwnerId,
     );
+  }
+
+  /**
+   * GET /api/v1/public/sitemap.xml
+   * Generates a dynamic XML sitemap of all published portfolios.
+   */
+  @Get('sitemap.xml')
+  @Header('Content-Type', 'application/xml')
+  async getSitemap() {
+    const data = await this.publicService.getSitemapData();
+    const frontendUrl = process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn';
+    
+    const urls = data.map(item => `
+  <url>
+    <loc>${frontendUrl}${item.urlPath}</loc>
+    <lastmod>${item.lastmod.toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}
+</urlset>`;
+  }
+
+  /**
+   * GET /api/v1/public/robots.txt
+   * Generates a robots.txt file allowing all bots and pointing to the sitemap.
+   */
+  @Get('robots.txt')
+  @Header('Content-Type', 'text/plain')
+  getRobotsTxt() {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn';
+    return `User-agent: *
+Allow: /
+
+Sitemap: ${frontendUrl}/api/v1/public/sitemap.xml
+`;
   }
 
   /**

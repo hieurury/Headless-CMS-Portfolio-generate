@@ -36,6 +36,13 @@ import { BadgeBlock } from '../../components/blocks/BadgeBlock';
 import { FlexBlock } from '../../components/blocks/FlexBlock';
 import { TableBlock } from '../../components/blocks/TableBlock';
 
+export const commonSpacingSchema = {
+  marginTop: { type: 'select', label: 'Margin Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+  marginBottom: { type: 'select', label: 'Margin Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+  paddingTop: { type: 'select', label: 'Padding Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+  paddingBottom: { type: 'select', label: 'Padding Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+};
+
 // ─── NavBarWrapperBlock — composable sticky navbar container ──────────────────
 componentRegistry.register({
   type: 'nav-bar-wrapper',
@@ -87,9 +94,6 @@ componentRegistry.register({
   icon: <Columns2 size={16} />,
   category: 'layout',
   isContainer: true,
-  // NOTE: passChildrenDirect is NOT set here — SectionRenderer handles
-  // Columns with a dedicated ColumnsGridRenderer path that bypasses the
-  // standard ContainerDropZone/passChildrenDirect logic entirely.
   defaultProps: {
     columns: '2',
     gap: 'md',
@@ -212,6 +216,10 @@ componentRegistry.register({
     text: 'Your Heading Here',
     level: 'h2',
     size: 'xl',
+    marginTop: 'none',
+    marginBottom: 'md',
+    paddingTop: 'none',
+    paddingBottom: 'none',
     textAlign: 'left',
     alignX: 'left',
     alignY: 'middle',
@@ -227,6 +235,11 @@ componentRegistry.register({
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
     gradient: { type: 'boolean', label: 'Gradient Effect' },
+    marginTop: { type: 'select', label: 'Margin Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+    marginBottom: { type: 'select', label: 'Margin Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+    paddingTop: { type: 'select', label: 'Padding Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+    paddingBottom: { type: 'select', label: 'Padding Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+
   },
 });
 

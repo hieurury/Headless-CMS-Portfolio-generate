@@ -78,7 +78,7 @@ export const ExplorePage: React.FC = () => {
             <div className="w-8 h-8 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center">
               <LayoutGrid size={16} className="text-[var(--color-text)]" />
             </div>
-            <span className="font-bold text-[var(--color-text)] hidden sm:block">Portfolio CMS</span>
+            <span className="font-bold text-[var(--color-text)] hidden sm:block">Ruryfo CMS</span>
           </Link>
 
           {/* Search */}

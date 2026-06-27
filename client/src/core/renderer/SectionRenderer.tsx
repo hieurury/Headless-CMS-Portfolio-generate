@@ -79,10 +79,9 @@ const ColCellDropZone: React.FC<{
       className={`
         group relative select-none cursor-pointer
         flex items-center justify-center transition-all duration-150
-        ${
-          isOver
-            ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] shadow-[inset_0_0_0_1.5px_var(--color-border-hover)]'
-            : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-[var(--color-text)] hover:shadow-[inset_0_0_0_1.5px_var(--color-border-hover)]'
+        ${isOver
+          ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] shadow-[inset_0_0_0_1.5px_var(--color-border-hover)]'
+          : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-[var(--color-text)] hover:shadow-[inset_0_0_0_1.5px_var(--color-border-hover)]'
         }
       `}
     >
@@ -259,55 +258,55 @@ const _ColumnsEditGrid: React.FC<{
 
   return (
     <SortableContext items={filledIds} strategy={horizontalListSortingStrategy}>
-        <div style={{ position: 'relative', width: '100%' }}>
-          <div
-            id={section.name || section.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: gridTemplate,
-              gap: gapValue,
-              justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
-              alignItems: ALIGN_MAP[alignY] ?? 'stretch',
-              width: '100%',
-            }}
-          >
-            {cells.map(({ index: i, child, isEmpty, span }) => {
-              if (isEmpty) {
-                return (
-                  <ColCellDropZone
-                    key={`cell-empty-${i}`}
-                    columnsId={section.id}
-                    cellIndex={i}
-                    span={span}
-                  />
-                );
-              }
+      <div style={{ position: 'relative', width: '100%' }}>
+        <div
+          id={section.name || section.id}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: gridTemplate,
+            gap: gapValue,
+            justifyItems: ALIGN_MAP[alignX] ?? 'stretch',
+            alignItems: ALIGN_MAP[alignY] ?? 'stretch',
+            width: '100%',
+          }}
+        >
+          {cells.map(({ index: i, child, isEmpty, span }) => {
+            if (isEmpty) {
               return (
-                <ColCellSortable key={child!.id} child={child!} depth={depth} />
+                <ColCellDropZone
+                  key={`cell-empty-${i}`}
+                  columnsId={section.id}
+                  cellIndex={i}
+                  span={span}
+                />
               );
-            })}
-          </div>
+            }
+            return (
+              <ColCellSortable key={child!.id} child={child!} depth={depth} />
+            );
+          })}
+        </div>
 
-          {/* ── Merge buttons between adjacent EMPTY cells ────────────── */}
-          {colCount >= 2 &&
-            cells.slice(0, -1).map(({ index: i, isEmpty: leftEmpty }) => {
-              const rightEmpty = cells[i + 1]?.isEmpty;
-              if (!leftEmpty || !rightEmpty) return null;
-              const pct = (cumulativeSpans[i] / totalSpan) * 100;
-              return (
-                <button
-                  key={`merge-${i}`}
-                  data-editor-chrome
-                  onClick={(e) => { e.stopPropagation(); handleMerge(i); }}
-                  title={`Merge columns (${colSpans[i]}fr + ${colSpans[i+1]}fr = ${colSpans[i]+colSpans[i+1]}fr)`}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: `${pct}%`,
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 30,
-                  }}
-                  className="
+        {/* ── Merge buttons between adjacent EMPTY cells ────────────── */}
+        {colCount >= 2 &&
+          cells.slice(0, -1).map(({ index: i, isEmpty: leftEmpty }) => {
+            const rightEmpty = cells[i + 1]?.isEmpty;
+            if (!leftEmpty || !rightEmpty) return null;
+            const pct = (cumulativeSpans[i] / totalSpan) * 100;
+            return (
+              <button
+                key={`merge-${i}`}
+                data-editor-chrome
+                onClick={(e) => { e.stopPropagation(); handleMerge(i); }}
+                title={`Merge columns (${colSpans[i]}fr + ${colSpans[i + 1]}fr = ${colSpans[i] + colSpans[i + 1]}fr)`}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: `${pct}%`,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 30,
+                }}
+                className="
                     w-6 h-6 rounded-full
                     bg-[var(--color-surface)] border border-[var(--color-border-hover)]
                     flex items-center justify-center
@@ -316,14 +315,14 @@ const _ColumnsEditGrid: React.FC<{
                     hover:shadow-lg hover:shadow-black/20
                     transition-all duration-150 cursor-pointer
                   "
-                >
-                  <Merge size={11} />
-                </button>
-              );
-            })
-          }
-        </div>
-      </SortableContext>
+              >
+                <Merge size={11} />
+              </button>
+            );
+          })
+        }
+      </div>
+    </SortableContext>
   );
 };
 
@@ -398,10 +397,9 @@ const EmptySlotBlock: React.FC<{
         group relative w-full rounded-lg border border-dashed select-none
         flex items-center justify-center
         transition-all duration-150
-        ${
-          isOver
-            ? 'border-[var(--color-border-hover)] bg-[var(--color-surface-2)] text-[var(--color-text)] min-h-[48px]'
-            : 'border-white/10 bg-white/2 text-slate-700 hover:border-[var(--color-border-hover)]/40 hover:text-[var(--color-text)] hover:bg-white/4'
+        ${isOver
+          ? 'border-[var(--color-border-hover)] bg-[var(--color-surface-2)] text-[var(--color-text)] min-h-[48px]'
+          : 'border-white/10 bg-white/2 text-slate-700 hover:border-[var(--color-border-hover)]/40 hover:text-[var(--color-text)] hover:bg-white/4'
         }
       `}
       style={{ minHeight: 40 }}
@@ -469,11 +467,10 @@ const ContainerDropZone: React.FC<{
   return (
     <div
       ref={setNodeRef}
-      className={`relative w-full transition-all duration-150 ${
-        isOver && (isEmpty || hasEmptySlot)
-          ? 'bg-white/5 ring-1 ring-inset ring-[var(--color-border-hover)] rounded-lg'
-          : ''
-      }`}
+      className={`relative w-full transition-all duration-150 ${isOver && (isEmpty || hasEmptySlot)
+        ? 'bg-white/5 ring-1 ring-inset ring-[var(--color-border-hover)] rounded-lg'
+        : ''
+        }`}
       style={{ minHeight: isEmpty ? 48 : undefined }}
     >
       {isEmpty ? (
@@ -889,9 +886,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     >
       {/* ── Selection ring ────────────────────────────────────────────── */}
       <div
-        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
-          isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''
-        }`}
+        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''
+          }`}
       />
 
       {/* ── Hover ring ─────────────────────────────────────────────────── */}
@@ -967,9 +963,8 @@ const ColumnsEditorWrapper: React.FC<{
       ref={setNodeRef}
       id={section.name || section.id}
       style={dragStyle}
-      className={`relative cms-block select-none${
-        isDragging ? ' shadow-2xl shadow-black/20' : ''
-      }${isSelected ? ' z-10' : ''}`}
+      className={`relative cms-block select-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
+        }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
     >
       {/* Editor chrome (drag handle) */}
@@ -984,9 +979,8 @@ const ColumnsEditorWrapper: React.FC<{
       )}
       {/* Selection ring */}
       <div
-        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${
-          isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''
-        }`}
+        className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''
+          }`}
       />
 
       {/* Hover ring */}

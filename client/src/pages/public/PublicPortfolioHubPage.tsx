@@ -5,6 +5,7 @@ import { useUIStore } from '../../store/uiStore';
 import {
   Loader2, Lock, FileText, ArrowRight, Globe, Users, LayoutGrid, Sun, Moon, Folder, Briefcase, Code, Palette, Laptop, Camera, Book, Video, Image as ImageIcon
 } from 'lucide-react';
+import { SeoHelmet } from '../../core/renderer/SeoHelmet';
 
 const ICONS = [
   { name: 'Folder', component: Folder },
@@ -72,8 +73,28 @@ export const PublicPortfolioHubPage: React.FC = () => {
 
   const PortfolioIcon = ICONS.find(ic => ic.name === data.meta?.icon)?.component || Folder;
 
+  // Enrich meta for better AIO context
+  const metaAny = data.meta as any;
+  const enrichedMeta = {
+    ...metaAny,
+    aio: {
+      ...metaAny?.aio,
+      authorName: metaAny?.aio?.authorName || data.ownerName,
+      bio: metaAny?.aio?.bio || data.description,
+    },
+    seo: {
+      ...metaAny?.seo,
+      description: metaAny?.seo?.description || data.description,
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
+      <SeoHelmet 
+        portfolioTitle={data.title}
+        pageTitle="Hub"
+        meta={enrichedMeta}
+      />
       {/* ── Nav ────────────────────────────────────────────────────── */}
       <nav className="home-navbar home-navbar--scrolled sticky top-0 z-40">
         <div className="home-navbar__inner container-max px-6">
