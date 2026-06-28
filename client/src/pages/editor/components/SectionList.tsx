@@ -1,5 +1,7 @@
 import React from 'react';
 import { Plus, Layers } from 'lucide-react';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 import {
   DndContext,
   closestCenter,
@@ -38,9 +40,13 @@ export const SectionList: React.FC<SectionListProps> = ({
   onAddClick,
   onReorder,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.sectionList;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -61,15 +67,17 @@ export const SectionList: React.FC<SectionListProps> = ({
         <div className="flex items-center gap-2">
           <Layers size={14} className="text-[var(--color-text-muted)]" />
           <span className="text-sm font-medium text-[var(--color-text)]">
-            Sections
-            <span className="ml-1.5 text-xs text-[var(--color-text-faint)]">({sections.length})</span>
+            {tr.header}
+            <span className="ml-1.5 text-xs text-[var(--color-text-faint)]">
+              ({sections.length})
+            </span>
           </span>
         </div>
         <button
           onClick={onAddClick}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all hover:shadow-md hover:shadow-black/10"
         >
-          <Plus size={13} /> Add
+          <Plus size={13} /> {tr.add}
         </button>
       </div>
 
@@ -77,8 +85,12 @@ export const SectionList: React.FC<SectionListProps> = ({
       {sections.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-md">
           <Layers size={28} className="text-[var(--color-text-faint)] mb-3" />
-          <p className="text-sm text-[var(--color-text-faint)]">No sections yet</p>
-          <p className="text-xs text-[var(--color-text-faint)] mt-1">Use AI Generate or Add to get started</p>
+          <p className="text-sm text-[var(--color-text-faint)]">
+            {tr.noSections}
+          </p>
+          <p className="text-xs text-[var(--color-text-faint)] mt-1">
+            {tr.emptyHint}
+          </p>
         </div>
       )}
 

@@ -4,6 +4,8 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 import clsx from 'clsx';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -12,7 +14,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   content: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
   form: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   media: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
-  block: 'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold border-[var(--color-border)]',
+  block:
+    'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold border-[var(--color-border)]',
 };
 
 interface SectionCardProps {
@@ -36,6 +39,8 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   onMoveDown,
   onDelete,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.sectionList;
   const entry = componentRegistry.getAll().find((e) => e.type === section.type);
   const colorClass =
     CATEGORY_COLORS[entry?.category ?? 'content'] ?? CATEGORY_COLORS.content;
@@ -75,7 +80,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         {...listeners}
         className="p-1 text-slate-700 hover:text-[var(--color-text-muted)] cursor-grab active:cursor-grabbing shrink-0 touch-none"
         onClick={(e) => e.stopPropagation()}
-        title="Drag to reorder"
+        title={tr.dragToReorder}
       >
         <GripVertical size={14} />
       </button>
@@ -87,7 +92,9 @@ export const SectionCard: React.FC<SectionCardProps> = ({
 
       {/* Icon + type badge */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {entry?.icon && <span className="text-sm leading-none">{entry.icon}</span>}
+        {entry?.icon && (
+          <span className="text-sm leading-none">{entry.icon}</span>
+        )}
         <span
           className={clsx(
             'px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold border',
@@ -119,7 +126,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           onClick={onMoveUp}
           disabled={index === 0}
           className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          title="Move up"
+          title={tr.moveUp}
         >
           <ArrowUp size={12} />
         </button>
@@ -127,16 +134,17 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           onClick={onMoveDown}
           disabled={index === total - 1}
           className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          title="Move down"
+          title={tr.moveDown}
         >
           <ArrowDown size={12} />
         </button>
         <button
           onClick={() => {
-            if (confirm(`Delete "${section.type}" section?`)) onDelete();
+            if (confirm(tr.deleteConfirm.replace('{type}', section.type)))
+              onDelete();
           }}
           className="p-1 rounded text-[var(--color-text-faint)] hover:text-red-400 hover:bg-red-500/10 transition-all"
-          title="Delete section"
+          title={tr.deleteSection}
         >
           <Trash2 size={12} />
         </button>

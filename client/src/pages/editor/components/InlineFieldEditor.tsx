@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Link, Image as ImageIcon, ChevronDown, ExternalLink } from 'lucide-react';
+import {
+  X,
+  Link,
+  Image as ImageIcon,
+  ChevronDown,
+  ExternalLink,
+} from 'lucide-react';
 import type { FieldSchema } from '../../../core/types/registry.types';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 
 interface InlineFieldEditorProps {
   /** The field schema to determine what editor widget to show */
@@ -37,6 +45,8 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
   onClose,
   onOpenInPanel,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.inlineFieldEditor;
   const panelRef = useRef<HTMLDivElement>(null);
   const [localValue, setLocalValue] = useState<unknown>(value);
   const [imgError, setImgError] = useState(false);
@@ -73,7 +83,10 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       }
     };
     // Delay to avoid the same click that opened the editor
-    const t = setTimeout(() => document.addEventListener('mousedown', handler), 50);
+    const t = setTimeout(
+      () => document.addEventListener('mousedown', handler),
+      50,
+    );
     return () => {
       clearTimeout(t);
       document.removeEventListener('mousedown', handler);
@@ -83,8 +96,12 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
   // Keyboard: Escape to close, Enter to confirm (except textarea)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { commitAndClose(); }
-      if (e.key === 'Enter' && schema.type !== 'textarea') { commitAndClose(); }
+      if (e.key === 'Escape') {
+        commitAndClose();
+      }
+      if (e.key === 'Enter' && schema.type !== 'textarea') {
+        commitAndClose();
+      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
@@ -111,13 +128,13 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       return (
         <div className="space-y-2">
           <p className="text-xs text-[var(--color-text-muted)]">
-            Trường danh sách — cần chỉnh sửa trong panel đầy đủ.
+            {tr.listFieldHint}
           </p>
           <button
             onClick={onOpenInPanel}
             className="w-full flex items-center justify-center gap-2 py-2 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/20 border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-xs font-medium hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]/30 transition-all"
           >
-            <ExternalLink size={12} /> Mở trong Properties Panel
+            <ExternalLink size={12} /> {tr.openInPanel}
           </button>
         </div>
       );
@@ -155,19 +172,22 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       return (
         <div className="space-y-1.5">
           <div className="relative">
-            <Link size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+            <Link
+              size={12}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+            />
             <input
               autoFocus
               type="text"
               value={(localValue as string) ?? ''}
-              placeholder={schema.placeholder ?? '#section, /page, or https://...'}
+              placeholder={schema.placeholder ?? tr.linkPlaceholder}
               onChange={(e) => handleChange(e.target.value)}
               onBlur={commitAndClose}
               className={INPUT_CLS + ' pl-8'}
             />
           </div>
           <p className="text-[11px] text-[var(--color-text-faint)]">
-            Dùng <code className="text-[var(--color-text)] font-semibold">#name</code> để scroll, <code className="text-[var(--color-text)] font-semibold">/page</code> để điều hướng
+            {tr.linkHint}
           </p>
         </div>
       );
@@ -178,13 +198,19 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       return (
         <div className="space-y-2">
           <div className="relative">
-            <ImageIcon size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+            <ImageIcon
+              size={12}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+            />
             <input
               autoFocus
               type="text"
               value={src}
-              placeholder="https://example.com/image.png"
-              onChange={(e) => { handleChange(e.target.value); setImgError(false); }}
+              placeholder={tr.imagePlaceholder}
+              onChange={(e) => {
+                handleChange(e.target.value);
+                setImgError(false);
+              }}
               onBlur={commitAndClose}
               className={INPUT_CLS + ' pl-8'}
             />
@@ -201,7 +227,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
           )}
           {imgError && (
             <p className="text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">
-              Không tải được ảnh từ URL này
+              {tr.failedImage}
             </p>
           )}
         </div>
@@ -220,7 +246,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
             className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
           />
           <span className="ml-14 text-sm text-[var(--color-text)] whitespace-nowrap">
-            {checked ? 'Bật' : 'Tắt'}
+            {checked ? tr.booleanOn : tr.booleanOff}
           </span>
         </button>
       );
@@ -237,10 +263,15 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
             className={INPUT_CLS + ' appearance-none pr-8'}
           >
             {schema.options?.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
             ))}
           </select>
-          <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)] pointer-events-none" />
+          <ChevronDown
+            size={12}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)] pointer-events-none"
+          />
         </div>
       );
     }
@@ -295,7 +326,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={onOpenInPanel}
-            title="Mở trong Properties Panel"
+            title={tr.openInPanel}
             className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold hover:bg-[var(--color-surface-2)] transition-all"
           >
             <ExternalLink size={11} />
@@ -310,9 +341,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
       </div>
 
       {/* Body */}
-      <div className="p-3 space-y-2">
-        {renderWidget()}
-      </div>
+      <div className="p-3 space-y-2">{renderWidget()}</div>
 
       {/* Footer: confirm button for string/textarea/link/image/number */}
       {!['boolean', 'select', 'array'].includes(schema.type) && (
@@ -321,7 +350,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
             onClick={commitAndClose}
             className="w-full py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-semibold transition-all"
           >
-            Xác nhận
+            {tr.confirm}
           </button>
         </div>
       )}

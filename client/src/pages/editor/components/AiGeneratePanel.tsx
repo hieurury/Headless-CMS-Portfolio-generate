@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2, AlertCircle, Zap } from 'lucide-react';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 import { aiService } from '../../../services/ai.service';
 import type { PageLayout } from '../../../core/types/layout.types';
 
@@ -17,36 +19,43 @@ interface AiGeneratePanelProps {
   onLayoutGenerated: (layout: PageLayout) => void;
 }
 
-
-
 export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
   portfolioId,
   pageId,
   currentLayout,
   onLayoutGenerated,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.aiPanel;
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastSectionsCount, setLastSectionsCount] = useState<number | null>(null);
+  const [lastSectionsCount, setLastSectionsCount] = useState<number | null>(
+    null,
+  );
 
   const handleGenerate = async () => {
     if (!prompt.trim() || prompt.trim().length < 10) {
-      setError('Prompt must be at least 10 characters');
+      setError(tr.promptTooShort);
       return;
     }
     setIsLoading(true);
     setError(null);
     setLastSectionsCount(null);
     try {
-      const result = await aiService.generateLayout(prompt, portfolioId, pageId, currentLayout);
+      const result = await aiService.generateLayout(
+        prompt,
+        portfolioId,
+        pageId,
+        currentLayout,
+      );
       onLayoutGenerated(result.layout);
       setLastSectionsCount(result.sectionsGenerated);
       setPrompt('');
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Generation failed — please try again';
+          ?.message ?? tr.generateFailed;
       setError(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsLoading(false);
@@ -61,16 +70,21 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
           <Sparkles size={14} className="text-violet-400" />
         </div>
         <div>
-          <p className="text-sm font-semibold ">AI Layout Generator</p>
-          <p className="text-xs text-[var(--color-text-faint)]">Powered by AI Layout Engine</p>
+          <p className="text-sm font-semibold ">{tr.header}</p>
+          <p className="text-xs text-[var(--color-text-faint)]">
+            {tr.subtitle}
+          </p>
         </div>
       </div>
 
       {/* Prompt textarea */}
       <textarea
         value={prompt}
-        onChange={(e) => { setPrompt(e.target.value); setError(null); }}
-        placeholder="e.g. Portfolio for a React developer named John with dark theme. Include about, skills section with React and Node.js, 3 projects with GitHub links, and a contact form with social links."
+        onChange={(e) => {
+          setPrompt(e.target.value);
+          setError(null);
+        }}
+        placeholder={tr.promptPlaceholder}
         rows={4}
         className="w-full px-3 py-3 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)]  text-sm placeholder-slate-600 focus:outline-none focus:border-violet-500/50 resize-none transition-colors leading-relaxed"
       />
@@ -78,8 +92,16 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
       {/* Character count */}
       <div className="flex items-center justify-between text-xs text-[var(--color-text-faint)]">
         <span>{prompt.length}/2000</span>
-        <span className={prompt.length < 10 ? 'text-[var(--color-text-faint)]' : 'text-emerald-500'}>
-          {prompt.length < 10 ? `${10 - prompt.length} more chars needed` : '✓ Ready'}
+        <span
+          className={
+            prompt.length < 10
+              ? 'text-[var(--color-text-faint)]'
+              : 'text-emerald-500'
+          }
+        >
+          {prompt.length < 10
+            ? `${10 - prompt.length} ${tr.moreCharsNeeded}`
+            : tr.ready}
         </span>
       </div>
 
@@ -108,14 +130,18 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
         className="w-full flex items-center justify-center gap-2 py-3 rounded-md bg-[var(--color-text)] text-[var(--color-bg)]  font-semibold text-sm hover:shadow-lg hover:shadow-black/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
       >
         {isLoading ? (
-          <><Loader2 size={16} className="animate-spin" /> Generating...</>
+          <>
+            <Loader2 size={16} className="animate-spin" /> {tr.generating}
+          </>
         ) : (
-          <><Sparkles size={16} /> Generate Layout</>
+          <>
+            <Sparkles size={16} /> {tr.generateLayout}
+          </>
         )}
       </button>
 
       <p className="text-xs text-[var(--color-text-faint)] text-center">
-        💡 This will modify or append to your current layout intelligently.
+        💡 {tr.intelligenceNote}
       </p>
     </div>
   );

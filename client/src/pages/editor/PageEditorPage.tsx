@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePageStore } from '../../store/pageStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
+import { useUIStore } from '../../store/uiStore';
+import { t } from '../../i18n';
 import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { EditorProvider } from '../../core/context/EditorContext';
 import { FloatingControlPanel } from '../../components/editor/FloatingControlPanel';
@@ -14,9 +16,21 @@ import { EmptyCanvasPrompt } from './components/EmptyCanvasPrompt';
 import type { LayoutSection, PageLayout } from '../../core/types/layout.types';
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import {
-  Save, ArrowLeft, Sparkles, Layers,
-  Loader2, Check, ChevronRight, Plus, X,
-  PanelLeft, PanelRight, Settings, Eye, PenLine, Globe
+  Save,
+  ArrowLeft,
+  Sparkles,
+  Layers,
+  Loader2,
+  Check,
+  ChevronRight,
+  Plus,
+  X,
+  PanelLeft,
+  PanelRight,
+  Settings,
+  Eye,
+  PenLine,
+  Globe,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -41,7 +55,10 @@ type LeftTab = 'ai' | 'sections' | 'settings';
 const HEADER_H = 56;
 
 /** Build the auto-generated default children for container types */
-function buildDefaultChildren(_type: string, _props: Record<string, unknown>): LayoutSection[] {
+function buildDefaultChildren(
+  _type: string,
+  _props: Record<string, unknown>,
+): LayoutSection[] {
   // Columns: no default children — cells are rendered as empty drop zones directly
   // Split: _column slots are still needed (two halves)
   const entry = componentRegistry.getEntry(_type);
@@ -63,11 +80,17 @@ function patchSection(
   if (!section) return section;
   if (section.id === targetId) return { ...section, ...patch };
   if (!section.children?.length) return section;
-  return { ...section, children: section.children.map((c) => patchSection(c, targetId, patch)) };
+  return {
+    ...section,
+    children: section.children.map((c) => patchSection(c, targetId, patch)),
+  };
 }
 
 export const PageEditorPage: React.FC = () => {
-  const { portfolioId, pageId } = useParams<{ portfolioId: string; pageId: string }>();
+  const { portfolioId, pageId } = useParams<{
+    portfolioId: string;
+    pageId: string;
+  }>();
   const navigate = useNavigate();
 
   const { current: page, fetchOne, update, isLoading } = usePageStore();
@@ -94,6 +117,9 @@ export const PageEditorPage: React.FC = () => {
   // the chosen block REPLACES the _empty slot with this id
   const [fillSlotId, setFillSlotId] = useState<string | null>(null);
   const [leftTab, setLeftTab] = useState<LeftTab>('ai');
+
+  const { language, toggleLanguage } = useUIStore();
+  const tr = t(language).editor;
 
   const rightScrollRef = useRef<HTMLDivElement>(null);
 
@@ -122,10 +148,13 @@ export const PageEditorPage: React.FC = () => {
   }, [page]);
 
   // -- Immutable layout updater -----------------------------------------------
-  const updateLayout = useCallback((updater: (prev: PageLayout) => PageLayout) => {
-    setDraftLayout((prev) => updater(prev));
-    setIsDirty(true);
-  }, []);
+  const updateLayout = useCallback(
+    (updater: (prev: PageLayout) => PageLayout) => {
+      setDraftLayout((prev) => updater(prev));
+      setIsDirty(true);
+    },
+    [],
+  );
 
   // -- Scroll Preview to Selected Block ---------------------------------------
   useEffect(() => {
@@ -168,13 +197,14 @@ export const PageEditorPage: React.FC = () => {
         const newCount = current - 1;
         // Also remove the last child so it doesn’t reappear on next add
         const children = rowBlock.children ?? [];
-        const newChildren = children.length > newCount
-          ? children.slice(0, newCount)
-          : children;
+        const newChildren =
+          children.length > newCount ? children.slice(0, newCount) : children;
         return {
           ...layout,
           sections: updateSectionProps(
-            layout.sections.map((s) => patchSection(s, rowsId, { children: newChildren })),
+            layout.sections.map((s) =>
+              patchSection(s, rowsId, { children: newChildren }),
+            ),
             rowsId,
             { ...rowBlock.props, rows: String(newCount) },
           ),
@@ -253,14 +283,15 @@ export const PageEditorPage: React.FC = () => {
         const newCount = current - 1;
         // Remove the last child if it exists at the last index
         const children = colBlock.children ?? [];
-        const newChildren = children.length > newCount
-          ? children.slice(0, newCount)
-          : children;
+        const newChildren =
+          children.length > newCount ? children.slice(0, newCount) : children;
         // Apply both prop change + children update
         return {
           ...layout,
           sections: updateSectionProps(
-            layout.sections.map((s) => patchSection(s, columnsId, { children: newChildren })),
+            layout.sections.map((s) =>
+              patchSection(s, columnsId, { children: newChildren }),
+            ),
             columnsId,
             { ...colBlock.props, columns: String(newCount) },
           ),
@@ -276,8 +307,19 @@ export const PageEditorPage: React.FC = () => {
   // removes rightIndex entry. Decrements column count by 1.
   useEffect(() => {
     const handler = (e: Event) => {
-      const { columnsId, leftIndex, newSpan, colSpans: currentSpans } =
-        (e as CustomEvent<{ columnsId: string; leftIndex: number; newSpan: number; colSpans: number[] }>).detail;
+      const {
+        columnsId,
+        leftIndex,
+        newSpan,
+        colSpans: currentSpans,
+      } = (
+        e as CustomEvent<{
+          columnsId: string;
+          leftIndex: number;
+          newSpan: number;
+          colSpans: number[];
+        }>
+      ).detail;
       updateLayout((layout) => {
         const colBlock = findSectionById(layout.sections, columnsId);
         if (!colBlock) return layout;
@@ -298,9 +340,15 @@ export const PageEditorPage: React.FC = () => {
         return {
           ...layout,
           sections: updateSectionProps(
-            layout.sections.map((s) => patchSection(s, columnsId, { children })),
+            layout.sections.map((s) =>
+              patchSection(s, columnsId, { children }),
+            ),
             columnsId,
-            { ...colBlock.props, columns: String(current - 1), colSpans: newSpans },
+            {
+              ...colBlock.props,
+              columns: String(current - 1),
+              colSpans: newSpans,
+            },
           ),
         };
       });
@@ -310,8 +358,19 @@ export const PageEditorPage: React.FC = () => {
   }, [updateLayout]);
   useEffect(() => {
     const rowHandler = (e: Event) => {
-      const { rowId, aboveIndex, newSpan, rowSpans: currentSpans } =
-        (e as CustomEvent<{ rowId: string; aboveIndex: number; newSpan: number; rowSpans: number[] }>).detail;
+      const {
+        rowId,
+        aboveIndex,
+        newSpan,
+        rowSpans: currentSpans,
+      } = (
+        e as CustomEvent<{
+          rowId: string;
+          aboveIndex: number;
+          newSpan: number;
+          rowSpans: number[];
+        }>
+      ).detail;
       updateLayout((layout) => {
         const rowBlock = findSectionById(layout.sections, rowId);
 
@@ -319,9 +378,9 @@ export const PageEditorPage: React.FC = () => {
         const current = Number(rowBlock.props['rows'] ?? 2);
 
         if (current <= 1) return layout; // can't go below 1
-        const newSpans = [...currentSpans]
-        newSpans[aboveIndex] = newSpan
-        newSpans.splice(aboveIndex + 1, 1)
+        const newSpans = [...currentSpans];
+        newSpans[aboveIndex] = newSpan;
+        newSpans.splice(aboveIndex + 1, 1);
         // Remove the last child if it exists at the last index
         const children = [...(rowBlock.children ?? [])];
         if (children[aboveIndex + 1] !== undefined) {
@@ -333,11 +392,15 @@ export const PageEditorPage: React.FC = () => {
           sections: updateSectionProps(
             layout.sections.map((s) => patchSection(s, rowId, { children })),
             rowId,
-            { ...rowBlock.props, rows: String(current - 1), rowSpans: newSpans },
+            {
+              ...rowBlock.props,
+              rows: String(current - 1),
+              rowSpans: newSpans,
+            },
           ),
         };
       });
-    }
+    };
     window.addEventListener('cms:mergeRowCells', rowHandler);
     return () => window.removeEventListener('cms:mergeRowCells', rowHandler);
   }, [updateLayout]);
@@ -346,16 +409,18 @@ export const PageEditorPage: React.FC = () => {
   // Math.ceil(S/2) and Math.floor(S/2). Increments column count by 1.
   useEffect(() => {
     const handler = (e: Event) => {
-      const { columnsId, cellIndex } =
-        (e as CustomEvent<{ columnsId: string; cellIndex: number }>).detail;
+      const { columnsId, cellIndex } = (
+        e as CustomEvent<{ columnsId: string; cellIndex: number }>
+      ).detail;
       updateLayout((layout) => {
         const colBlock = findSectionById(layout.sections, columnsId);
         if (!colBlock) return layout;
         const current = Number(colBlock.props['columns'] ?? 2);
         const rawSpans = colBlock.props['colSpans'] as number[] | undefined;
-        const colSpans = Array.isArray(rawSpans) && rawSpans.length === current
-          ? [...rawSpans]
-          : Array(current).fill(1);
+        const colSpans =
+          Array.isArray(rawSpans) && rawSpans.length === current
+            ? [...rawSpans]
+            : Array(current).fill(1);
 
         const cellSpan = colSpans[cellIndex] ?? 1;
         if (cellSpan <= 1) return layout; // already minimum, nothing to split
@@ -374,9 +439,15 @@ export const PageEditorPage: React.FC = () => {
         return {
           ...layout,
           sections: updateSectionProps(
-            layout.sections.map((s) => patchSection(s, columnsId, { children })),
+            layout.sections.map((s) =>
+              patchSection(s, columnsId, { children }),
+            ),
             columnsId,
-            { ...colBlock.props, columns: String(current + 1), colSpans: newSpans },
+            {
+              ...colBlock.props,
+              columns: String(current + 1),
+              colSpans: newSpans,
+            },
           ),
         };
       });
@@ -388,16 +459,18 @@ export const PageEditorPage: React.FC = () => {
   // ── Listen for cms:splitRowCell — split a merged cell back into two ───
   useEffect(() => {
     const handler = (e: Event) => {
-      const { rowId, cellIndex } =
-        (e as CustomEvent<{ rowId: string; cellIndex: number }>).detail;
+      const { rowId, cellIndex } = (
+        e as CustomEvent<{ rowId: string; cellIndex: number }>
+      ).detail;
       updateLayout((layout) => {
         const rowBlock = findSectionById(layout.sections, rowId);
         if (!rowBlock) return layout;
         const current = Number(rowBlock.props['rows'] ?? 2);
         const rawSpans = rowBlock.props['rowSpans'] as number[] | undefined;
-        const rowSpans = Array.isArray(rawSpans) && rawSpans.length === current
-          ? [...rawSpans]
-          : Array(current).fill(1);
+        const rowSpans =
+          Array.isArray(rawSpans) && rawSpans.length === current
+            ? [...rawSpans]
+            : Array(current).fill(1);
 
         const cellSpan = rowSpans[cellIndex] ?? 1;
         if (cellSpan <= 1) return layout;
@@ -414,7 +487,11 @@ export const PageEditorPage: React.FC = () => {
           sections: updateSectionProps(
             layout.sections.map((s) => patchSection(s, rowId, { children })),
             rowId,
-            { ...rowBlock.props, rows: String(current + 1), rowSpans: newSpans },
+            {
+              ...rowBlock.props,
+              rows: String(current + 1),
+              rowSpans: newSpans,
+            },
           ),
         };
       });
@@ -426,8 +503,13 @@ export const PageEditorPage: React.FC = () => {
   // ── Listen for cms:reorderRowCells — drag reorder inside Rows ──────
   useEffect(() => {
     const handler = (e: Event) => {
-      const { rowId, children, rowSpans } =
-        (e as CustomEvent<{ rowId: string; children: LayoutSection[]; rowSpans: number[] }>).detail;
+      const { rowId, children, rowSpans } = (
+        e as CustomEvent<{
+          rowId: string;
+          children: LayoutSection[];
+          rowSpans: number[];
+        }>
+      ).detail;
       updateLayout((layout) => {
         const rowBlock = findSectionById(layout.sections, rowId);
         if (!rowBlock) return layout;
@@ -449,15 +531,22 @@ export const PageEditorPage: React.FC = () => {
   // Receives the reordered children AND colSpans arrays from dnd-kit.
   useEffect(() => {
     const handler = (e: Event) => {
-      const { columnsId, children, colSpans } =
-        (e as CustomEvent<{ columnsId: string; children: LayoutSection[]; colSpans: number[] }>).detail;
+      const { columnsId, children, colSpans } = (
+        e as CustomEvent<{
+          columnsId: string;
+          children: LayoutSection[];
+          colSpans: number[];
+        }>
+      ).detail;
       updateLayout((layout) => {
         const colBlock = findSectionById(layout.sections, columnsId);
         if (!colBlock) return layout;
         return {
           ...layout,
           sections: updateSectionProps(
-            layout.sections.map((s) => patchSection(s, columnsId, { children })),
+            layout.sections.map((s) =>
+              patchSection(s, columnsId, { children }),
+            ),
             columnsId,
             { ...colBlock.props, colSpans },
           ),
@@ -470,11 +559,16 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Listen for cms:fillColCell — click on empty column cell ──────────
   // Opens AddPanel; the chosen block is inserted at the specified cell index.
-  const [fillColCell, setFillColCell] = useState<{ columnsId: string; cellIndex: number } | null>(null);
+  const [fillColCell, setFillColCell] = useState<{
+    columnsId: string;
+    cellIndex: number;
+  } | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ columnsId: string; cellIndex: number }>).detail;
+      const detail = (
+        e as CustomEvent<{ columnsId: string; cellIndex: number }>
+      ).detail;
       setFillColCell(detail);
       setFillSlotId(null);
       setAddChildParentId(null);
@@ -484,11 +578,15 @@ export const PageEditorPage: React.FC = () => {
     return () => window.removeEventListener('cms:fillColCell', handler);
   }, []);
 
-  const [fillRowCell, setFillRowCell] = useState<{ rowId: string; cellIndex: number } | null>(null);
+  const [fillRowCell, setFillRowCell] = useState<{
+    rowId: string;
+    cellIndex: number;
+  } | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ rowId: string; cellIndex: number }>).detail;
+      const detail = (e as CustomEvent<{ rowId: string; cellIndex: number }>)
+        .detail;
       setFillRowCell(detail);
       setFillColCell(null);
       setFillSlotId(null);
@@ -500,11 +598,15 @@ export const PageEditorPage: React.FC = () => {
   }, []);
 
   // ── Listen for cms:fillFlexCell — click on empty flex cell ───────────
-  const [fillFlexCell, setFillFlexCell] = useState<{ flexId: string; cellIndex: number } | null>(null);
+  const [fillFlexCell, setFillFlexCell] = useState<{
+    flexId: string;
+    cellIndex: number;
+  } | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ flexId: string; cellIndex: number }>).detail;
+      const detail = (e as CustomEvent<{ flexId: string; cellIndex: number }>)
+        .detail;
       setFillFlexCell(detail);
       setFillColCell(null);
       setFillRowCell(null);
@@ -519,14 +621,17 @@ export const PageEditorPage: React.FC = () => {
   // ── Listen for cms:reorderFlexCells — drag reorder inside Flex ──────
   useEffect(() => {
     const handler = (e: Event) => {
-      const { flexId, children } =
-        (e as CustomEvent<{ flexId: string; children: LayoutSection[] }>).detail;
+      const { flexId, children } = (
+        e as CustomEvent<{ flexId: string; children: LayoutSection[] }>
+      ).detail;
       updateLayout((layout) => {
         const flexBlock = findSectionById(layout.sections, flexId);
         if (!flexBlock) return layout;
         return {
           ...layout,
-          sections: layout.sections.map((s) => patchSection(s, flexId, { children })),
+          sections: layout.sections.map((s) =>
+            patchSection(s, flexId, { children }),
+          ),
         };
       });
     };
@@ -547,207 +652,309 @@ export const PageEditorPage: React.FC = () => {
     return () => window.removeEventListener('cms:fillEmptySlot', handler);
   }, []);
 
-
   // ── Add section / block ────────────────────────────────────────────
-  const handleAddSection = useCallback((type: string) => {
-    const defaults = componentRegistry.getDefaultProps(type);
-    const children = buildDefaultChildren(type, defaults);
-    const newSection: LayoutSection = {
-      id: `section-${type}-${Date.now()}`,
-      type,
-      name: '',
-      props: defaults,
-      children,
-    };
-    if (fillColCell) {
-      // Insert the block at the specified cell index inside a Columns block
-      updateLayout((layout) => ({
-        ...layout,
-        sections: insertIntoColumnsCell(layout.sections, fillColCell.columnsId, newSection, fillColCell.cellIndex),
-      }));
-      setSelectedId(newSection.id);
-      setFillColCell(null);
-    } else if (fillRowCell) {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: insertIntoRowsCell(layout.sections, fillRowCell.rowId, newSection, fillRowCell.cellIndex),
-      }));
-      setSelectedId(newSection.id);
-      setFillRowCell(null);
-    } else if (fillFlexCell) {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: insertIntoFlexCell(layout.sections, fillFlexCell.flexId, newSection, fillFlexCell.cellIndex),
-      }));
-      setSelectedId(newSection.id);
-      setFillFlexCell(null);
-    } else if (fillSlotId) {
-      // Replace the _empty placeholder with the real block
-      updateLayout((layout) => ({
-        ...layout,
-        sections: replaceSection(layout.sections, fillSlotId, newSection),
-      }));
-      setSelectedId(newSection.id);
-      setFillSlotId(null);
-    } else if (addChildParentId) {
-      // Append as a child of a container
-      updateLayout((layout) => ({
-        ...layout,
-        sections: addChildToSection(layout.sections, addChildParentId, newSection),
-      }));
-      setSelectedId(newSection.id);
-    } else {
-      // Add to top level
-      updateLayout((layout) => ({
-        ...layout,
-        sections: [...layout.sections, newSection],
-      }));
-      setSelectedId(newSection.id);
-      setLeftTab('sections');
-    }
+  const handleAddSection = useCallback(
+    (type: string) => {
+      const defaults = componentRegistry.getDefaultProps(type);
+      const children = buildDefaultChildren(type, defaults);
+      const newSection: LayoutSection = {
+        id: `section-${type}-${Date.now()}`,
+        type,
+        name: '',
+        props: defaults,
+        children,
+      };
+      if (fillColCell) {
+        // Insert the block at the specified cell index inside a Columns block
+        updateLayout((layout) => ({
+          ...layout,
+          sections: insertIntoColumnsCell(
+            layout.sections,
+            fillColCell.columnsId,
+            newSection,
+            fillColCell.cellIndex,
+          ),
+        }));
+        setSelectedId(newSection.id);
+        setFillColCell(null);
+      } else if (fillRowCell) {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: insertIntoRowsCell(
+            layout.sections,
+            fillRowCell.rowId,
+            newSection,
+            fillRowCell.cellIndex,
+          ),
+        }));
+        setSelectedId(newSection.id);
+        setFillRowCell(null);
+      } else if (fillFlexCell) {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: insertIntoFlexCell(
+            layout.sections,
+            fillFlexCell.flexId,
+            newSection,
+            fillFlexCell.cellIndex,
+          ),
+        }));
+        setSelectedId(newSection.id);
+        setFillFlexCell(null);
+      } else if (fillSlotId) {
+        // Replace the _empty placeholder with the real block
+        updateLayout((layout) => ({
+          ...layout,
+          sections: replaceSection(layout.sections, fillSlotId, newSection),
+        }));
+        setSelectedId(newSection.id);
+        setFillSlotId(null);
+      } else if (addChildParentId) {
+        // Append as a child of a container
+        updateLayout((layout) => ({
+          ...layout,
+          sections: addChildToSection(
+            layout.sections,
+            addChildParentId,
+            newSection,
+          ),
+        }));
+        setSelectedId(newSection.id);
+      } else {
+        // Add to top level
+        updateLayout((layout) => ({
+          ...layout,
+          sections: [...layout.sections, newSection],
+        }));
+        setSelectedId(newSection.id);
+        setLeftTab('sections');
+      }
 
-    setAddChildParentId(null);
-    setSelectedFieldKey(null);
-    setShowRightPanel(true);
-    setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [fillColCell, fillRowCell, fillFlexCell, fillSlotId, addChildParentId, updateLayout, draftLayout.sections]);
+      setAddChildParentId(null);
+      setSelectedFieldKey(null);
+      setShowRightPanel(true);
+      setTimeout(
+        () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
+        100,
+      );
+    },
+    [
+      fillColCell,
+      fillRowCell,
+      fillFlexCell,
+      fillSlotId,
+      addChildParentId,
+      updateLayout,
+      draftLayout.sections,
+    ],
+  );
 
   // ── Add template (inject full tree) ───────────────────────────────
-  const handleAddTemplate = useCallback((tree: LayoutSection) => {
-    if (fillColCell) {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: insertIntoColumnsCell(layout.sections, fillColCell.columnsId, tree, fillColCell.cellIndex),
-      }));
-      setSelectedId(tree.id);
-      setFillColCell(null);
-    } else if (fillRowCell) {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: insertIntoRowsCell(layout.sections, fillRowCell.rowId, tree, fillRowCell.cellIndex),
-      }));
-      setSelectedId(tree.id);
-      setFillRowCell(null);
-    } else if (fillFlexCell) {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: insertIntoFlexCell(layout.sections, fillFlexCell.flexId, tree, fillFlexCell.cellIndex),
-      }));
-      setSelectedId(tree.id);
-      setFillFlexCell(null);
-    } else if (fillSlotId) {
-      // Replace _empty placeholder with the template root
-      updateLayout((layout) => ({
-        ...layout,
-        sections: replaceSection(layout.sections, fillSlotId, tree),
-      }));
-      setSelectedId(tree.id);
-      setFillSlotId(null);
-    } else if (addChildParentId) {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: addChildToSection(layout.sections, addChildParentId, tree),
-      }));
-      setSelectedId(tree.id);
-    } else {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: [...layout.sections, tree],
-      }));
-      setSelectedId(tree.id);
-      setLeftTab('sections');
-    }
-    setAddChildParentId(null);
-    setSelectedFieldKey(null);
-    setShowRightPanel(true);
-    setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [fillSlotId, fillFlexCell, addChildParentId, updateLayout]);
+  const handleAddTemplate = useCallback(
+    (tree: LayoutSection) => {
+      if (fillColCell) {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: insertIntoColumnsCell(
+            layout.sections,
+            fillColCell.columnsId,
+            tree,
+            fillColCell.cellIndex,
+          ),
+        }));
+        setSelectedId(tree.id);
+        setFillColCell(null);
+      } else if (fillRowCell) {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: insertIntoRowsCell(
+            layout.sections,
+            fillRowCell.rowId,
+            tree,
+            fillRowCell.cellIndex,
+          ),
+        }));
+        setSelectedId(tree.id);
+        setFillRowCell(null);
+      } else if (fillFlexCell) {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: insertIntoFlexCell(
+            layout.sections,
+            fillFlexCell.flexId,
+            tree,
+            fillFlexCell.cellIndex,
+          ),
+        }));
+        setSelectedId(tree.id);
+        setFillFlexCell(null);
+      } else if (fillSlotId) {
+        // Replace _empty placeholder with the template root
+        updateLayout((layout) => ({
+          ...layout,
+          sections: replaceSection(layout.sections, fillSlotId, tree),
+        }));
+        setSelectedId(tree.id);
+        setFillSlotId(null);
+      } else if (addChildParentId) {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: addChildToSection(layout.sections, addChildParentId, tree),
+        }));
+        setSelectedId(tree.id);
+      } else {
+        updateLayout((layout) => ({
+          ...layout,
+          sections: [...layout.sections, tree],
+        }));
+        setSelectedId(tree.id);
+        setLeftTab('sections');
+      }
+      setAddChildParentId(null);
+      setSelectedFieldKey(null);
+      setShowRightPanel(true);
+      setTimeout(
+        () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
+        100,
+      );
+    },
+    [fillSlotId, fillFlexCell, addChildParentId, updateLayout],
+  );
 
   // ── Top-level reorder ──────────────────────────────────────────────
-  const handleTopLevelReorder = useCallback((oldIndex: number, newIndex: number) => {
-    updateLayout((layout) => ({
-      ...layout,
-      sections: arrayMove(layout.sections, oldIndex, newIndex),
-    }));
-  }, [updateLayout]);
+  const handleTopLevelReorder = useCallback(
+    (oldIndex: number, newIndex: number) => {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: arrayMove(layout.sections, oldIndex, newIndex),
+      }));
+    },
+    [updateLayout],
+  );
 
   // ── Remove any section (by id, any depth) ─────────────────────────
-  const handleRemoveSection = useCallback((sectionId: string) => {
-    updateLayout((layout) => {
-      const [newSections] = removeSection(layout.sections, sectionId);
-      return { ...layout, sections: newSections };
-    });
-    setSelectedId((prev) => prev === sectionId ? null : prev);
-  }, [updateLayout]);
+  const handleRemoveSection = useCallback(
+    (sectionId: string) => {
+      updateLayout((layout) => {
+        const [newSections] = removeSection(layout.sections, sectionId);
+        return { ...layout, sections: newSections };
+      });
+      setSelectedId((prev) => (prev === sectionId ? null : prev));
+    },
+    [updateLayout],
+  );
 
   // ── Move a section into a container (or to top level if containerId is null) ──
-  const handleMoveToContainer = useCallback((sectionId: string, toContainerId: string | null, toIndex?: number) => {
-    updateLayout((layout) => {
-      // Special case: dropping into a Columns block cell — use insertIntoColumnsCell
-      // so cell indices stay aligned (sparse cells are padded, not shifted)
-      if (toContainerId && toIndex !== undefined) {
-        const targetBlock = findSectionById(layout.sections, toContainerId);
-        if (targetBlock?.type === 'columns') {
-          // First remove the block from its current location
-          const [withoutBlock, movedBlock] = removeSection(layout.sections, sectionId);
-          if (!movedBlock) return layout;
-          return {
-            ...layout,
-            sections: insertIntoColumnsCell(withoutBlock, toContainerId, movedBlock, toIndex),
-          };
-        } else if (targetBlock?.type === 'rows') {
-          const [withoutBlock, movedBlock] = removeSection(layout.sections, sectionId);
-          if (!movedBlock) return layout;
-          return {
-            ...layout,
-            sections: insertIntoRowsCell(withoutBlock, toContainerId, movedBlock, toIndex),
-          };
+  const handleMoveToContainer = useCallback(
+    (sectionId: string, toContainerId: string | null, toIndex?: number) => {
+      updateLayout((layout) => {
+        // Special case: dropping into a Columns block cell — use insertIntoColumnsCell
+        // so cell indices stay aligned (sparse cells are padded, not shifted)
+        if (toContainerId && toIndex !== undefined) {
+          const targetBlock = findSectionById(layout.sections, toContainerId);
+          if (targetBlock?.type === 'columns') {
+            // First remove the block from its current location
+            const [withoutBlock, movedBlock] = removeSection(
+              layout.sections,
+              sectionId,
+            );
+            if (!movedBlock) return layout;
+            return {
+              ...layout,
+              sections: insertIntoColumnsCell(
+                withoutBlock,
+                toContainerId,
+                movedBlock,
+                toIndex,
+              ),
+            };
+          } else if (targetBlock?.type === 'rows') {
+            const [withoutBlock, movedBlock] = removeSection(
+              layout.sections,
+              sectionId,
+            );
+            if (!movedBlock) return layout;
+            return {
+              ...layout,
+              sections: insertIntoRowsCell(
+                withoutBlock,
+                toContainerId,
+                movedBlock,
+                toIndex,
+              ),
+            };
+          }
         }
-      }
-      return {
-        ...layout,
-        sections: moveSection(layout.sections, sectionId, toContainerId, toIndex),
-      };
-    });
-  }, [updateLayout]);
-
+        return {
+          ...layout,
+          sections: moveSection(
+            layout.sections,
+            sectionId,
+            toContainerId,
+            toIndex,
+          ),
+        };
+      });
+    },
+    [updateLayout],
+  );
 
   // ── Reorder children within a container ───────────────────────────
-  const handleReorderChildren = useCallback((parentId: string, oldIndex: number, newIndex: number) => {
-    updateLayout((layout) => ({
-      ...layout,
-      sections: reorderChildren(layout.sections, parentId, oldIndex, newIndex),
-    }));
-  }, [updateLayout]);
+  const handleReorderChildren = useCallback(
+    (parentId: string, oldIndex: number, newIndex: number) => {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: reorderChildren(
+          layout.sections,
+          parentId,
+          oldIndex,
+          newIndex,
+        ),
+      }));
+    },
+    [updateLayout],
+  );
 
   // ── Replace an _empty slot with a dragged block ───────────────────────────
   // Called by PageRenderer (or LayersPanel) when a block is dropped onto an _empty slot.
   // We simply remove the block from its old location and put it where the slot was.
-  const handleReplaceEmptySlot = useCallback((sectionId: string, slotId: string) => {
-    updateLayout((layout) => {
-      const [withoutBlock, movedBlockOut] = removeSection(layout.sections, sectionId);
-      if (!movedBlockOut) return layout;
+  const handleReplaceEmptySlot = useCallback(
+    (sectionId: string, slotId: string) => {
+      updateLayout((layout) => {
+        const [withoutBlock, movedBlockOut] = removeSection(
+          layout.sections,
+          sectionId,
+        );
+        if (!movedBlockOut) return layout;
 
-      const final = replaceSection(withoutBlock, slotId, movedBlockOut);
-      return { ...layout, sections: final };
-    });
-  }, [updateLayout]);
+        const final = replaceSection(withoutBlock, slotId, movedBlockOut);
+        return { ...layout, sections: final };
+      });
+    },
+    [updateLayout],
+  );
 
   // ── Props change (by section id, any depth) ───────────────────────
-  const handlePropsChange = useCallback((sectionId: string, newProps: Record<string, unknown>) => {
-    updateLayout((layout) => ({
-      ...layout,
-      sections: updateSectionProps(layout.sections, sectionId, newProps),
-    }));
-  }, [updateLayout]);
+  const handlePropsChange = useCallback(
+    (sectionId: string, newProps: Record<string, unknown>) => {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: updateSectionProps(layout.sections, sectionId, newProps),
+      }));
+    },
+    [updateLayout],
+  );
 
   // ── Name change (by section id, any depth) ────────────────────────
-  const handleNameChange = useCallback((sectionId: string, name: string) => {
-    updateLayout((layout) => ({
-      ...layout,
-      sections: updateSectionName(layout.sections, sectionId, name),
-    }));
-  }, [updateLayout]);
+  const handleNameChange = useCallback(
+    (sectionId: string, name: string) => {
+      updateLayout((layout) => ({
+        ...layout,
+        sections: updateSectionName(layout.sections, sectionId, name),
+      }));
+    },
+    [updateLayout],
+  );
 
   // ── AI layout replace ─────────────────────────────────────────────
   const handleAiLayout = (layout: PageLayout) => {
@@ -765,21 +972,29 @@ export const PageEditorPage: React.FC = () => {
     setSelectedId(id);
     setSelectedFieldKey(null);
     setShowRightPanel(true);
-    setTimeout(() => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 80);
+    setTimeout(
+      () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
+      80,
+    );
   }, []);
 
-  const handleFieldSelect = useCallback((sectionId: string, fieldKey: string) => {
-    setSelectedId(sectionId);
-    setSelectedFieldKey(fieldKey);
-    setShowRightPanel(true);
-  }, []);
+  const handleFieldSelect = useCallback(
+    (sectionId: string, fieldKey: string) => {
+      setSelectedId(sectionId);
+      setSelectedFieldKey(fieldKey);
+      setShowRightPanel(true);
+    },
+    [],
+  );
 
   // ── Save ───────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!portfolioId || !pageId || !isDirty) return;
     setIsSaving(true);
     try {
-      await update(portfolioId, pageId, { layout: draftLayout } as Parameters<typeof update>[2]);
+      await update(portfolioId, pageId, { layout: draftLayout } as Parameters<
+        typeof update
+      >[2]);
       setIsDirty(false);
       setSavedFeedback(true);
       setTimeout(() => setSavedFeedback(false), 2000);
@@ -802,13 +1017,18 @@ export const PageEditorPage: React.FC = () => {
   if (isLoading && !page) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 size={36} className="animate-spin text-[var(--color-text)] font-semibold" />
+        <Loader2
+          size={36}
+          className="animate-spin text-[var(--color-text)] font-semibold"
+        />
       </div>
     );
   }
 
   // Derive selected section from id (works at any nesting depth)
-  const selectedSection = selectedId ? findSectionById(draftLayout.sections, selectedId) : null;
+  const selectedSection = selectedId
+    ? findSectionById(draftLayout.sections, selectedId)
+    : null;
 
   return (
     <EditorProvider
@@ -838,7 +1058,10 @@ export const PageEditorPage: React.FC = () => {
       {/* ── Floating control panel (global, fixed-position) ──────── */}
       {!previewMode && <FloatingControlPanel />}
 
-      <div className="flex flex-col bg-[var(--color-bg)]" style={{ height: '100dvh', overflow: 'hidden' }}>
+      <div
+        className="flex flex-col bg-[var(--color-bg)]"
+        style={{ height: '100dvh', overflow: 'hidden' }}
+      >
         {/* ── Header ─────────────────────────────────────────────── */}
         <header
           className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface)] backdrop-blur-md flex items-center px-3 gap-2 z-40"
@@ -851,21 +1074,27 @@ export const PageEditorPage: React.FC = () => {
             <ArrowLeft size={16} />
           </button>
           <ChevronRight size={12} className="text-slate-700" />
-          <span className="text-[var(--color-text-faint)] text-sm truncate max-w-[100px]">{portfolio?.title}</span>
+          <span className="text-[var(--color-text-faint)] text-sm truncate max-w-[100px]">
+            {portfolio?.title}
+          </span>
           <ChevronRight size={12} className="text-slate-700" />
-          <span className="text-[var(--color-text)] text-sm font-medium truncate max-w-[120px]">{page?.title}</span>
+          <span className="text-[var(--color-text)] text-sm font-medium truncate max-w-[120px]">
+            {page?.title}
+          </span>
 
           <div className="flex-1" />
 
           {isDirty && (
-            <span className="text-xs text-amber-400 font-medium animate-pulse hidden sm:block">Unsaved</span>
+            <span className="text-xs text-amber-400 font-medium animate-pulse hidden sm:block">
+              {tr.topbar.unsaved}
+            </span>
           )}
 
           {/* ── Preview / Edit Mode Toggle ─────────────────────────────── */}
           <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
             <button
               onClick={() => setPreviewMode(false)}
-              title="Edit mode — click elements to edit inline"
+              title={tr.topbar.editModeTitle}
               className={clsx(
                 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
                 !previewMode
@@ -874,11 +1103,11 @@ export const PageEditorPage: React.FC = () => {
               )}
             >
               <PenLine size={13} />
-              <span className="hidden sm:inline">Edit</span>
+              <span className="hidden sm:inline">{tr.topbar.edit}</span>
             </button>
             <button
               onClick={() => setPreviewMode(true)}
-              title="Preview mode — links and interactions work normally"
+              title={tr.topbar.previewModeTitle}
               className={clsx(
                 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
                 previewMode
@@ -887,14 +1116,30 @@ export const PageEditorPage: React.FC = () => {
               )}
             >
               <Eye size={13} />
-              <span className="hidden sm:inline">Preview</span>
+              <span className="hidden sm:inline">{tr.topbar.preview}</span>
             </button>
           </div>
           <button
-            onClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
+            id="editor-lang-toggle"
+            onClick={toggleLanguage}
+            title={
+              language === 'en'
+                ? tr.topbar.switchToVietnamese
+                : tr.topbar.switchToEnglish
+            }
+            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]/90 text-xs font-medium transition-all"
+          >
+            <Globe size={13} />
+            <span className="hidden sm:inline">{language.toUpperCase()}</span>
+          </button>
+          <button
+            onClick={() => {
+              setAddChildParentId(null);
+              setShowAddPanel(true);
+            }}
             className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
           >
-            <Plus size={11} /> Add
+            <Plus size={11} /> {tr.topbar.add}
           </button>
 
           <button
@@ -907,19 +1152,33 @@ export const PageEditorPage: React.FC = () => {
                 : 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-not-allowed',
             )}
           >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : savedFeedback ? <Check size={14} /> : <Save size={14} />}
-            <span className="hidden sm:inline">{isSaving ? 'Saving...' : savedFeedback ? 'Saved!' : 'Save'}</span>
+            {isSaving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : savedFeedback ? (
+              <Check size={14} />
+            ) : (
+              <Save size={14} />
+            )}
+            <span className="hidden sm:inline">
+              {isSaving
+                ? tr.topbar.saving
+                : savedFeedback
+                  ? tr.topbar.saved
+                  : tr.topbar.save}
+            </span>
           </button>
         </header>
 
         {/* ── 3-column body ───────────────────────────────────────── */}
-        <div className="flex flex-1 min-h-0 relative" style={{ height: `calc(100dvh - ${HEADER_H}px)` }}>
-
+        <div
+          className="flex flex-1 min-h-0 relative"
+          style={{ height: `calc(100dvh - ${HEADER_H}px)` }}
+        >
           {/* Left panel toggle button */}
           {!previewMode && (
             <button
               onClick={() => setShowLeftPanel((p) => !p)}
-              title="Toggle left panel"
+              title={tr.topbar.toggleLeftPanel}
               className="absolute left-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-r border-[var(--color-border)] rounded-r-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
               style={{
                 transform: `translateY(-50%) translateX(${showLeftPanel ? '240px' : '0'})`,
@@ -935,7 +1194,7 @@ export const PageEditorPage: React.FC = () => {
           {!previewMode && (
             <button
               onClick={() => setShowRightPanel((p) => !p)}
-              title="Toggle right panel"
+              title={tr.topbar.toggleRightPanel}
               className="absolute right-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-l border-[var(--color-border)] rounded-l-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
               style={{
                 transform: `translateY(-50%) translateX(${showRightPanel ? '-300px' : '0'})`,
@@ -954,17 +1213,29 @@ export const PageEditorPage: React.FC = () => {
               style={{ width: 240 }}
             >
               <div className="flex border-b border-[var(--color-border)] shrink-0">
-                {([
-                  { key: 'ai' as LeftTab, label: 'AI', icon: Sparkles },
-                  { key: 'sections' as LeftTab, label: 'Layers', icon: Layers },
-                  { key: 'settings' as LeftTab, label: 'Settings', icon: Globe },
-                ] as const).map(({ key, label, icon: Icon }) => (
+                {(
+                  [
+                    { key: 'ai' as LeftTab, label: tr.tabs.ai, icon: Sparkles },
+                    {
+                      key: 'sections' as LeftTab,
+                      label: tr.tabs.layers,
+                      icon: Layers,
+                    },
+                    {
+                      key: 'settings' as LeftTab,
+                      label: tr.tabs.settings,
+                      icon: Globe,
+                    },
+                  ] as const
+                ).map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
                     onClick={() => setLeftTab(key)}
                     className={clsx(
                       'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2',
-                      leftTab === key ? 'text-[var(--color-text)] border-[var(--color-text)]' : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]',
+                      leftTab === key
+                        ? 'text-[var(--color-text)] border-[var(--color-text)]'
+                        : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]',
                     )}
                   >
                     <Icon size={13} /> {label}
@@ -991,7 +1262,10 @@ export const PageEditorPage: React.FC = () => {
                       setShowRightPanel(true);
                     }}
                     onDelete={handleRemoveSection}
-                    onAddClick={() => { setAddChildParentId(null); setShowAddPanel(true); }}
+                    onAddClick={() => {
+                      setAddChildParentId(null);
+                      setShowAddPanel(true);
+                    }}
                     onAddChild={(parentId) => {
                       setAddChildParentId(parentId);
                       setShowAddPanel(true);
@@ -1015,14 +1289,22 @@ export const PageEditorPage: React.FC = () => {
           {/* CENTER: Preview */}
           <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[var(--color-bg)]">
             <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]">
-              <span className="text-xs text-[var(--color-text-faint)]">{previewMode ? '👁 Preview' : '✏ Editor'}</span>
-              <span className="text-xs text-slate-700 font-mono">{page?.slug}</span>
+              <span className="text-xs text-[var(--color-text-faint)]">
+                {previewMode ? tr.topbar.modePreview : tr.topbar.modeEditor}
+              </span>
+              <span className="text-xs text-slate-700 font-mono">
+                {page?.slug}
+              </span>
             </div>
 
-            <div className={`flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}>
+            <div
+              className={`flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}
+            >
               {draftLayout.sections.length === 0 ? (
                 <EmptyCanvasPrompt
-                  onLayoutGenerated={(layout) => { handleAiLayout(layout); }}
+                  onLayoutGenerated={(layout) => {
+                    handleAiLayout(layout);
+                  }}
                   onAddBlocks={() => setShowAddPanel(true)}
                   portfolioId={portfolioId!}
                   pageId={pageId!}
@@ -1042,27 +1324,42 @@ export const PageEditorPage: React.FC = () => {
               <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]">
                 {selectedSection ? (
                   <div className="flex items-center gap-2 min-w-0">
-                    <Settings size={13} className="text-[var(--color-text)] font-semibold shrink-0" />
+                    <Settings
+                      size={13}
+                      className="text-[var(--color-text)] font-semibold shrink-0"
+                    />
                     <span className="text-xs font-semibold text-[var(--color-text)] truncate">
-                      {componentRegistry.getEntry(selectedSection.type)?.displayName ?? selectedSection.type}
+                      {componentRegistry.getEntry(selectedSection.type)
+                        ?.displayName ?? selectedSection.type}
                     </span>
                     {/* Is this a child block? */}
-                    {selectedId && findParent(draftLayout.sections, selectedId)?.parent && (
-                      <span className="text-[10px] text-[var(--color-text-faint)] font-mono">child</span>
-                    )}
+                    {selectedId &&
+                      findParent(draftLayout.sections, selectedId)?.parent && (
+                        <span className="text-[10px] text-[var(--color-text-faint)] font-mono">
+                          {tr.selectionPanel.child}
+                        </span>
+                      )}
                   </div>
                 ) : (
-                  <span className="text-xs text-[var(--color-text-faint)]">No selection</span>
+                  <span className="text-xs text-[var(--color-text-faint)]">
+                    {tr.selectionPanel.noSelection}
+                  </span>
                 )}
                 <button
-                  onClick={() => { setSelectedId(null); setSelectedFieldKey(null); }}
+                  onClick={() => {
+                    setSelectedId(null);
+                    setSelectedFieldKey(null);
+                  }}
                   className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all shrink-0"
                 >
                   <X size={13} />
                 </button>
               </div>
 
-              <div ref={rightScrollRef} className="flex-1 overflow-y-auto overscroll-contain p-4">
+              <div
+                ref={rightScrollRef}
+                className="flex-1 overflow-y-auto overscroll-contain p-4"
+              >
                 {selectedSection ? (
                   <SmartPropEditor
                     key={selectedSection.id}
@@ -1071,20 +1368,29 @@ export const PageEditorPage: React.FC = () => {
                     sectionType={selectedSection.type}
                     props={selectedSection.props}
                     focusFieldKey={selectedFieldKey}
-                    onChange={(newProps) => handlePropsChange(selectedSection.id, newProps)}
-                    onNameChange={(name) => handleNameChange(selectedSection.id, name)}
+                    onChange={(newProps) =>
+                      handlePropsChange(selectedSection.id, newProps)
+                    }
+                    onNameChange={(name) =>
+                      handleNameChange(selectedSection.id, name)
+                    }
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center py-16">
                     <div className="w-12 h-12 rounded-md bg-[var(--color-surface-2)] flex items-center justify-center mb-3">
-                      <Settings size={20} className="text-[var(--color-text-faint)]" />
+                      <Settings
+                        size={20}
+                        className="text-[var(--color-text-faint)]"
+                      />
                     </div>
-                    <p className="text-sm text-[var(--color-text-faint)] font-medium">No block selected</p>
+                    <p className="text-sm text-[var(--color-text-faint)] font-medium">
+                      {tr.selectionPanel.noSelection}
+                    </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Click any block in the preview to edit
+                      {tr.selectionPanel.clickToEdit}
                     </p>
                     <p className="text-xs text-[var(--color-text)] font-semibold/50 mt-3 text-center leading-relaxed">
-                      ✏ Click text or images<br />directly in the preview
+                      {tr.selectionPanel.clickTextImages}
                     </p>
                   </div>
                 )}
@@ -1098,8 +1404,21 @@ export const PageEditorPage: React.FC = () => {
           <AddSectionPanel
             onAdd={handleAddSection}
             onAddTemplate={handleAddTemplate}
-            onClose={() => { setShowAddPanel(false); setAddChildParentId(null); setFillSlotId(null); setFillColCell(null); setFillRowCell(null); setFillFlexCell(null); }}
-            addingToContainer={addChildParentId !== null || fillSlotId !== null || fillColCell !== null || fillRowCell !== null || fillFlexCell !== null}
+            onClose={() => {
+              setShowAddPanel(false);
+              setAddChildParentId(null);
+              setFillSlotId(null);
+              setFillColCell(null);
+              setFillRowCell(null);
+              setFillFlexCell(null);
+            }}
+            addingToContainer={
+              addChildParentId !== null ||
+              fillSlotId !== null ||
+              fillColCell !== null ||
+              fillRowCell !== null ||
+              fillFlexCell !== null
+            }
           />
         )}
       </div>

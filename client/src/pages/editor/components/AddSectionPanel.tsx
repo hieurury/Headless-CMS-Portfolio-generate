@@ -1,11 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, Box, LayoutDashboard, Settings, Wand2 } from 'lucide-react';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
-import { templateLibrary, TEMPLATE_CATEGORIES, type TemplateEntry } from '../../../core/registry/templateLibrary';
+import {
+  templateLibrary,
+  TEMPLATE_CATEGORIES,
+  type TemplateEntry,
+} from '../../../core/registry/templateLibrary';
 import type { RegistryEntry } from '../../../core/types/registry.types';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import clsx from 'clsx';
-
 
 interface AddSectionPanelProps {
   onAdd: (type: string) => void;
@@ -22,13 +27,20 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
   onClose,
   addingToContainer = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<'blocks' | 'layout' | 'templates'>('templates');
+  const [activeTab, setActiveTab] = useState<'blocks' | 'layout' | 'templates'>(
+    'templates',
+  );
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  const { language } = useUIStore();
+  const tr = t(language).editor.addSectionPanel;
+
   const allEntries = componentRegistry.getAll().filter((e) => !e.isInternal);
   const atomEntries = allEntries.filter((e) => e.isAtom);
-  const containerEntries = allEntries.filter((e) => e.isContainer && !e.isInternal);
+  const containerEntries = allEntries.filter(
+    (e) => e.isContainer && !e.isInternal,
+  );
 
   const filterEntries = (entries: RegistryEntry[]) => {
     if (!search.trim()) return entries;
@@ -41,8 +53,14 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
     );
   };
 
-  const filteredAtoms = useMemo(() => filterEntries(atomEntries), [atomEntries, search]);
-  const filteredContainers = useMemo(() => filterEntries(containerEntries), [containerEntries, search]);
+  const filteredAtoms = useMemo(
+    () => filterEntries(atomEntries),
+    [atomEntries, search],
+  );
+  const filteredContainers = useMemo(
+    () => filterEntries(containerEntries),
+    [containerEntries, search],
+  );
 
   // Template filtering
   const filteredTemplates = useMemo(() => {
@@ -50,7 +68,9 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
-        (t) => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q),
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q),
       );
     }
     if (selectedCategory !== 'all') {
@@ -66,7 +86,10 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[var(--color-surface)] backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-[var(--color-surface)] backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div
         className="relative w-full max-w-xl glass rounded-md shadow-2xl animate-slide-up overflow-hidden flex flex-col max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
@@ -75,10 +98,12 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)] shrink-0">
           <div>
             <h3 className="text-base font-bold text-[var(--color-text)]">
-              {addingToContainer ? 'Add Block to Container' : 'Add to Page'}
+              {addingToContainer ? tr.addBlockToContainer : tr.addToPage}
             </h3>
             {addingToContainer && (
-              <p className="text-xs text-[var(--color-text)] font-semibold mt-0.5">Block will be placed inside the container</p>
+              <p className="text-xs text-[var(--color-text)] font-semibold mt-0.5">
+                {tr.containerHint}
+              </p>
             )}
           </div>
           <button
@@ -92,12 +117,21 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
         {/* Search */}
         <div className="px-5 py-3 border-b border-[var(--color-border)] shrink-0">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+            />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={activeTab === 'templates' ? 'Search templates...' : 'Search blocks...'}
+              placeholder={
+                activeTab === 'templates'
+                  ? tr.searchTemplates
+                  : activeTab === 'blocks'
+                    ? tr.searchBlocks
+                    : tr.searchLayout
+              }
               autoFocus
               className="w-full pl-9 pr-4 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
                 placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors"
@@ -107,11 +141,26 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
 
         {/* Tabs */}
         <div className="flex border-b border-[var(--color-border)] shrink-0 px-5">
-          {([
-            { key: 'templates' as const, label: 'Templates', icon: Wand2, count: filteredTemplates.length },
-            { key: 'blocks' as const, label: 'Blocks', icon: Box, count: filteredAtoms.length },
-            { key: 'layout' as const, label: 'Layout', icon: LayoutDashboard, count: filteredContainers.length },
-          ]).map(({ key, label, icon: Icon, count }) => (
+          {[
+            {
+              key: 'templates' as const,
+              label: tr.templates,
+              icon: Wand2,
+              count: filteredTemplates.length,
+            },
+            {
+              key: 'blocks' as const,
+              label: tr.blocks,
+              icon: Box,
+              count: filteredAtoms.length,
+            },
+            {
+              key: 'layout' as const,
+              label: tr.layout,
+              icon: LayoutDashboard,
+              count: filteredContainers.length,
+            },
+          ].map(({ key, label, icon: Icon, count }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
@@ -123,14 +172,15 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
               )}
             >
               <Icon size={13} /> {label}
-              <span className="ml-1 text-xs text-[var(--color-text-faint)] font-mono">{count}</span>
+              <span className="ml-1 text-xs text-[var(--color-text-faint)] font-mono">
+                {count}
+              </span>
             </button>
           ))}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-
           {/* ─── Templates Tab ───────────────────────────────────────── */}
           {activeTab === 'templates' && (
             <>
@@ -145,7 +195,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                       : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:brightness-110',
                   )}
                 >
-                  All
+                  {tr.all}
                 </button>
                 {allCategories.map((cat) => {
                   const meta = TEMPLATE_CATEGORIES.find((c) => c.id === cat);
@@ -183,7 +233,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                 </div>
               )}
               <p className="text-xs text-[var(--color-text-faint)] text-center">
-                Templates are pre-built layout trees — every element inside is directly editable
+                {tr.templatesHint}
               </p>
             </>
           )}
@@ -199,13 +249,16 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                     <ComponentCard
                       key={entry.type}
                       entry={entry}
-                      onAdd={() => { onAdd(entry.type); onClose(); }}
+                      onAdd={() => {
+                        onAdd(entry.type);
+                        onClose();
+                      }}
                     />
                   ))}
                 </div>
               )}
               <p className="text-xs text-[var(--color-text-faint)] mt-4 text-center">
-                Atomic blocks — combine them inside Layout containers for complex designs
+                {tr.blocksHint}
               </p>
             </>
           )}
@@ -222,13 +275,16 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                       key={entry.type}
                       entry={entry}
                       isContainer
-                      onAdd={() => { onAdd(entry.type); onClose(); }}
+                      onAdd={() => {
+                        onAdd(entry.type);
+                        onClose();
+                      }}
                     />
                   ))}
                 </div>
               )}
               <p className="text-xs text-[var(--color-text-faint)] mt-4 text-center">
-                Containers — hold and arrange blocks. Nest freely: Card inside Columns, Rows of Buttons...
+                {tr.containersHint}
               </p>
             </>
           )}
@@ -240,7 +296,10 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
 
 // ─── Template Card ────────────────────────────────────────────────────────────
 
-const TemplateCard: React.FC<{ template: TemplateEntry; onAdd: () => void }> = ({ template, onAdd }) => {
+const TemplateCard: React.FC<{
+  template: TemplateEntry;
+  onAdd: () => void;
+}> = ({ template, onAdd }) => {
   const meta = TEMPLATE_CATEGORIES.find((c) => c.id === template.category);
   return (
     <button
@@ -253,12 +312,16 @@ const TemplateCard: React.FC<{ template: TemplateEntry; onAdd: () => void }> = (
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
-          <p className="text-sm font-semibold text-[var(--color-text)] truncate">{template.name}</p>
+          <p className="text-sm font-semibold text-[var(--color-text)] truncate">
+            {template.name}
+          </p>
           <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono shrink-0">
             {meta?.icon} {meta?.label}
           </span>
         </div>
-        <p className="text-[11px] text-[var(--color-text-faint)] leading-snug line-clamp-2">{template.description}</p>
+        <p className="text-[11px] text-[var(--color-text-faint)] leading-snug line-clamp-2">
+          {template.description}
+        </p>
       </div>
     </button>
   );
@@ -266,47 +329,73 @@ const TemplateCard: React.FC<{ template: TemplateEntry; onAdd: () => void }> = (
 
 // ─── Component Card ───────────────────────────────────────────────────────────
 
-const ComponentCard: React.FC<{ entry: RegistryEntry; onAdd: () => void; isContainer?: boolean }> = ({ entry, onAdd, isContainer }) => (
-  <button
-    onClick={onAdd}
-    className={clsx(
-      'flex items-start gap-3 p-3 rounded-md text-left transition-all group',
-      isContainer
-        ? 'border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] hover:border-solid hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
-        : 'border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
-    )}
-  >
-    <div className={clsx(
-      'w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
-      isContainer
-        ? 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20'
-        : 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20',
-    )}>
-      {entry.icon ?? <Settings size={16} />}
-    </div>
-    <div className="min-w-0">
-      <div className="flex items-center gap-1.5">
-        <p className="text-sm font-medium text-[var(--color-text)] truncate">{entry.displayName}</p>
-        {isContainer && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono uppercase tracking-wide shrink-0">
-            container
-          </span>
-        )}
-      </div>
-      {entry.description && (
-        <p className="text-[11px] text-[var(--color-text-faint)] mt-0.5 leading-snug line-clamp-2">{entry.description}</p>
+const ComponentCard: React.FC<{
+  entry: RegistryEntry;
+  onAdd: () => void;
+  isContainer?: boolean;
+}> = ({ entry, onAdd, isContainer }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.addSectionPanel;
+
+  return (
+    <button
+      onClick={onAdd}
+      className={clsx(
+        'flex items-start gap-3 p-3 rounded-md text-left transition-all group',
+        isContainer
+          ? 'border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] hover:border-solid hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
+          : 'border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
       )}
-      <p className="text-[10px] text-slate-700 font-mono mt-1">{entry.type}</p>
-    </div>
-  </button>
-);
+    >
+      <div
+        className={clsx(
+          'w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
+          isContainer
+            ? 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20'
+            : 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20',
+        )}
+      >
+        {entry.icon ?? <Settings size={16} />}
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-medium text-[var(--color-text)] truncate">
+            {entry.displayName}
+          </p>
+          {isContainer && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono uppercase tracking-wide shrink-0">
+              {tr.containerLabel}
+            </span>
+          )}
+        </div>
+        {entry.description && (
+          <p className="text-[11px] text-[var(--color-text-faint)] mt-0.5 leading-snug line-clamp-2">
+            {entry.description}
+          </p>
+        )}
+        <p className="text-[10px] text-slate-700 font-mono mt-1">
+          {entry.type}
+        </p>
+      </div>
+    </button>
+  );
+};
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
-const EmptyState: React.FC<{ query: string }> = ({ query }) => (
-  <div className="flex flex-col items-center justify-center py-10 text-center">
-    <Search size={24} className="text-slate-700 mb-3" />
-    <p className="text-sm text-[var(--color-text-faint)]">No results for "{query}"</p>
-    <p className="text-xs text-slate-700 mt-1">Try a different keyword</p>
-  </div>
-);
+const EmptyState: React.FC<{ query: string }> = ({ query }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.addSectionPanel;
+
+  return (
+    <div className="flex flex-col items-center justify-center py-10 text-center">
+      <Search size={24} className="text-slate-700 mb-3" />
+      <p className="text-sm text-[var(--color-text-faint)]">
+        {tr.noResults.replace('{query}', query)}
+      </p>
+      <p className="text-xs text-[var(--color-text-faint)] mt-1">
+        {tr.tryDifferentKeyword}
+      </p>
+    </div>
+  );
+};

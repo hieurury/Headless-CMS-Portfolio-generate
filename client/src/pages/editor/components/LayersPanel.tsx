@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GripVertical, ChevronRight, Plus, Trash2, Eye, Settings } from 'lucide-react';
+import {
+  GripVertical,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Eye,
+  Settings,
+} from 'lucide-react';
 import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
@@ -20,16 +27,42 @@ import {
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 
 // ─── Colour palette per category ─────────────────────────────────────────────
 
 const CAT_COLOR: Record<string, { dot: string; bg: string; text: string }> = {
-  navigation: { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
-  layout:     { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
-  content:    { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
-  form:       { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
-  media:      { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
-  block:      { dot: 'bg-[var(--color-text)]/40', bg: 'bg-[var(--color-text)]/10', text: 'text-[var(--color-text)]' },
+  navigation: {
+    dot: 'bg-[var(--color-text)]/40',
+    bg: 'bg-[var(--color-text)]/10',
+    text: 'text-[var(--color-text)]',
+  },
+  layout: {
+    dot: 'bg-[var(--color-text)]/40',
+    bg: 'bg-[var(--color-text)]/10',
+    text: 'text-[var(--color-text)]',
+  },
+  content: {
+    dot: 'bg-[var(--color-text)]/40',
+    bg: 'bg-[var(--color-text)]/10',
+    text: 'text-[var(--color-text)]',
+  },
+  form: {
+    dot: 'bg-[var(--color-text)]/40',
+    bg: 'bg-[var(--color-text)]/10',
+    text: 'text-[var(--color-text)]',
+  },
+  media: {
+    dot: 'bg-[var(--color-text)]/40',
+    bg: 'bg-[var(--color-text)]/10',
+    text: 'text-[var(--color-text)]',
+  },
+  block: {
+    dot: 'bg-[var(--color-text)]/40',
+    bg: 'bg-[var(--color-text)]/10',
+    text: 'text-[var(--color-text)]',
+  },
 };
 
 const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
@@ -38,8 +71,12 @@ const getColor = (cat?: string) => CAT_COLOR[cat ?? ''] ?? CAT_COLOR.block;
  * Filter out null/undefined gaps and legacy _colpad placeholders.
  * Columns blocks may contain null entries for index-alignment.
  */
-const validChildren = (children: LayoutSection[] | undefined): LayoutSection[] =>
-  (children ?? []).filter((c): c is LayoutSection => !!c && c.type !== '_colpad');
+const validChildren = (
+  children: LayoutSection[] | undefined,
+): LayoutSection[] =>
+  (children ?? []).filter(
+    (c): c is LayoutSection => !!c && c.type !== '_colpad',
+  );
 
 // ─── Shared interface for child-related props ─────────────────────────────────
 
@@ -48,7 +85,11 @@ interface ChildNodeSharedProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
-  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
+  onReorderChildren: (
+    parentId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
 }
 
 // ─── SortableChildrenList — owns the DndContext for its children ──────────────
@@ -56,11 +97,13 @@ interface ChildNodeSharedProps {
  * Separate component so that hooks (useSensors) are called at component
  * top level — not inside conditionals or render loops.
  */
-const SortableChildrenList: React.FC<{
-  children: LayoutSection[];
-  depth: number;
-  indent: number;
-} & ChildNodeSharedProps> = ({
+const SortableChildrenList: React.FC<
+  {
+    children: LayoutSection[];
+    depth: number;
+    indent: number;
+  } & ChildNodeSharedProps
+> = ({
   children,
   depth,
   indent,
@@ -105,7 +148,6 @@ const SortableChildrenList: React.FC<{
 
 // ─── Individual draggable node ────────────────────────────────────────────────
 
-
 interface LayerNodeProps {
   section: LayoutSection;
   depth: number;
@@ -113,7 +155,11 @@ interface LayerNodeProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
-  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
+  onReorderChildren: (
+    parentId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
   /** If set, this node is sortable within its parent */
   isSortable?: boolean;
 }
@@ -128,6 +174,8 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   onReorderChildren,
   isSortable = false,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.layersPanel;
   const entry = componentRegistry.getEntry(section.type);
   const color = getColor(entry?.category);
   const isContainer = entry?.isContainer ?? false;
@@ -161,7 +209,11 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   };
 
   const style = isSortable
-    ? { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }
     : undefined;
 
   const indent = depth * 14;
@@ -207,7 +259,10 @@ const LayerNode: React.FC<LayerNodeProps> = ({
               expanded ? 'rotate-90' : 'rotate-0',
               'text-[var(--color-text-faint)] hover:text-[var(--color-text)]',
             )}
-            onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded((v) => !v);
+            }}
           >
             <ChevronRight size={12} />
           </button>
@@ -216,7 +271,13 @@ const LayerNode: React.FC<LayerNodeProps> = ({
         )}
 
         {/* Icon */}
-        <span className={clsx('flex items-center justify-center w-5 h-5 rounded shrink-0', color.bg, color.text)}>
+        <span
+          className={clsx(
+            'flex items-center justify-center w-5 h-5 rounded shrink-0',
+            color.bg,
+            color.text,
+          )}
+        >
           {entry?.icon ?? <Settings size={11} />}
         </span>
 
@@ -226,14 +287,24 @@ const LayerNode: React.FC<LayerNodeProps> = ({
             {entry?.displayName ?? section.type}
           </p>
           {section.name && (
-            <p className={clsx('text-[10px] font-semibold font-mono truncate opacity-70', !isSelected && 'text-[var(--color-text)]')}>
+            <p
+              className={clsx(
+                'text-[10px] font-semibold font-mono truncate opacity-70',
+                !isSelected && 'text-[var(--color-text)]',
+              )}
+            >
               #{section.name}
             </p>
           )}
         </div>
 
         {/* Category dot */}
-        <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0 opacity-60', color.dot)} />
+        <span
+          className={clsx(
+            'w-1.5 h-1.5 rounded-full shrink-0 opacity-60',
+            color.dot,
+          )}
+        />
 
         {/* Actions */}
         <div
@@ -242,7 +313,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
         >
           {isContainer && (
             <button
-              title="Add block inside"
+              title={tr.addBlockInside}
               onClick={() => onAddChild(section.id)}
               className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold hover:bg-[var(--color-text)]/10 transition-all"
             >
@@ -250,9 +321,16 @@ const LayerNode: React.FC<LayerNodeProps> = ({
             </button>
           )}
           <button
-            title="Remove"
+            title={tr.remove}
             onClick={() => {
-              if (confirm(`Remove "${entry?.displayName ?? section.type}"?`)) {
+              if (
+                confirm(
+                  tr.removeConfirm.replace(
+                    '{name}',
+                    entry?.displayName ?? section.type,
+                  ),
+                )
+              ) {
                 onDelete(section.id);
               }
             }}
@@ -290,8 +368,16 @@ interface LayersPanelProps {
   onAddClick: () => void;
   onAddChild: (parentId: string) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
-  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
-  onMoveToContainer: (sectionId: string, containerId: string | null, index?: number) => void;
+  onReorderChildren: (
+    parentId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
+  onMoveToContainer: (
+    sectionId: string,
+    containerId: string | null,
+    index?: number,
+  ) => void;
   onReplaceEmptySlot: (sectionId: string, slotId: string) => void;
 }
 
@@ -309,7 +395,9 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -338,7 +426,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         const valid = validChildren(parent.children);
         const oldIndex = valid.findIndex((c) => c.id === activeId);
         const newIndex = valid.findIndex((c) => c.id === overId);
-        if (oldIndex !== -1 && newIndex !== -1) onReorderChildren(activeParentId, oldIndex, newIndex);
+        if (oldIndex !== -1 && newIndex !== -1)
+          onReorderChildren(activeParentId, oldIndex, newIndex);
       }
     } else {
       // Different parents -> move cross-container
@@ -348,13 +437,19 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         return;
       }
 
-      const newIdx = overParentId === null
-        ? sections.findIndex(s => s.id === overId)
-        : validChildren(overParentInfo.parent!.children).findIndex(c => c.id === overId);
+      const newIdx =
+        overParentId === null
+          ? sections.findIndex((s) => s.id === overId)
+          : validChildren(overParentInfo.parent!.children).findIndex(
+              (c) => c.id === overId,
+            );
 
       onMoveToContainer(activeId, overParentId, Math.max(0, newIdx));
     }
   };
+
+  const { language } = useUIStore();
+  const tr = t(language).editor.layersPanel;
 
   return (
     <div className="flex flex-col h-full">
@@ -362,21 +457,25 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
       <div className="flex items-center justify-between mb-2 px-1">
         <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
           <Eye size={12} className="text-[var(--color-text-faint)]" />
-          Layers
-          <span className="text-slate-700 font-mono normal-case tracking-normal">{sections.length}</span>
+          {tr.title}
+          <span className="text-slate-700 font-mono normal-case tracking-normal">
+            {sections.length}
+          </span>
         </span>
         <button
           onClick={onAddClick}
           className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
         >
-          <Plus size={11} /> Add
+          <Plus size={11} /> {tr.add}
         </button>
       </div>
 
       {/* Empty state */}
       {sections.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-md">
-          <p className="text-xs text-[var(--color-text-faint)]">No sections yet</p>
+          <p className="text-xs text-[var(--color-text-faint)]">
+            {tr.emptyState}
+          </p>
         </div>
       )}
 
