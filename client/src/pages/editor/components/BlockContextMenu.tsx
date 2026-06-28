@@ -24,7 +24,7 @@ const MenuItem: React.FC<{
   rightSlot?: React.ReactNode;
 }> = ({ label, icon, onClick, children, rightSlot }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
