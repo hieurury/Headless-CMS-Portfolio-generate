@@ -24,6 +24,10 @@ export interface DescriptionBlockProps {
   backgroundColor?: string;
   color?: string;
   sectionId?: string;
+  /** CSS shorthand string, e.g. "8px 16px" */
+  margin?: string;
+  /** CSS shorthand string, e.g. "8px 16px" */
+  padding?: string;
   [key: string]: unknown;
 }
 
@@ -51,6 +55,8 @@ export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
   backgroundColor,
   color,
   sectionId,
+  margin,
+  padding,
 }) => {
   const sizeClass  = SIZE_MAP[size]           ?? 'text-base';
   const textAlignClass = TEXT_ALIGN_MAP[textAlign] ?? 'text-left';
@@ -67,7 +73,13 @@ export const DescriptionBlock: React.FC<DescriptionBlockProps> = ({
         backgroundColor: backgroundColor,
       }}
     >
-      <div className={`py-1 w-full ${textAlignClass}`}>
+      <div
+        className={`w-full ${textAlignClass}`}
+        style={{
+          margin: margin || undefined,
+          padding: padding || undefined,
+        }}
+      >
         <p
           data-cms-field="text"
           className={`leading-relaxed ${sizeClass} cursor-text`}

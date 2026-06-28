@@ -11,7 +11,6 @@ export default $config({
   },
   async run() {
     const gcp = await import("@pulumi/gcp");
-
     const project = "n8nproject-461516";
     const imageTag = process.env.IMAGE_TAG || "latest";
     const myService = new gcp.cloudrunv2.Service("MyBackendService", {

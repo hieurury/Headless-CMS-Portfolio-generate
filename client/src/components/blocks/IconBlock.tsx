@@ -34,6 +34,10 @@ interface IconBlockProps {
   textColor?: string;
   backgroundColor?: string;
   sectionId?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  margin?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  padding?: string;
   [key: string]: unknown;
 }
 
@@ -73,6 +77,8 @@ export const IconBlock: React.FC<IconBlockProps> = ({
   textColor,
   backgroundColor,
   sectionId,
+  margin,
+  padding,
 }) => {
 
 
@@ -100,6 +106,8 @@ export const IconBlock: React.FC<IconBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[alignX]  ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        margin: margin || undefined,
+        padding: padding || undefined,
       }}
     >
       {hasBackground ? (

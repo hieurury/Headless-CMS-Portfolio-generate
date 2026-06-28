@@ -6,14 +6,16 @@ type AlignX = 'left' | 'center' | 'right';
 type AlignY = 'top' | 'middle' | 'bottom';
 
 type StyleValue    = 'none' | 'card' | 'glass' | 'outlined' | 'filled';
-type PaddingValue  = 'none' | 'sm' | 'md' | 'lg' | 'xl';
 type RadiusValue   = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+type MaxWidthValue = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
 
 export interface ContainerBlockProps {
   /** Visual style of the container box */
   style?: StyleValue;
-  /** Inner padding */
-  padding?: PaddingValue;
+  /** CSS shorthand, e.g. "8px 16px" — applied to the outer container */
+  padding?: string;
+  /** CSS shorthand, e.g. "8px 16px" — applied to the outer container */
+  margin?: string;
   /** Border radius */
   borderRadius?: RadiusValue;
   /** Custom background colour / gradient */
@@ -27,6 +29,11 @@ export interface ContainerBlockProps {
    * Vertical position of the child — top | middle | bottom.
    */
   alignY?: AlignY;
+  /**
+   * Maximum width of the content area inside the container.
+   * 'none' means no constraint (fills parent width).
+   */
+  maxWidth?: MaxWidthValue;
   textColor?: string;
   backgroundColor?: string;
   children?: React.ReactNode;
@@ -44,14 +51,6 @@ const STYLE_MAP: Record<StyleValue, string> = {
   filled:   'bg-white/8',
 };
 
-const PADDING_MAP: Record<PaddingValue, string> = {
-  none: '',
-  sm:   'p-4',
-  md:   'p-6',
-  lg:   'p-8',
-  xl:   'p-12',
-};
-
 const RADIUS_MAP: Record<RadiusValue, string> = {
   none: '',
   sm:   'rounded-sm',
@@ -59,6 +58,17 @@ const RADIUS_MAP: Record<RadiusValue, string> = {
   lg:   'rounded-lg',
   xl:   'rounded-xl',
   '2xl':'rounded-2xl',
+};
+
+/** Content max-width — constrains the inner wrapper, not the container itself */
+const MAX_WIDTH_MAP: Record<MaxWidthValue, string> = {
+  none: '',
+  sm:   'max-w-screen-sm',   // 640px
+  md:   'max-w-screen-md',   // 768px
+  lg:   'max-w-screen-lg',   // 1024px
+  xl:   'max-w-screen-xl',   // 1280px
+  '2xl':'max-w-screen-2xl', // 1536px
+  full: 'max-w-full',
 };
 
 /** X-axis → flexbox justifyContent */
@@ -87,11 +97,13 @@ const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
  */
 export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   style      = 'none',
-  padding    = 'none',
+  padding,
+  margin,
   borderRadius = 'none',
   background,
   alignX,
   alignY,
+  maxWidth   = 'none',
   textColor,
   backgroundColor,
   children,
@@ -102,22 +114,27 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   const resolvedY: AlignY = alignY ?? 'middle';
 
   const styleClass     = STYLE_MAP[style]            ?? '';
-  const paddingClass   = PADDING_MAP[padding]        ?? '';
   const radiusClass    = RADIUS_MAP[borderRadius]    ?? '';
+  const maxWidthClass  = MAX_WIDTH_MAP[maxWidth]     ?? '';
 
   return (
     <div
       id={sectionId}
-      className={`w-full h-full ${styleClass} ${paddingClass} ${radiusClass} transition-all`}
+      className={`w-full h-full ${styleClass} ${radiusClass} transition-all`}
       style={{
         display:        'flex',
         justifyContent: JUSTIFY_MAP[resolvedX]     ?? 'center',
         alignItems:     ALIGN_ITEMS_MAP[resolvedY] ?? 'center',
         ...(backgroundColor ? { backgroundColor } : background ? { background } : {}),
         color: textColor,
+        padding: padding || undefined,
+        margin: margin || undefined,
       }}
     >
-      {children}
+      {/* Inner wrapper constrains the content width */}
+      <div className={`w-full ${maxWidthClass} transition-all`}>
+        {children}
+      </div>
     </div>
   );
 };

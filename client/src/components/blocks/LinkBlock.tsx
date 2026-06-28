@@ -35,6 +35,10 @@ interface LinkBlockProps {
   textColor?: string;
   backgroundColor?: string;
   sectionId?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  margin?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  padding?: string;
   [key: string]: unknown;
 }
 
@@ -66,6 +70,8 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
   textColor,
   backgroundColor,
   sectionId,
+  margin,
+  padding,
 }) => {
   const { isEditorMode, previewMode } = useEditorContext();
 
@@ -97,6 +103,8 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
         backgroundColor: backgroundColor,
         color: textColor,
+        margin: margin || undefined,
+        padding: padding || undefined,
       }}
     >
       <a
