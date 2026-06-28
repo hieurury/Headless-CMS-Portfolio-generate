@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import {
   Plus, Trash2, ChevronDown, ChevronUp, GripVertical,
-  Image as ImageIcon, Link, Eye, EyeOff,
+  Link, Eye, EyeOff,
 } from 'lucide-react';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import type { FieldSchema } from '../../../core/types/registry.types';
+import { ImageUploadField } from '../../../components/editor/ImageUploadField';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ interface FieldRendererProps {
   value: unknown;
   onChange: (key: string, value: unknown) => void;
   depth?: number;
+  sectionId?: string;
 }
 
 const FieldRenderer: React.FC<FieldRendererProps> = ({
@@ -71,6 +73,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   value,
   onChange,
   depth = 0,
+  sectionId,
 }) => {
   const [expanded, setExpanded] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
@@ -219,30 +222,17 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     );
   }
 
-  // IMAGE
+  // IMAGE — drag-and-drop upload widget
   if (schema.type === 'image') {
-    const imgSrc = (value as string) ?? '';
     return (
       <div>
-        <Label description={schema.description}>
-          <span className="flex items-center gap-1.5"><ImageIcon size={12} />{schema.label}</span>
-        </Label>
-        <Input
-          type="text"
-          value={imgSrc}
-          placeholder="https://example.com/image.png"
-          onChange={(e) => handleChange(e.target.value)}
+        <Label description={schema.description}>{schema.label}</Label>
+        <ImageUploadField
+          value={(value as string) ?? ''}
+          onChange={handleChange}
+          sectionId={sectionId}
+          fieldKey={fieldKey}
         />
-        {imgSrc && (
-          <div className="mt-2 rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)]">
-            <img
-              src={imgSrc}
-              alt="preview"
-              className="w-full h-20 object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </div>
-        )}
       </div>
     );
   }
@@ -361,6 +351,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
                   itemSchema={itemSchema}
                   itemLabel={schema.itemLabel ?? 'Item'}
                   depth={depth + 1}
+                  sectionId={sectionId}
                   onUpdate={(key, val) => updateItem(idx, key, val)}
                   onRemove={() => removeItem(idx)}
                   onMoveUp={() => moveItem(idx, -1)}
@@ -430,6 +421,7 @@ interface ArrayItemCardProps {
   itemSchema: Record<string, FieldSchema>;
   itemLabel: string;
   depth: number;
+  sectionId?: string;
   onUpdate: (key: string, value: unknown) => void;
   onRemove: () => void;
   onMoveUp: () => void;
@@ -443,6 +435,7 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
   itemSchema,
   itemLabel,
   depth,
+  sectionId,
   onUpdate,
   onRemove,
   onMoveUp,
@@ -488,6 +481,7 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
               value={item[key]}
               onChange={(k, v) => onUpdate(k, v)}
               depth={depth}
+              sectionId={sectionId}
             />
           ))}
         </div>
@@ -509,6 +503,7 @@ interface SmartPropEditorProps {
 }
 
 export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
+  sectionId,
   sectionName,
   sectionType,
   props,
@@ -628,6 +623,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
                 schema={fieldSchema}
                 value={get(props, key)}
                 onChange={handleFieldChange}
+                sectionId={sectionId}
               />
             </div>
           ))}
