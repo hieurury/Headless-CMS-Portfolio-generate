@@ -38,7 +38,11 @@ export const Navbar: React.FC = () => {
       <div className="home-navbar__inner">
         {/* Logo */}
         <Link to="/" className="home-navbar__logo" id="navbar-logo">
-          <span className="home-navbar__logo-mark">◆</span>
+          <img
+            src="icons.svg"
+            alt="CMS Portfolio Logo"
+            className="home-navbar__logo-mark"
+          />
           <span className="home-navbar__logo-text">CMS Portfolio</span>
         </Link>
 
@@ -49,7 +53,11 @@ export const Navbar: React.FC = () => {
             <Link to="/docs" className="home-navbar__link" id="navbar-docs">
               {tr.nav.docs}
             </Link>
-            <Link to="/explore" className="home-navbar__link" id="navbar-community">
+            <Link
+              to="/explore"
+              className="home-navbar__link"
+              id="navbar-community"
+            >
               {tr.nav.community}
             </Link>
           </div>
@@ -61,10 +69,16 @@ export const Navbar: React.FC = () => {
               id="navbar-lang-toggle"
               className="home-navbar__icon-btn"
               onClick={toggleLanguage}
-              title={language === 'en' ? 'Switch to Vietnamese' : 'Chuyển sang Tiếng Anh'}
+              title={
+                language === 'en'
+                  ? 'Switch to Vietnamese'
+                  : 'Chuyển sang Tiếng Anh'
+              }
               aria-label="Toggle language"
             >
-              <span className="home-navbar__lang-label">{language.toUpperCase()}</span>
+              <span className="home-navbar__lang-label">
+                {language.toUpperCase()}
+              </span>
             </button>
 
             {/* Theme toggle */}
@@ -72,7 +86,11 @@ export const Navbar: React.FC = () => {
               id="navbar-theme-toggle"
               className="home-navbar__icon-btn"
               onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={
+                theme === 'dark'
+                  ? 'Switch to light mode'
+                  : 'Switch to dark mode'
+              }
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -99,13 +117,25 @@ export const Navbar: React.FC = () => {
       {/* Mobile dropdown */}
       {mobileOpen && (
         <div className="home-navbar__mobile" id="navbar-mobile-dropdown">
-          <Link to="/docs" className="home-navbar__mobile-link" onClick={() => setMobileOpen(false)}>
+          <Link
+            to="/docs"
+            className="home-navbar__mobile-link"
+            onClick={() => setMobileOpen(false)}
+          >
             {tr.nav.docs}
           </Link>
-          <Link to="/explore" className="home-navbar__mobile-link" onClick={() => setMobileOpen(false)}>
+          <Link
+            to="/explore"
+            className="home-navbar__mobile-link"
+            onClick={() => setMobileOpen(false)}
+          >
             {tr.nav.community}
           </Link>
-          <Link to="/login" className="home-navbar__mobile-link home-navbar__mobile-link--cta" onClick={() => setMobileOpen(false)}>
+          <Link
+            to="/login"
+            className="home-navbar__mobile-link home-navbar__mobile-link--cta"
+            onClick={() => setMobileOpen(false)}
+          >
             {tr.nav.login}
           </Link>
         </div>
