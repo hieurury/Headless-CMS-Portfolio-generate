@@ -359,7 +359,7 @@ componentRegistry.register({
   category: 'block',
   isAtom: true,
   defaultProps: {
-    url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
+    url: '',
     alt: 'Image',
     aspectRatio: 'auto',
     objectFit: 'cover',

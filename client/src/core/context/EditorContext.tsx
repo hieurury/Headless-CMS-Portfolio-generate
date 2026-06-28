@@ -1,6 +1,13 @@
 import React, { createContext, useContext } from 'react';
 import type { LayoutSection } from '../types/layout.types';
 
+export type PendingUpload = {
+  sectionId: string;
+  fieldKey?: string;
+  file: File;
+  objectUrl: string;
+};
+
 export interface EditorContextValue {
   isEditorMode: boolean;
   /** true = Preview mode (links work, no editing). false = Edit mode (inline editing active). */
@@ -30,6 +37,11 @@ export interface EditorContextValue {
   // Props / name editing (works for any depth — finds section by id)
   onPropsChange: (sectionId: string, newProps: Record<string, unknown>) => void;
   onNameChange: (sectionId: string, name: string) => void;
+
+  // Pending Uploads for global save
+  pendingUploads: PendingUpload[];
+  setPendingUpload: (sectionId: string, file: File, objectUrl: string, fieldKey?: string) => void;
+  removePendingUpload: (sectionId: string, fieldKey?: string) => void;
 }
 
 const noop = () => {};
@@ -51,6 +63,9 @@ const EditorContext = createContext<EditorContextValue>({
   onReplaceEmptySlot: noop,
   onPropsChange: noop,
   onNameChange: noop,
+  pendingUploads: [],
+  setPendingUpload: noop,
+  removePendingUpload: noop,
 });
 
 export const EditorProvider: React.FC<{

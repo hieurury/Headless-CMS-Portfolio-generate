@@ -2,9 +2,11 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePageStore } from '../../store/pageStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { EditorProvider } from '../../core/context/EditorContext';
+import type { PendingUpload } from '../../core/context/EditorContext';
+import api from '../../services/api';
 import { FloatingControlPanel } from '../../components/editor/FloatingControlPanel';
+import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { LayersPanel } from './components/LayersPanel';
 import { AddSectionPanel } from './components/AddSectionPanel';
 import { SmartPropEditor } from './components/SmartPropEditor';
@@ -83,6 +85,9 @@ export const PageEditorPage: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
+
+  // Global pending uploads
+  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
 
   // ── Preview / Edit mode ────────────────────────────────────────────
   const [previewMode, setPreviewMode] = useState(false);
@@ -796,13 +801,43 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Save ───────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!portfolioId || !pageId || !isDirty) return;
+    if (!portfolioId || !pageId || (!isDirty && pendingUploads.length === 0)) return;
     setIsSaving(true);
     try {
-      await update(portfolioId, pageId, { layout: draftLayout } as Parameters<typeof update>[2]);
+      let finalLayout = { ...draftLayout };
+      
+      // Upload any pending files first
+      if (pendingUploads.length > 0) {
+        for (const upload of pendingUploads) {
+          const formData = new FormData();
+          formData.append('file', upload.file);
+          
+          try {
+            const { data } = await api.post<{ url: string; publicId: string }>(
+              '/upload/image',
+              formData,
+              { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            // Update layout with the new URL
+            const fieldKey = upload.fieldKey || 'url';
+            finalLayout = {
+              ...finalLayout,
+              sections: updateSectionProps(finalLayout.sections, upload.sectionId, { [fieldKey]: data.url })
+            };
+          } catch (err) {
+            console.error('Failed to upload image for section', upload.sectionId, err);
+          }
+        }
+      }
+
+      await update(portfolioId, pageId, { layout: finalLayout } as Parameters<typeof update>[2]);
+      setPendingUploads([]);
+      setDraftLayout(finalLayout);
       setIsDirty(false);
       setSavedFeedback(true);
       setTimeout(() => setSavedFeedback(false), 2000);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsSaving(false);
     }
@@ -853,6 +888,17 @@ export const PageEditorPage: React.FC = () => {
         onReplaceEmptySlot: handleReplaceEmptySlot,
         onPropsChange: handlePropsChange,
         onNameChange: handleNameChange,
+        pendingUploads,
+        setPendingUpload: (sectionId, file, objectUrl, fieldKey) => {
+          setPendingUploads(prev => {
+            const existing = prev.filter(p => !(p.sectionId === sectionId && p.fieldKey === fieldKey));
+            return [...existing, { sectionId, file, objectUrl, fieldKey }];
+          });
+          setIsDirty(true);
+        },
+        removePendingUpload: (sectionId, fieldKey) => {
+          setPendingUploads(prev => prev.filter(p => !(p.sectionId === sectionId && p.fieldKey === fieldKey)));
+        }
       }}
     >
       {/* ── Floating control panel (global, fixed-position) ──────── */}

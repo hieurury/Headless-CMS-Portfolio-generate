@@ -9,6 +9,7 @@ import { PagesModule } from './pages/pages.module';
 import { ComponentsModule } from './components/components.module';
 import { AiModule } from './ai/ai.module';
 import { PublicModule } from './public/public.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PublicModule } from './public/public.module';
     ComponentsModule,
     AiModule,
     PublicModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

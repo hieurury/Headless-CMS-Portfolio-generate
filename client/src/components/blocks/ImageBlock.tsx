@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Image as ImageIcon, Upload } from 'lucide-react';
+import { useEditorContext } from '../../core/context/EditorContext';
 
 type AlignX = 'left' | 'center' | 'right';
 type AlignY = 'top'  | 'middle' | 'bottom';
@@ -46,8 +48,12 @@ const RADIUS_MAP: Record<string, string> = {
   full:  'rounded-full',
 };
 
+function isValidImageFile(file: File): boolean {
+  return file.type.startsWith('image/');
+}
+
 export const ImageBlock: React.FC<ImageBlockProps> = ({
-  url          = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
+  url          = '',
   alt          = 'Image',
   aspectRatio  = 'auto',
   objectFit    = 'cover',
@@ -58,27 +64,113 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   backgroundColor,
   sectionId,
 }) => {
+  const { isEditorMode, previewMode, pendingUploads, setPendingUpload, removePendingUpload } = useEditorContext();
   const radiusClass = RADIUS_MAP[borderRadius] ?? 'rounded-md';
   const ratioStyle  = ASPECT_RATIO_MAP[aspectRatio] ?? 'auto';
 
+  // Find if this block has a pending upload in the global state
+  const pendingUpload = pendingUploads.find(p => p.sectionId === sectionId && (p.fieldKey === 'url' || !p.fieldKey));
+  const activeUrl = pendingUpload ? pendingUpload.objectUrl : url;
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const outerStyle: React.CSSProperties = {
+    width:           '100%',
+    height:          '100%',
+    display:         'flex',
+    justifyContent:  JUSTIFY_MAP[alignX]     ?? 'center',
+    alignItems:      ALIGN_ITEMS_MAP[alignY] ?? 'center',
+    backgroundColor: backgroundColor,
+    color:           textColor,
+  };
+
+  const selectFile = useCallback((file: File) => {
+    if (!sectionId) return;
+    if (!isValidImageFile(file)) {
+      setErrorMsg('Only image files are accepted');
+      return;
+    }
+    setErrorMsg('');
+    const preview = URL.createObjectURL(file);
+    setPendingUpload(sectionId, file, preview, 'url');
+  }, [sectionId, setPendingUpload]);
+
+  const onDragOver = (e: React.DragEvent) => {
+    if (!isEditorMode || previewMode) return;
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => setIsDragging(false);
+
+  const onDrop = (e: React.DragEvent) => {
+    if (!isEditorMode || previewMode) return;
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) selectFile(file);
+  };
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) selectFile(file);
+    e.target.value = '';
+  };
+
+  // ── Empty state — shown when no URL is set yet AND no pending file ──────
+  if (!activeUrl) {
+    return (
+      <div id={sectionId} style={outerStyle}>
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={() => isEditorMode && !previewMode && inputRef.current?.click()}
+          className={`
+            w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed 
+            ${isDragging ? 'border-indigo-400 bg-indigo-500/10' : 'border-white/15 bg-white/3 hover:border-indigo-400/60 hover:bg-white/5'}
+            ${radiusClass} transition-all
+            ${isEditorMode && !previewMode ? 'cursor-pointer' : ''}
+          `}
+          style={{
+            aspectRatio: ratioStyle !== 'auto' ? ratioStyle : undefined,
+            minHeight: '120px',
+          }}
+        >
+          <ImageIcon size={32} className={isDragging ? 'text-indigo-400' : 'text-white/20'} />
+          {errorMsg ? (
+            <p className="text-xs text-red-400 font-medium">{errorMsg}</p>
+          ) : (
+            <>
+              <p className="text-xs font-medium text-[var(--color-text-muted)]">
+                Drag &amp; drop an image here
+              </p>
+              <p className="text-[10px] text-[var(--color-text-faint)] mt-0.5">
+                or click to browse
+              </p>
+            </>
+          )}
+        </div>
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onInputChange} />
+      </div>
+    );
+  }
+
+  // ── Image ────────────────────────────────────────────────────────────────
   return (
-    <div
-      id={sectionId}
-      className="cms-block-wrapper"
-      style={{
-        width:          '100%',
-        height:         '100%',
-        display:        'flex',
-        justifyContent: JUSTIFY_MAP[alignX]     ?? 'center',
-        alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
-        backgroundColor: backgroundColor,
-        color: textColor,
-      }}
-    >
-      <div className="w-full flex" style={{ justifyContent: JUSTIFY_MAP[alignX] ?? 'center' }}>
+    <div id={sectionId} className="cms-block-wrapper relative group" style={outerStyle}>
+      <div 
+        className="w-full flex relative" 
+        style={{ justifyContent: JUSTIFY_MAP[alignX] ?? 'center' }}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
         <img
           data-cms-field="url"
-          src={url}
+          src={activeUrl}
           alt={alt}
           className={`max-w-full ${radiusClass}`}
           style={{
@@ -91,7 +183,38 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
             (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/1e1e2e/818cf8?text=Image+Not+Found';
           }}
         />
+        
+        {/* Hover overlay to change image */}
+        {isEditorMode && !previewMode && !pendingUpload && (
+           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+             <button 
+                className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 text-white text-xs font-medium backdrop-blur-sm"
+                onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
+             >
+                <Upload size={14} /> Change Image
+             </button>
+           </div>
+        )}
+
+        {/* Overlay when a file is pending upload */}
+        {pendingUpload && (
+          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-indigo-300 font-medium bg-black/40 px-3 py-1.5 rounded text-sm">
+              <Upload size={16} /> Ready to save
+            </div>
+            <button
+              onClick={() => {
+                URL.revokeObjectURL(pendingUpload.objectUrl);
+                if (sectionId) removePendingUpload(sectionId, 'url');
+              }}
+              className="text-xs text-white/70 hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onInputChange} />
     </div>
   );
 };
