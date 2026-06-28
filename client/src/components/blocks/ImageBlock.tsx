@@ -64,7 +64,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   backgroundColor,
   sectionId,
 }) => {
-  const { isEditorMode, previewMode, pendingUploads, setPendingUpload, removePendingUpload } = useEditorContext();
+  const { isEditorMode, previewMode, pendingUploads, setPendingUpload } = useEditorContext();
   const radiusClass = RADIUS_MAP[borderRadius] ?? 'rounded-md';
   const ratioStyle  = ASPECT_RATIO_MAP[aspectRatio] ?? 'auto';
 
