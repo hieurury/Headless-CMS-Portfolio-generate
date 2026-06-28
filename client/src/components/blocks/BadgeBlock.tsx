@@ -25,6 +25,10 @@ export interface BadgeBlockProps {
   textColor?: string;
   backgroundColor?: string;
   sectionId?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  margin?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  padding?: string;
   [key: string]: unknown;
 }
 
@@ -80,6 +84,8 @@ export const BadgeBlock: React.FC<BadgeBlockProps> = ({
   textColor,
   backgroundColor,
   sectionId,
+  margin,
+  padding,
 }) => {
   const sizeClass  = SIZE_MAP[size] ?? SIZE_MAP.sm;
   const shapeClass = SHAPE_MAP[shape] ?? SHAPE_MAP.pill;
@@ -94,6 +100,8 @@ export const BadgeBlock: React.FC<BadgeBlockProps> = ({
         display:        'flex',
         justifyContent: JUSTIFY_MAP[alignX]     ?? 'flex-start',
         alignItems:     ALIGN_ITEMS_MAP[alignY] ?? 'center',
+        margin: margin || undefined,
+        padding: padding || undefined,
       }}
     >
       <div className="py-1">

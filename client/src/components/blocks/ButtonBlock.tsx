@@ -36,6 +36,10 @@ interface ButtonBlockProps {
   textColor?: string;
   backgroundColor?: string;
   sectionId?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  margin?: string;
+  /** CSS shorthand, e.g. "8px 16px" */
+  padding?: string;
   [key: string]: unknown;
 }
 
@@ -87,6 +91,8 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   textColor,
   backgroundColor,
   sectionId,
+  margin,
+  padding,
 }) => {
 
 
@@ -143,6 +149,8 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
         alignItems: ALIGN_ITEMS_MAP[alignY] ?? 'center',
         backgroundColor: backgroundColor,
         color: textColor,
+        margin: margin || undefined,
+        padding: padding || undefined,
       }}
     >
       {hasUrl ? (

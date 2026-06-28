@@ -149,6 +149,26 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     );
   }
 
+  // SPACING (free-form CSS shorthand: "8px 16px", "4px 8px 12px 0", etc.)
+  if (schema.type === 'spacing') {
+    return (
+      <div>
+        <Label description={schema.description}>{schema.label}</Label>
+        <Input
+          type="text"
+          value={(value as string) ?? ''}
+          placeholder={schema.placeholder ?? '0'}
+          onChange={(e) => handleChange(e.target.value)}
+        />
+        <p className="text-xs text-[var(--color-text-faint)] mt-1 leading-snug">
+          CSS shorthand — e.g.{' '}
+          <code className="text-[var(--color-text)] font-semibold">8px 16px</code> (T/B · L/R) or{' '}
+          <code className="text-[var(--color-text)] font-semibold">4px 8px 12px 0</code> (T · R · B · L)
+        </p>
+      </div>
+    );
+  }
+
   // SELECT
   if (schema.type === 'select') {
     return (

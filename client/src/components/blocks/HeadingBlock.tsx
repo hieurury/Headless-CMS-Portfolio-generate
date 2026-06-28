@@ -14,18 +14,7 @@ const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
   middle: 'center',
   bottom: 'flex-end',
 };
-const MARGIN_TOP_MAP: Record<string, string> = {
-  none: '', sm: 'mt-2', md: 'mt-4', lg: 'mt-8', xl: 'mt-12', '2xl': 'mt-16',
-};
-const MARGIN_BOTTOM_MAP: Record<string, string> = {
-  none: '', sm: 'mb-2', md: 'mb-4', lg: 'mb-8', xl: 'mb-12', '2xl': 'mb-16',
-};
-const PADDING_TOP_MAP: Record<string, string> = {
-  none: '', sm: 'pt-2', md: 'pt-4', lg: 'pt-8', xl: 'pt-12', '2xl': 'pt-16',
-};
-const PADDING_BOTTOM_MAP: Record<string, string> = {
-  none: '', sm: 'pb-2', md: 'pb-4', lg: 'pb-8', xl: 'pb-12', '2xl': 'pb-16',
-};
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface HeadingBlockProps {
   text?: string;
@@ -42,10 +31,10 @@ interface HeadingBlockProps {
   color?: string;
   gradient?: boolean;
   sectionId?: string;
-  marginTop?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  marginBottom?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  paddingTop?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  paddingBottom?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  /** CSS shorthand string, e.g. "8px 16px" or "4px 8px 12px 0" */
+  margin?: string;
+  /** CSS shorthand string, e.g. "8px 16px" or "4px 8px 12px 0" */
+  padding?: string;
   [key: string]: unknown;
 }
 
@@ -78,10 +67,8 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   color,
   gradient = false,
   sectionId,
-  marginTop,
-  marginBottom,
-  paddingTop,
-  paddingBottom,
+  margin,
+  padding,
 }) => {
   const safeLevel = String(level).startsWith('h') ? String(level).toLowerCase() : `h${level}`;
   const validLevels = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
@@ -102,7 +89,13 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
         backgroundColor: backgroundColor,
       }}
     >
-      <div className={`${MARGIN_TOP_MAP[marginTop || 'none']} ${MARGIN_BOTTOM_MAP[marginBottom || 'none']} ${PADDING_TOP_MAP[paddingTop || 'none']} ${PADDING_BOTTOM_MAP[paddingBottom || 'none']} ${textAlignClass}`}>
+      <div
+        className={textAlignClass}
+        style={{
+          margin: margin || undefined,
+          padding: padding || undefined,
+        }}
+      >
         <Tag
           data-cms-field="text"
           className={`font-bold leading-tight ${sizeClass} ${textClass} cursor-text`}

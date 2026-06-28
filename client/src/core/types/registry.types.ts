@@ -14,7 +14,8 @@ export interface FieldSchema {
     | 'link'
     | 'textarea'
     | 'array'
-    | 'table';
+    | 'table'
+    | 'spacing'; // free-form CSS shorthand, e.g. "8px 16px" or "4px 8px 12px 0"
   label: string;
   description?: string;
   placeholder?: string;

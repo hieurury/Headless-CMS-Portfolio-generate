@@ -36,12 +36,6 @@ import { BadgeBlock } from '../../components/blocks/BadgeBlock';
 import { FlexBlock } from '../../components/blocks/FlexBlock';
 import { TableBlock } from '../../components/blocks/TableBlock';
 
-export const commonSpacingSchema = {
-  marginTop: { type: 'select', label: 'Margin Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-  marginBottom: { type: 'select', label: 'Margin Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-  paddingTop: { type: 'select', label: 'Padding Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-  paddingBottom: { type: 'select', label: 'Padding Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-};
 
 // ─── NavBarWrapperBlock — composable sticky navbar container ──────────────────
 componentRegistry.register({
@@ -176,14 +170,22 @@ componentRegistry.register({
   ],
   defaultProps: {
     style: 'none',
-    padding: 'none',
+    padding: '',
+    margin: '',
     borderRadius: 'none',
+    maxWidth: 'none',
     alignX: 'center',
     alignY: 'middle',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
+    maxWidth: {
+      type: 'select',
+      label: 'Content Max Width',
+      description: 'Constrains the maximum horizontal width of child content inside the container',
+      options: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'],
+    },
     alignX: {
       type: 'select',
       label: 'Horizontal (X)',
@@ -197,8 +199,9 @@ componentRegistry.register({
       options: ['top', 'middle', 'bottom'],
     },
     style: { type: 'select', label: 'Box Style', options: ['none', 'card', 'glass', 'outlined', 'filled'] },
-    padding: { type: 'select', label: 'Padding', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px (T/B · L/R) or 4px 8px 12px 0' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px (T/B · L/R) or 4px 8px 12px 0' },
   },
 });
 
@@ -216,10 +219,8 @@ componentRegistry.register({
     text: 'Your Heading Here',
     level: 'h2',
     size: 'xl',
-    marginTop: 'none',
-    marginBottom: 'md',
-    paddingTop: 'none',
-    paddingBottom: 'none',
+    margin: '',
+    padding: '',
     textAlign: 'left',
     alignX: 'left',
     alignY: 'middle',
@@ -235,11 +236,8 @@ componentRegistry.register({
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
     gradient: { type: 'boolean', label: 'Gradient Effect' },
-    marginTop: { type: 'select', label: 'Margin Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-    marginBottom: { type: 'select', label: 'Margin Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-    paddingTop: { type: 'select', label: 'Padding Top', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-    paddingBottom: { type: 'select', label: 'Padding Bottom', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
-
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px (T/B · L/R) or 4px 8px 12px 0 (T · R · B · L)' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px (T/B · L/R) or 4px 8px 12px 0 (T · R · B · L)' },
   },
 });
 
@@ -260,6 +258,8 @@ componentRegistry.register({
     alignY: 'middle',
     showIcon: false,
     external: false,
+    margin: '',
+    padding: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -272,6 +272,8 @@ componentRegistry.register({
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
     showIcon: { type: 'boolean', label: 'Show Arrow / External Icon' },
     external: { type: 'boolean', label: 'Open in new tab' },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
   },
 });
 
@@ -293,6 +295,8 @@ componentRegistry.register({
     alignY: 'middle',
     icon: '',
     iconPosition: 'right',
+    margin: '',
+    padding: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -308,6 +312,8 @@ componentRegistry.register({
     iconPosition: { type: 'select', label: 'Icon Position', options: ['left', 'right'] },
     fullWidth: { type: 'boolean', label: 'Full Width' },
     external: { type: 'boolean', label: 'Open in new tab' },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
   },
 });
 
@@ -326,6 +332,8 @@ componentRegistry.register({
     accent: 'indigo',
     alignX: 'left',
     alignY: 'middle',
+    margin: '',
+    padding: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -337,6 +345,8 @@ componentRegistry.register({
     color: { type: 'color', label: 'Custom Icon Color' },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
   },
 });
 
@@ -384,6 +394,8 @@ componentRegistry.register({
     textAlign: 'left',
     alignX: 'left',
     alignY: 'middle',
+    margin: '',
+    padding: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -393,6 +405,8 @@ componentRegistry.register({
     textAlign: { type: 'select', label: 'Text Align', options: ['left', 'center', 'right'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
   },
 });
 
@@ -412,6 +426,8 @@ componentRegistry.register({
     shape: 'pill',
     alignX: 'left',
     alignY: 'middle',
+    margin: '',
+    padding: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -423,6 +439,8 @@ componentRegistry.register({
     shape: { type: 'select', label: 'Shape', options: ['rounded', 'pill'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
   },
 });
 
