@@ -170,7 +170,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
 
       {/* ── Status badge ── */}
       {pendingUpload && (
-        <div className="flex items-center justify-center py-2 rounded-md bg-indigo-500/10 text-indigo-400 text-sm font-semibold border border-indigo-500/20">
+        <div className="flex items-center justify-center py-2 rounded-md bg-indigo-500/10 text-white text-sm font-semibold border border-indigo-500/20">
           Will upload on Save
         </div>
       )}

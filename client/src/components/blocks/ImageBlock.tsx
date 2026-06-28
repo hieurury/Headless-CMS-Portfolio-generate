@@ -185,7 +185,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
         />
         
         {/* Hover overlay to change image */}
-        {isEditorMode && !previewMode && !pendingUpload && (
+        {isEditorMode && !previewMode && (
            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
              <button 
                 className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 text-white text-xs font-medium backdrop-blur-sm"
@@ -196,23 +196,6 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
            </div>
         )}
 
-        {/* Overlay when a file is pending upload */}
-        {pendingUpload && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2 text-indigo-300 font-medium bg-black/40 px-3 py-1.5 rounded text-sm">
-              <Upload size={16} /> Ready to save
-            </div>
-            <button
-              onClick={() => {
-                URL.revokeObjectURL(pendingUpload.objectUrl);
-                if (sectionId) removePendingUpload(sectionId, 'url');
-              }}
-              className="text-xs text-white/70 hover:text-white"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
       </div>
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onInputChange} />
     </div>
