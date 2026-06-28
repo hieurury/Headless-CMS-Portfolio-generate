@@ -55,9 +55,73 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = (
   </button>
 );
 
+const SpacingInput: React.FC<{ value: string; onChange: (v: string) => void; label: string }> = ({ value, onChange, label }) => {
+  const [localY, setLocalY] = useState('');
+  const [localX, setLocalX] = useState('');
+
+  const formatVal = useCallback((val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return '0';
+    if (trimmed === '0') return '0';
+    // If it's a pure number (including decimals/negatives), append px
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) return `${trimmed}px`;
+    return trimmed;
+  }, []);
+
+  React.useEffect(() => {
+    const stringVal = value || '';
+    const currentDerived = (!localY && !localX) ? '' : `${formatVal(localY)} ${formatVal(localX)}`;
+    if (stringVal !== currentDerived) {
+      const parts = stringVal.trim().split(/\s+/);
+      if (parts.length === 1 && parts[0] !== '') {
+        setLocalY(parts[0]);
+        setLocalX(parts[0]);
+      } else if (parts.length >= 2) {
+        setLocalY(parts[0]);
+        setLocalX(parts[1]);
+      } else {
+        setLocalY('');
+        setLocalX('');
+      }
+    }
+  }, [value, localY, localX, formatVal]);
+
+  const handleYChange = (newY: string) => {
+    setLocalY(newY);
+    if (!newY && !localX) onChange('');
+    else onChange(`${formatVal(newY)} ${formatVal(localX)}`);
+  };
+
+  const handleXChange = (newX: string) => {
+    setLocalX(newX);
+    if (!localY && !newX) onChange('');
+    else onChange(`${formatVal(localY)} ${formatVal(newX)}`);
+  };
+
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          value={localX}
+          placeholder="X"
+          onChange={(e) => handleXChange(e.target.value)}
+        />
+        <Input
+          type="text"
+          value={localY}
+          placeholder="Y"
+          onChange={(e) => handleYChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+};
+
 // ─── FieldRenderer ─────────────────────────────────────────────────────────────
 
-interface FieldRendererProps {
+export interface FieldRendererProps {
   fieldKey: string;
   schema: FieldSchema;
   value: unknown;
@@ -65,7 +129,7 @@ interface FieldRendererProps {
   depth?: number;
 }
 
-const FieldRenderer: React.FC<FieldRendererProps> = ({
+export const FieldRenderer: React.FC<FieldRendererProps> = ({
   fieldKey,
   schema,
   value,
@@ -149,23 +213,14 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     );
   }
 
-  // SPACING (free-form CSS shorthand: "8px 16px", "4px 8px 12px 0", etc.)
+  // SPACING
   if (schema.type === 'spacing') {
     return (
-      <div>
-        <Label description={schema.description}>{schema.label}</Label>
-        <Input
-          type="text"
-          value={(value as string) ?? ''}
-          placeholder={schema.placeholder ?? '0'}
-          onChange={(e) => handleChange(e.target.value)}
-        />
-        <p className="text-xs text-[var(--color-text-faint)] mt-1 leading-snug">
-          CSS shorthand — e.g.{' '}
-          <code className="text-[var(--color-text)] font-semibold">8px 16px</code> (T/B · L/R) or{' '}
-          <code className="text-[var(--color-text)] font-semibold">4px 8px 12px 0</code> (T · R · B · L)
-        </p>
-      </div>
+      <SpacingInput 
+        value={(value as string) ?? ''} 
+        onChange={handleChange} 
+        label={schema.label} 
+      />
     );
   }
 
@@ -193,24 +248,36 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     return (
       <div>
         <Label description={schema.description}>{schema.label}</Label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center rounded-md bg-black/20 border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-text-muted)] transition-colors">
+          <div className="relative w-9 h-9 shrink-0 border-r border-[var(--color-border)] bg-white/5">
+            <input
+              type="color"
+              value={(value as string) || '#000000'}
+              onChange={(e) => handleChange(e.target.value)}
+              className="absolute inset-0 w-full h-full cursor-pointer opacity-0 z-10"
+            />
+            <div 
+              className="absolute inset-0 m-2 rounded-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/10" 
+              style={{ backgroundColor: (value as string) || '#000000' }} 
+            />
+          </div>
           <input
-            type="color"
-            value={(value as string) || '#000000'}
-            onChange={(e) => handleChange(e.target.value)}
-            className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
-          />
-          <Input
             type="text"
             value={(value as string) ?? ''}
-            placeholder="#000000 or rgba(0,0,0,0.5)"
-            onChange={(e) => handleChange(e.target.value)}
-            className="flex-1"
+            placeholder="#000000"
+            onChange={(e) => {
+              let val = e.target.value.trim();
+              if (val && !val.startsWith('#')) {
+                val = '#' + val;
+              }
+              handleChange(val);
+            }}
+            className="flex-1 bg-transparent border-0 px-3 py-2 text-[var(--color-text)] text-sm placeholder-slate-600 focus:outline-none focus:ring-0"
           />
           {Boolean(value) && (
             <button
               onClick={() => handleChange('')}
-              className="text-[var(--color-text-faint)] hover:text-red-400 text-xs"
+              className="px-3 text-[var(--color-text-faint)] hover:text-red-400 text-xs transition-colors"
               title="Clear color"
             >✕</button>
           )}
@@ -617,7 +684,9 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       {/* Form Fields */}
       {activeTab === 'form' && schema && (
         <div className="space-y-4">
-          {Object.entries(schema).map(([key, fieldSchema]) => (
+          {Object.entries(schema)
+            .filter(([, fieldSchema]) => !['select', 'boolean', 'color'].includes(fieldSchema.type))
+            .map(([key, fieldSchema]) => (
             <div
               key={key}
               ref={(el) => { fieldRefs.current[key] = el; }}

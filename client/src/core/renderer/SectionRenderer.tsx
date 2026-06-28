@@ -860,6 +860,23 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     setFieldPicker(null);
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!isEditorMode || previewMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[SectionRenderer] onContextMenu fired for section:', section.id);
+    onSectionSelect(section.id);
+    window.dispatchEvent(
+      new CustomEvent('cms:openContextMenu', {
+        detail: {
+          sectionId: section.id,
+          x: e.clientX,
+          y: e.clientY,
+        },
+      })
+    );
+  };
+
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -883,6 +900,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       className={`relative cms-block select-none touch-none${isContainer ? ' cms-container-block' : ''}${isDragging ? ' shadow-2xl shadow-black/20' : ''}${isSelected ? ' z-10' : ''}`}
       onClickCapture={handleCapture}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
     >
       {/* ── Selection ring ────────────────────────────────────────────── */}
       <div
@@ -966,6 +984,15 @@ const ColumnsEditorWrapper: React.FC<{
       className={`relative cms-block select-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
         }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
+      onContextMenu={(e) => {
+        if (!isEditorMode || previewMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onSectionSelect(section.id);
+        window.dispatchEvent(new CustomEvent('cms:openContextMenu', {
+          detail: { sectionId: section.id, x: e.clientX, y: e.clientY }
+        }));
+      }}
     >
       {/* Editor chrome (drag handle) */}
       {isEditorMode && !previewMode && isSelected && (

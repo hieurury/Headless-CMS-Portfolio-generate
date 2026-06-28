@@ -11,6 +11,8 @@ import { SmartPropEditor } from './components/SmartPropEditor';
 import { AiGeneratePanel } from './components/AiGeneratePanel';
 import { SeoSettingsPanel } from './components/SeoSettingsPanel';
 import { EmptyCanvasPrompt } from './components/EmptyCanvasPrompt';
+import { BlockContextMenu } from './components/BlockContextMenu';
+import type { ContextMenuState } from './components/BlockContextMenu';
 import type { LayoutSection, PageLayout } from '../../core/types/layout.types';
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import {
@@ -95,6 +97,9 @@ export const PageEditorPage: React.FC = () => {
   const [fillSlotId, setFillSlotId] = useState<string | null>(null);
   const [leftTab, setLeftTab] = useState<LeftTab>('ai');
 
+  // ── Context Menu state ──────────────────────────────────────────────
+  const [contextMenuState, setContextMenuState] = useState<ContextMenuState | null>(null);
+
   const rightScrollRef = useRef<HTMLDivElement>(null);
 
   // -- Load ------------------------------------------------------------------
@@ -139,6 +144,21 @@ export const PageEditorPage: React.FC = () => {
       return () => clearTimeout(t);
     }
   }, [selectedId, previewMode]);
+
+  // ── Listen for cms:openContextMenu ────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<ContextMenuState>).detail;
+      console.log('[PageEditorPage] Received cms:openContextMenu', detail);
+      setContextMenuState(detail);
+      // Ensure we select the section so properties update in real-time correctly
+      if (detail.sectionId !== selectedId) {
+        setSelectedId(detail.sectionId);
+      }
+    };
+    window.addEventListener('cms:openContextMenu', handler);
+    return () => window.removeEventListener('cms:openContextMenu', handler);
+  }, [selectedId]);
 
   // ── Listen for cms:addEmptySlot — "+" button on container control ──
   // For non-columns containers: adds an _empty placeholder child.
@@ -1102,6 +1122,10 @@ export const PageEditorPage: React.FC = () => {
             addingToContainer={addChildParentId !== null || fillSlotId !== null || fillColCell !== null || fillRowCell !== null || fillFlexCell !== null}
           />
         )}
+        
+        {/* ── Context Menu ──────────────────────────────────────────── */}
+        <BlockContextMenu state={contextMenuState} onClose={() => setContextMenuState(null)} />
+
       </div>
     </EditorProvider>
   );

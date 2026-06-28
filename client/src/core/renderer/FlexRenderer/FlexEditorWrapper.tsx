@@ -42,6 +42,15 @@ const FlexEditorWrapper: React.FC<{
         isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
       }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
+      onContextMenu={(e) => {
+        if (!isEditorMode || previewMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onSectionSelect(section.id);
+        window.dispatchEvent(new CustomEvent('cms:openContextMenu', {
+          detail: { sectionId: section.id, x: e.clientX, y: e.clientY }
+        }));
+      }}
     >
       {/* Selection ring */}
       <div
