@@ -34,7 +34,10 @@ export default $config({
             { name: "MONGODB_URI", value: process.env.MONGODB_URI },
             { name: "JWT_SECRET", value: process.env.JWT_SECRET },
             { name: "AI_TOKEN", value: process.env.AI_TOKEN },
-            { name: "AI_MODEL", value: process.env.AI_MODEL }
+            { name: "AI_MODEL", value: process.env.AI_MODEL },
+            { name: "CLOUDINARY_CLOUD_NAME", value: process.env.CLOUDINARY_CLOUD_NAME },
+            { name: "CLOUDINARY_API_KEY", value: process.env.CLOUDINARY_API_KEY },
+            { name: "CLOUDINARY_API_SECRET", value: process.env.CLOUDINARY_API_SECRET }
           ],
         }],
       },
