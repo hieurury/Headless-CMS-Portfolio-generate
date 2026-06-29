@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 
 interface PropEditorProps {
   props: Record<string, unknown>;
@@ -12,6 +14,8 @@ export const PropEditor: React.FC<PropEditorProps> = ({
   sectionType,
   onChange,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.propEditor;
   const [json, setJson] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -57,20 +61,28 @@ export const PropEditor: React.FC<PropEditorProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs text-[var(--color-text-faint)] uppercase tracking-wider">
-          Props — <span className="font-mono text-[var(--color-text)] font-semibold">{sectionType}</span>
+          {tr.propsLabel}{' '}
+          <span className="font-mono text-[var(--color-text)] font-semibold">
+            {sectionType}
+          </span>
         </p>
-        <p className="text-xs text-[var(--color-text-faint)]">Ctrl+S to apply</p>
+        <p className="text-xs text-[var(--color-text-faint)]">{tr.ctrlApply}</p>
       </div>
 
       <div className="relative">
         <textarea
           value={json}
-          onChange={(e) => { setJson(e.target.value); setError(null); }}
+          onChange={(e) => {
+            setJson(e.target.value);
+            setError(null);
+          }}
           onKeyDown={handleKeyDown}
           rows={14}
           spellCheck={false}
           className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none transition-colors"
-          style={{ fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace" }}
+          style={{
+            fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+          }}
         />
       </div>
 
@@ -86,9 +98,11 @@ export const PropEditor: React.FC<PropEditorProps> = ({
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-black/10"
       >
         {saved ? (
-          <><Check size={15} /> Applied!</>
+          <>
+            <Check size={15} /> {tr.applied}
+          </>
         ) : (
-          'Apply Props'
+          tr.applyProps
         )}
       </button>
     </div>

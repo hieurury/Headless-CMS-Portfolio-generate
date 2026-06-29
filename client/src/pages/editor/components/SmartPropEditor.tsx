@@ -1,11 +1,20 @@
 import React, { useState, useCallback } from 'react';
 import {
-  Plus, Trash2, ChevronDown, ChevronUp, GripVertical,
-  Link, Eye, EyeOff,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  Image as ImageIcon,
+  Link,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import type { FieldSchema } from '../../../core/types/registry.types';
 import { ImageUploadField } from '../../../components/editor/ImageUploadField';
+import { useUIStore } from '../../../store/uiStore';
+import { t } from '../../../i18n';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -13,20 +22,35 @@ function get(obj: Record<string, unknown>, key: string): unknown {
   return obj[key];
 }
 
-function set(obj: Record<string, unknown>, key: string, value: unknown): Record<string, unknown> {
+function set(
+  obj: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
   return { ...obj, [key]: value };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const Label: React.FC<{ children: React.ReactNode; description?: string }> = ({ children, description }) => (
+const Label: React.FC<{ children: React.ReactNode; description?: string }> = ({
+  children,
+  description,
+}) => (
   <div className="mb-1.5">
-    <label className="text-xs font-medium text-[var(--color-text)]">{children}</label>
-    {description && <p className="text-xs text-[var(--color-text-faint)] mt-0.5">{description}</p>}
+    <label className="text-xs font-medium text-[var(--color-text)]">
+      {children}
+    </label>
+    {description && (
+      <p className="text-xs text-[var(--color-text-faint)] mt-0.5">
+        {description}
+      </p>
+    )}
   </div>
 );
 
-const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
+const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (
+  props,
+) => (
   <input
     {...props}
     className={`w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
@@ -34,7 +58,9 @@ const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => 
   />
 );
 
-const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
+const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (
+  props,
+) => (
   <textarea
     {...props}
     className={`w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
@@ -42,7 +68,10 @@ const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (p
   />
 );
 
-const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
+const Toggle: React.FC<{
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}> = ({ checked, onChange }) => (
   <button
     type="button"
     onClick={() => onChange(!checked)}
@@ -139,6 +168,8 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   depth = 0,
   sectionId,
 }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.smartPropEditor;
   const [expanded, setExpanded] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
 
@@ -233,13 +264,15 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       <div>
         <Label description={schema.description}>{schema.label}</Label>
         <select
-          value={(value as string) ?? (schema.options?.[0] ?? '')}
+          value={(value as string) ?? schema.options?.[0] ?? ''}
           onChange={(e) => handleChange(e.target.value)}
           className="w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             focus:outline-none focus:border-[var(--color-border)] transition-colors"
         >
           {schema.options?.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
           ))}
         </select>
       </div>
@@ -267,7 +300,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
           <input
             type="text"
             value={(value as string) ?? ''}
-            placeholder="#000000"
+            placeholder={tr.colorPlaceholder}
             onChange={(e) => {
               let val = e.target.value.trim();
               if (val && !val.startsWith('#')) {
@@ -281,8 +314,10 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
             <button
               onClick={() => handleChange('')}
               className="px-3 text-[var(--color-text-faint)] hover:text-red-400 text-xs transition-colors"
-              title="Clear color"
-            >✕</button>
+              title={tr.clearColor}
+            >
+              ✕
+            </button>
           )}
         </div>
       </div>
@@ -293,7 +328,12 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   if (schema.type === 'image') {
     return (
       <div>
-        <Label description={schema.description}>{schema.label}</Label>
+        <Label description={schema.description}>
+          <span className="flex items-center gap-1.5">
+            <ImageIcon size={12} />
+            {schema.label}
+          </span>
+        </Label>
         <ImageUploadField
           value={(value as string) ?? ''}
           onChange={handleChange}
@@ -309,16 +349,19 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     return (
       <div>
         <Label description={schema.description}>
-          <span className="flex items-center gap-1.5"><Link size={12} />{schema.label}</span>
+          <span className="flex items-center gap-1.5">
+            <Link size={12} />
+            {schema.label}
+          </span>
         </Label>
         <Input
           type="text"
           value={(value as string) ?? ''}
-          placeholder={schema.placeholder ?? '#section-name, /page, or https://...'}
+          placeholder={schema.placeholder ?? tr.linkPlaceholder}
           onChange={(e) => handleChange(e.target.value)}
         />
         <p className="text-xs text-[var(--color-text-faint)] mt-1">
-          Use <code className="text-[var(--color-text)] font-semibold">#name</code> to scroll to a section, <code className="text-[var(--color-text)] font-semibold">/page</code> for navigation, or full URL
+          {tr.linkHint}
         </p>
       </div>
     );
@@ -328,7 +371,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   if (schema.type === 'array') {
     const items = (value as Record<string, unknown>[]) ?? [];
     const itemSchema = schema.itemSchema ?? {};
-    const isSimpleString = Object.keys(itemSchema).length === 1 && Object.values(itemSchema)[0]?.type === 'string';
+    const isSimpleString =
+      Object.keys(itemSchema).length === 1 &&
+      Object.values(itemSchema)[0]?.type === 'string';
     const simpleKey = isSimpleString ? Object.keys(itemSchema)[0] : null;
 
     const addItem = () => {
@@ -337,7 +382,14 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         newItem[simpleKey] = '';
       } else {
         Object.entries(itemSchema).forEach(([k, s]) => {
-          newItem[k] = s.type === 'boolean' ? false : s.type === 'number' ? 0 : s.type === 'array' ? [] : '';
+          newItem[k] =
+            s.type === 'boolean'
+              ? false
+              : s.type === 'number'
+                ? 0
+                : s.type === 'array'
+                  ? []
+                  : '';
         });
       }
       handleChange([...items, newItem]);
@@ -363,7 +415,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     };
 
     return (
-      <div className={`${depth > 0 ? 'pl-3 border-l border-[var(--color-border)]' : ''}`}>
+      <div
+        className={`${depth > 0 ? 'pl-3 border-l border-[var(--color-border)]' : ''}`}
+      >
         <button
           type="button"
           onClick={() => setExpanded((p) => !p)}
@@ -373,7 +427,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
           <span className="ml-auto text-[var(--color-text-faint)]">
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </span>
-          <span className="text-xs text-[var(--color-text-faint)] font-mono">{items.length}</span>
+          <span className="text-xs text-[var(--color-text-faint)] font-mono">
+            {items.length}
+          </span>
         </button>
 
         {expanded && (
@@ -383,27 +439,38 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
               if (simpleKey) {
                 return (
                   <div key={idx} className="flex items-center gap-2">
-                    <GripVertical size={14} className="text-slate-700 shrink-0" />
+                    <GripVertical
+                      size={14}
+                      className="text-slate-700 shrink-0"
+                    />
                     <Input
                       type="text"
                       value={(item[simpleKey] as string) ?? ''}
                       placeholder={itemSchema[simpleKey]?.placeholder}
-                      onChange={(e) => updateItem(idx, simpleKey, e.target.value)}
+                      onChange={(e) =>
+                        updateItem(idx, simpleKey, e.target.value)
+                      }
                     />
                     <button
                       onClick={() => moveItem(idx, -1)}
                       disabled={idx === 0}
                       className="text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30 p-1"
-                    ><ChevronUp size={13} /></button>
+                    >
+                      <ChevronUp size={13} />
+                    </button>
                     <button
                       onClick={() => moveItem(idx, 1)}
                       disabled={idx === items.length - 1}
                       className="text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30 p-1"
-                    ><ChevronDown size={13} /></button>
+                    >
+                      <ChevronDown size={13} />
+                    </button>
                     <button
                       onClick={() => removeItem(idx)}
                       className="text-[var(--color-text-faint)] hover:text-red-400 p-1"
-                    ><Trash2 size={13} /></button>
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 );
               }
@@ -433,7 +500,8 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
               className="flex items-center gap-2 w-full px-3 py-2 rounded-md border border-dashed border-[var(--color-border)]
                 text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:border-[var(--color-border)] hover:bg-[var(--color-text)]/5 text-xs transition-all"
             >
-              <Plus size={13} /> Add {schema.itemLabel ?? 'Item'}
+              <Plus size={13} />{' '}
+              {tr.addItem.replace('{item}', schema.itemLabel ?? 'Item')}
             </button>
           </div>
         )}
@@ -447,9 +515,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       <div className="space-y-2">
         <Label>{schema.label}</Label>
         <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md">
-          <p className="text-xs text-blue-400 font-medium">
-            💡 Nhấp trực tiếp vào bảng trên khung thiết kế để sửa nội dung và thêm/xóa hàng cột.
-          </p>
+          <p className="text-xs text-blue-400 font-medium">{tr.tableHint}</p>
         </div>
       </div>
     );
@@ -460,8 +526,13 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     <div>
       <Label>{schema.label}</Label>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-[var(--color-text-faint)]">Raw JSON</span>
-        <button onClick={() => setShowRaw((p) => !p)} className="text-xs text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold">
+        <span className="text-xs text-[var(--color-text-faint)]">
+          {tr.rawJson}
+        </span>
+        <button
+          onClick={() => setShowRaw((p) => !p)}
+          className="text-xs text-[var(--color-text-faint)] hover:text-[var(--color-text)] font-semibold"
+        >
           {showRaw ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>
       </div>
@@ -470,7 +541,11 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
           value={JSON.stringify(value, null, 2)}
           rows={4}
           onChange={(e) => {
-            try { handleChange(JSON.parse(e.target.value)); } catch { /* ignore */ }
+            try {
+              handleChange(JSON.parse(e.target.value));
+            } catch {
+              /* ignore */
+            }
           }}
           className="font-mono text-xs"
         />
@@ -511,8 +586,12 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
   const [collapsed, setCollapsed] = useState(false);
 
   // First string field as preview label
-  const previewKey = Object.entries(itemSchema).find(([, s]) => s.type === 'string')?.[0];
-  const previewValue = previewKey ? ((item[previewKey] as string) || `${itemLabel} ${idx + 1}`) : `${itemLabel} ${idx + 1}`;
+  const previewKey = Object.entries(itemSchema).find(
+    ([, s]) => s.type === 'string',
+  )?.[0];
+  const previewValue = previewKey
+    ? (item[previewKey] as string) || `${itemLabel} ${idx + 1}`
+    : `${itemLabel} ${idx + 1}`;
 
   return (
     <div className="border border-white/8 rounded-md overflow-hidden bg-white/2">
@@ -526,13 +605,24 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
         >
           {collapsed ? '▶' : '▼'} {previewValue}
         </button>
-        <button onClick={onMoveUp} disabled={idx === 0} className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30">
+        <button
+          onClick={onMoveUp}
+          disabled={idx === 0}
+          className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30"
+        >
           <ChevronUp size={12} />
         </button>
-        <button onClick={onMoveDown} disabled={idx === total - 1} className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30">
+        <button
+          onClick={onMoveDown}
+          disabled={idx === total - 1}
+          className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text)] disabled:opacity-30"
+        >
           <ChevronDown size={12} />
         </button>
-        <button onClick={onRemove} className="p-1 text-[var(--color-text-faint)] hover:text-red-400">
+        <button
+          onClick={onRemove}
+          className="p-1 text-[var(--color-text-faint)] hover:text-red-400"
+        >
           <Trash2 size={12} />
         </button>
       </div>
@@ -596,7 +686,9 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.style.transition = 'box-shadow 0.3s';
         el.style.boxShadow = '0 0 0 2px rgba(99,102,241,0.6)';
-        setTimeout(() => { el.style.boxShadow = ''; }, 1500);
+        setTimeout(() => {
+          el.style.boxShadow = '';
+        }, 1500);
       }
     }, 80);
   }, [focusFieldKey]);
@@ -632,9 +724,13 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-lg">{entry?.icon ?? '⚙️'}</span>
           <div>
-            <p className="text-sm font-semibold text-[var(--color-text)]">{entry?.displayName ?? sectionType}</p>
+            <p className="text-sm font-semibold text-[var(--color-text)]">
+              {entry?.displayName ?? sectionType}
+            </p>
             {entry?.description && (
-              <p className="text-xs text-[var(--color-text-faint)] mt-0.5 leading-snug">{entry.description}</p>
+              <p className="text-xs text-[var(--color-text-faint)] mt-0.5 leading-snug">
+                {entry.description}
+              </p>
             )}
           </div>
         </div>
@@ -649,12 +745,18 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           type="text"
           value={sectionName ?? ''}
           placeholder="e.g. about, hero, projects"
-          onChange={(e) => onNameChange(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+          onChange={(e) =>
+            onNameChange(e.target.value.toLowerCase().replace(/\s+/g, '-'))
+          }
           className="w-full px-3 py-2 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors font-mono"
         />
         <p className="text-xs text-[var(--color-text-faint)]">
-          Navbar links can use <code className="text-[var(--color-text)] font-semibold">#{sectionName || 'name'}</code> to scroll to this section
+          Navbar links can use{' '}
+          <code className="text-[var(--color-text)] font-semibold">
+            #{sectionName || 'name'}
+          </code>{' '}
+          to scroll to this section
         </p>
       </div>
 
@@ -664,11 +766,14 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           {(['form', 'json'] as const).map((tab) => (
             <button
               key={tab}
-              onClick={tab === 'json' ? openJsonTab : () => setActiveTab('form')}
-              className={`text-xs pb-2 font-medium transition-all border-b-2 capitalize ${activeTab === tab
-                ? 'text-[var(--color-text)] border-[var(--color-border-hover)]'
-                : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]'
-                }`}
+              onClick={
+                tab === 'json' ? openJsonTab : () => setActiveTab('form')
+              }
+              className={`text-xs pb-2 font-medium transition-all border-b-2 capitalize ${
+                activeTab === tab
+                  ? 'text-[var(--color-text)] border-[var(--color-border-hover)]'
+                  : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]'
+              }`}
             >
               {tab === 'form' ? '⚙ Form' : '{ } JSON'}
             </button>
@@ -684,7 +789,9 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             .map(([key, fieldSchema]) => (
             <div
               key={key}
-              ref={(el) => { fieldRefs.current[key] = el; }}
+              ref={(el) => {
+                fieldRefs.current[key] = el;
+              }}
               className="rounded-md transition-all"
             >
               <FieldRenderer
@@ -712,7 +819,9 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             onChange={(e) => {
               try {
                 onChange(JSON.parse(e.target.value) as Record<string, unknown>);
-              } catch { /* ignore mid-edit */ }
+              } catch {
+                /* ignore mid-edit */
+              }
             }}
             className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
               leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
@@ -727,7 +836,10 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             value={jsonText}
             rows={12}
             spellCheck={false}
-            onChange={(e) => { setJsonText(e.target.value); setJsonError(null); }}
+            onChange={(e) => {
+              setJsonText(e.target.value);
+              setJsonError(null);
+            }}
             className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
               leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
             style={{ fontFamily: "'Fira Code', 'Cascadia Code', monospace" }}
