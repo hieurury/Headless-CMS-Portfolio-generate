@@ -133,6 +133,14 @@ export const translations = {
         layers: 'Layers',
         settings: 'Settings',
       },
+      layersPanel: {
+        addBlockInside: 'Add block inside',
+        remove: 'Remove',
+        removeConfirm: 'Remove "{type}"?',
+        title: 'Layers',
+        add: 'Add',
+        emptyState: 'No layers',
+      },
       aiPanel: {
         header: 'AI Layout Generator',
         subtitle: 'Powered by AI Layout Engine',
@@ -145,6 +153,7 @@ export const translations = {
         generating: 'Generating…',
         intelligenceNote:
           'This will modify or append to your current layout intelligently.',
+        generateFailed: 'Generation failed — please try again',
       },
       sectionList: {
         header: 'Sections',
@@ -203,6 +212,7 @@ export const translations = {
         booleanOff: 'Off',
       },
       smartPropEditor: {
+        linkPlaceholder: '#section, /page, or https://...',
         colorPlaceholder: '#000000 or rgba(0,0,0,0.5)',
         clearColor: 'Clear color',
         imagePlaceholder: 'https://example.com/image.png',
@@ -386,6 +396,14 @@ export const translations = {
         layers: 'Lớp',
         settings: 'Cài đặt',
       },
+      layersPanel: {
+        addBlockInside: 'Thêm block vào trong',
+        remove: 'Xoá',
+        removeConfirm: 'Xoá "{type}"?',
+        title: 'Các lớp',
+        add: 'Thêm',
+        emptyState: 'Chưa có lớp nào',
+      },
       aiPanel: {
         header: 'Trình tạo bố cục AI',
         subtitle: 'Được hỗ trợ bởi AI Layout Engine',
@@ -398,6 +416,7 @@ export const translations = {
         generating: 'Đang tạo…',
         intelligenceNote:
           'Điều này sẽ thay thế hoặc thêm vào bố cục hiện có một cách thông minh.',
+        generateFailed: 'Tạo bố cục thất bại — vui lòng thử lại',
       },
       sectionList: {
         header: 'Phần',
@@ -452,6 +471,7 @@ export const translations = {
         booleanOff: 'Tắt',
       },
       smartPropEditor: {
+        linkPlaceholder: '#section, /page, hoặc https://...',
         colorPlaceholder: '#000000 hoặc rgba(0,0,0,0.5)',
         clearColor: 'Xóa màu',
         imagePlaceholder: 'https://example.com/image.png',
