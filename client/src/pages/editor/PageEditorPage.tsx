@@ -51,6 +51,8 @@ import {
   insertIntoColumnsCell,
   insertIntoRowsCell,
   insertIntoFlexCell,
+  cloneSection,
+  insertSectionAfter,
 } from '../../core/utils/layoutUtils';
 import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
@@ -869,6 +871,19 @@ export const PageEditorPage: React.FC = () => {
     [updateLayout],
   );
 
+  // ── Paste a section ───────────────────────────────────────────────────
+  const handlePasteSection = useCallback(
+    (targetId: string, sectionToPaste: LayoutSection) => {
+      const newSection = cloneSection(sectionToPaste);
+      updateLayout((layout) => {
+        const newSections = insertSectionAfter(layout.sections, targetId, newSection);
+        return { ...layout, sections: newSections };
+      });
+      setSelectedId(newSection.id);
+    },
+    [updateLayout],
+  );
+
   // ── Move a section into a container (or to top level if containerId is null) ──
   const handleMoveToContainer = useCallback(
     (sectionId: string, toContainerId: string | null, toIndex?: number) => {
@@ -1487,8 +1502,12 @@ export const PageEditorPage: React.FC = () => {
         )}
         
         {/* ── Context Menu ──────────────────────────────────────────── */}
-        <BlockContextMenu state={contextMenuState} onClose={() => setContextMenuState(null)} />
-
+        <BlockContextMenu 
+          state={contextMenuState} 
+          onClose={() => setContextMenuState(null)} 
+          onRemove={handleRemoveSection}
+          onPaste={handlePasteSection}
+        />
       </div>
     </EditorProvider>
   );
