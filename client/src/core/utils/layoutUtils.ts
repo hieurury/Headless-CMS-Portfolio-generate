@@ -310,3 +310,69 @@ export function insertIntoFlexCell(
     return s;
   });
 }
+
+/**
+ * Deep-clone a section (and all its descendants) assigning fresh UUIDs
+ * to every node so no IDs collide with the originals.
+ * Used by the copy-paste feature in the editor.
+ */
+export function cloneSection(section: LayoutSection): LayoutSection {
+  const newId = crypto.randomUUID();
+  const clonedChildren = section.children?.map((child) =>
+    child ? cloneSection(child) : (null as unknown as LayoutSection),
+  );
+  return {
+    ...section,
+    id: newId,
+    props: section.props ? JSON.parse(JSON.stringify(section.props)) : {},
+    ...(clonedChildren !== undefined ? { children: clonedChildren } : {}),
+  };
+}
+
+/**
+ * Immutably insert `newSection` immediately after the section with `targetId`
+ * at any nesting level (top-level or inside a container's children).
+ * If targetId is not found, `newSection` is appended to the top-level array.
+ */
+export function insertSectionAfter(
+  sections: LayoutSection[],
+  targetId: string,
+  newSection: LayoutSection,
+): LayoutSection[] {
+  // Check top-level first
+  const topIdx = sections.findIndex((s) => s && s.id === targetId);
+  if (topIdx !== -1) {
+    const result = [...sections];
+    result.splice(topIdx + 1, 0, newSection);
+    return result;
+  }
+
+  // Recurse into children
+  const recurse = (list: LayoutSection[]): { found: boolean; list: LayoutSection[] } => {
+    for (let i = 0; i < list.length; i++) {
+      const s = list[i];
+      if (!s) continue;
+      if (s.id === targetId) {
+        const newList = [...list];
+        newList.splice(i + 1, 0, newSection);
+        return { found: true, list: newList };
+      }
+      if (s.children?.length) {
+        const res = recurse(s.children);
+        if (res.found) {
+          const newList = [...list];
+          newList[i] = { ...s, children: res.list };
+          return { found: true, list: newList };
+        }
+      }
+    }
+    return { found: false, list };
+  };
+
+  const result = recurse(sections);
+  if (result.found) return result.list;
+
+  // Fallback: targetId not found → append at top level
+  return [...sections, newSection];
+}
+
