@@ -278,23 +278,24 @@ export class PublicService {
    * Fetch all published portfolios and their published pages for sitemap generation.
    * Returns an array of paths and their last modified dates.
    */
-  async getSitemapData(): Promise<{ urlPath: string; lastmod: Date }[]> {
+  async getSitemapData(): Promise<{ urlPath: string; lastmod: Date; isPage: boolean }[]> {
     const portfolios = await this.portfolioModel
       .find({ isPublished: true })
       .select('_id slug updatedAt')
       .lean()
       .exec();
 
-    const result: { urlPath: string; lastmod: Date }[] = [];
+    const result: { urlPath: string; lastmod: Date; isPage: boolean }[] = [];
 
     for (const p of portfolios) {
-      // Portfolio Hub page
+      // Portfolio Hub page — priority 0.8
       result.push({
         urlPath: `/p/${p.slug}`,
         lastmod: (p as any).updatedAt as Date || new Date(),
+        isPage: false,
       });
 
-      // Individual pages within the portfolio
+      // Individual pages within the portfolio — priority 0.7
       const pages = await this.pageModel
         .find({ portfolio: p._id, isPublished: true })
         .select('slug updatedAt')
@@ -305,6 +306,7 @@ export class PublicService {
         result.push({
           urlPath: `/p/${p.slug}/${normalizeSlug(page.slug)}`,
           lastmod: (page as any).updatedAt as Date || new Date(),
+          isPage: true,
         });
       }
     }

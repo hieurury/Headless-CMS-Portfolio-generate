@@ -785,7 +785,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       {activeTab === 'form' && schema && (
         <div className="space-y-4">
           {Object.entries(schema)
-            .filter(([, fieldSchema]) => !['select', 'boolean', 'color'].includes(fieldSchema.type))
             .map(([key, fieldSchema]) => (
             <div
               key={key}
