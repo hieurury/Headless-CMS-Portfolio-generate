@@ -10,6 +10,8 @@ import { ComponentsModule } from './components/components.module';
 import { AiModule } from './ai/ai.module';
 import { PublicModule } from './public/public.module';
 import { UploadModule } from './upload/upload.module';
+import { PosttypeModule } from './posttype/posttype.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { UploadModule } from './upload/upload.module';
     AiModule,
     PublicModule,
     UploadModule,
+    PosttypeModule,
+    PostsModule,
   ],
 })
 export class AppModule {}

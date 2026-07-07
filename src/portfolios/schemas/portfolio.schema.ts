@@ -77,5 +77,4 @@ export class Portfolio {
 
 export const PortfolioSchema = SchemaFactory.createForClass(Portfolio);
 
-// Compound unique index: one slug per owner
 PortfolioSchema.index({ owner: 1, slug: 1 }, { unique: true });
