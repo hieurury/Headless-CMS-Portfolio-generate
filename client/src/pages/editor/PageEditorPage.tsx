@@ -129,7 +129,7 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Context Menu state ──────────────────────────────────────────────
   const [contextMenuState, setContextMenuState] = useState<ContextMenuState | null>(null);
-  
+
   const { language, toggleLanguage } = useUIStore();
   const tr = t(language).editor;
 
@@ -1033,13 +1033,13 @@ export const PageEditorPage: React.FC = () => {
     setIsSaving(true);
     try {
       let finalLayout = { ...draftLayout };
-      
+
       // Upload any pending files first
       if (pendingUploads.length > 0) {
         for (const upload of pendingUploads) {
           const formData = new FormData();
           formData.append('file', upload.file);
-          
+
           try {
             const { data } = await api.post<{ url: string; publicId: string }>(
               '/upload/image',
@@ -1500,7 +1500,7 @@ export const PageEditorPage: React.FC = () => {
             }
           />
         )}
-        
+
         {/* ── Context Menu ──────────────────────────────────────────── */}
         <BlockContextMenu 
           state={contextMenuState} 

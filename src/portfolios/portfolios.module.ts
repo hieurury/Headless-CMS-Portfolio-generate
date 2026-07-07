@@ -14,4 +14,4 @@ import { PortfoliosController } from './portfolios.controller';
   providers: [PortfoliosService],
   exports: [PortfoliosService],
 })
-export class PortfoliosModule {}
+export class PortfoliosModule { }
