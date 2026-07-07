@@ -56,7 +56,7 @@ import {
 } from '../../core/utils/layoutUtils';
 import { makeEmptySlot } from '../../core/renderer/SectionRenderer';
 
-type LeftTab = 'ai' | 'sections' | 'settings';
+type LeftTab = 'sections' | 'settings';
 
 const HEADER_H = 56;
 
@@ -125,7 +125,14 @@ export const PageEditorPage: React.FC = () => {
   // When non-null, the AddPanel is in "fill slot" mode:
   // the chosen block REPLACES the _empty slot with this id
   const [fillSlotId, setFillSlotId] = useState<string | null>(null);
-  const [leftTab, setLeftTab] = useState<LeftTab>('ai');
+  const [leftTab, setLeftTab] = useState<LeftTab>('sections');
+
+  // ── AI Panel state ─────────────────────────────────────────
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  // aiPanelBasis: percentage of total body width the AI pane occupies (42% default)
+  const [aiPanelBasis, setAiPanelBasis] = useState(42);
+  const aiDragRef = useRef<{ startX: number; startBasis: number; bodyWidth: number } | null>(null);
+  const bodyRowRef = useRef<HTMLDivElement | null>(null);
 
   // ── Context Menu state ──────────────────────────────────────────────
   const [contextMenuState, setContextMenuState] = useState<ContextMenuState | null>(null);
@@ -1163,41 +1170,22 @@ export const PageEditorPage: React.FC = () => {
 
           <div className="flex-1" />
 
-          {isDirty && (
-            <span className="text-xs text-amber-400 font-medium animate-pulse hidden sm:block">
-              {tr.topbar.unsaved}
-            </span>
-          )}
+          {/* ── AI Toggle ───────────────────────────────────────────── */}
+          <button
+            onClick={() => setShowAiPanel((p) => !p)}
+            title="AI Assistant"
+            className={clsx(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+              showAiPanel
+                ? 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/40'
+                : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]/80',
+            )}
+          >
+            <Sparkles size={13} />
+            <span className="hidden sm:inline">AI</span>
+          </button>
 
-          {/* ── Preview / Edit Mode Toggle ─────────────────────────────── */}
-          <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
-            <button
-              onClick={() => setPreviewMode(false)}
-              title={tr.topbar.editModeTitle}
-              className={clsx(
-                'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
-                !previewMode
-                  ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
-              )}
-            >
-              <PenLine size={13} />
-              <span className="hidden sm:inline">{tr.topbar.edit}</span>
-            </button>
-            <button
-              onClick={() => setPreviewMode(true)}
-              title={tr.topbar.previewModeTitle}
-              className={clsx(
-                'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
-                previewMode
-                  ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
-              )}
-            >
-              <Eye size={13} />
-              <span className="hidden sm:inline">{tr.topbar.preview}</span>
-            </button>
-          </div>
+          {/* ── Language Toggle ─────────────────────────────────────── */}
           <button
             id="editor-lang-toggle"
             onClick={toggleLanguage}
@@ -1211,6 +1199,8 @@ export const PageEditorPage: React.FC = () => {
             <Globe size={13} />
             <span className="hidden sm:inline">{language.toUpperCase()}</span>
           </button>
+
+          {/* ── Add Block ───────────────────────────────────────────── */}
           <button
             onClick={() => {
               setAddChildParentId(null);
@@ -1221,14 +1211,19 @@ export const PageEditorPage: React.FC = () => {
             <Plus size={11} /> {tr.topbar.add}
           </button>
 
+          {/* ── Save Button (merged with unsaved indicator) ─────────── */}
           <button
             onClick={handleSave}
             disabled={!isDirty || isSaving}
             className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-all',
-              isDirty
-                ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-black/10'
-                : 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-not-allowed',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all',
+              isSaving
+                ? 'bg-emerald-500/10 text-emerald-400 cursor-wait'
+                : savedFeedback
+                  ? 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-default opacity-50'
+                  : isDirty
+                    ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 animate-pulse'
+                    : 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-not-allowed opacity-40',
             )}
           >
             {isSaving ? (
@@ -1243,58 +1238,64 @@ export const PageEditorPage: React.FC = () => {
                 ? tr.topbar.saving
                 : savedFeedback
                   ? tr.topbar.saved
-                  : tr.topbar.save}
+                  : isDirty
+                    ? tr.topbar.unsaved
+                    : tr.topbar.save}
             </span>
           </button>
         </header>
 
-        {/* ── 3-column body ───────────────────────────────────────── */}
+        {/* ── Body: Editor + AI Panel (side by side) ─────────────── */}
         <div
-          className="flex flex-1 min-h-0 relative"
+          ref={bodyRowRef}
+          className="flex flex-1 min-h-0 overflow-hidden"
           style={{ height: `calc(100dvh - ${HEADER_H}px)` }}
         >
+          {/* ── Editor Section (3-col layout) — shrinks when AI panel is open ─ */}
+          <div
+            className="flex min-w-0 relative overflow-hidden"
+            style={{
+              flex: showAiPanel ? `1 1 0` : '1 1 auto',
+              transition: 'flex-basis 0.2s ease',
+            }}
+          >
           {/* Left panel toggle button */}
-          {!previewMode && (
-            <button
-              onClick={() => setShowLeftPanel((p) => !p)}
-              title={tr.topbar.toggleLeftPanel}
-              className="absolute left-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-r border-[var(--color-border)] rounded-r-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
-              style={{
-                transform: `translateY(-50%) translateX(${showLeftPanel ? '240px' : '0'})`,
-                width: 24,
-                height: 48,
-              }}
-            >
-              <PanelLeft size={15} />
-            </button>
-          )}
+          <button
+            onClick={() => setShowLeftPanel((p) => !p)}
+            title={tr.topbar.toggleLeftPanel}
+            className="absolute left-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-r border-[var(--color-border)] rounded-r-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
+            style={{
+              transform: `translateY(-50%) translateX(${showLeftPanel ? '240px' : '0'})`,
+              width: 24,
+              height: 48,
+            }}
+          >
+            <PanelLeft size={15} />
+          </button>
 
           {/* Right panel toggle button */}
-          {!previewMode && (
-            <button
-              onClick={() => setShowRightPanel((p) => !p)}
-              title={tr.topbar.toggleRightPanel}
-              className="absolute right-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-l border-[var(--color-border)] rounded-l-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
-              style={{
-                transform: `translateY(-50%) translateX(${showRightPanel ? '-300px' : '0'})`,
-                width: 24,
-                height: 48,
-              }}
-            >
-              <PanelRight size={15} />
-            </button>
-          )}
+          <button
+            onClick={() => setShowRightPanel((p) => !p)}
+            title={tr.topbar.toggleRightPanel}
+            className="absolute right-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-l border-[var(--color-border)] rounded-l-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
+            style={{
+              transform: `translateY(-50%) translateX(${showRightPanel ? '-300px' : '0'})`,
+              width: 24,
+              height: 48,
+            }}
+          >
+            <PanelRight size={15} />
+          </button>
 
           {/* LEFT: AI + Layers */}
-          {showLeftPanel && !previewMode && (
+          {showLeftPanel && (
             <aside
               className="shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col"
               style={{ width: 240 }}
             >
-              <div className="flex border-b border-[var(--color-border)] shrink-0">
+              <div className="flex border-b border-[var(--color-border)] shrink-0" style={{ height: HEADER_H }}>
                 {(
                   [
-                    { key: 'ai' as LeftTab, label: tr.tabs.ai, icon: Sparkles },
                     {
                       key: 'sections' as LeftTab,
                       label: tr.tabs.layers,
@@ -1323,14 +1324,6 @@ export const PageEditorPage: React.FC = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-2">
-                {leftTab === 'ai' && portfolioId && pageId && (
-                  <AiGeneratePanel
-                    portfolioId={portfolioId}
-                    pageId={pageId}
-                    currentLayout={draftLayout}
-                    onLayoutGenerated={handleAiLayout}
-                  />
-                )}
                 {leftTab === 'sections' && (
                   <LayersPanel
                     sections={draftLayout.sections}
@@ -1367,10 +1360,39 @@ export const PageEditorPage: React.FC = () => {
 
           {/* CENTER: Preview */}
           <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[var(--color-bg)]">
-            <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]">
-              <span className="text-xs text-[var(--color-text-faint)]">
-                {previewMode ? tr.topbar.modePreview : tr.topbar.modeEditor}
-              </span>
+            <div
+              className="shrink-0 flex items-center gap-2 px-4 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]"
+              style={{ height: HEADER_H }}
+            >
+              {/* ── Preview / Edit Mode Toggle ────────────────────── */}
+              <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
+                <button
+                  onClick={() => setPreviewMode(false)}
+                  title={tr.topbar.editModeTitle}
+                  className={clsx(
+                    'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
+                    !previewMode
+                      ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                  )}
+                >
+                  <PenLine size={13} />
+                  <span className="hidden sm:inline">{tr.topbar.edit}</span>
+                </button>
+                <button
+                  onClick={() => setPreviewMode(true)}
+                  title={tr.topbar.previewModeTitle}
+                  className={clsx(
+                    'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
+                    previewMode
+                      ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                  )}
+                >
+                  <Eye size={13} />
+                  <span className="hidden sm:inline">{tr.topbar.preview}</span>
+                </button>
+              </div>
               <span className="text-xs text-slate-700 font-mono">
                 {page?.slug}
               </span>
@@ -1395,12 +1417,12 @@ export const PageEditorPage: React.FC = () => {
           </main>
 
           {/* RIGHT: Props Editor */}
-          {showRightPanel && !previewMode && (
+          {showRightPanel && (
             <aside
               className="shrink-0 border-l border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col"
               style={{ width: 300 }}
             >
-              <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]">
+              <div className="shrink-0 flex items-center justify-between px-4 border-b border-[var(--color-border)]" style={{ height: HEADER_H }}>
                 {selectedSection ? (
                   <div className="flex items-center gap-2 min-w-0">
                     <Settings
@@ -1476,7 +1498,88 @@ export const PageEditorPage: React.FC = () => {
               </div>
             </aside>
           )}
-        </div>
+          </div>{/* end editor section */}
+
+          {/* ── AI Panel: true split pane, not a sidebar ──────────────── */}
+          {showAiPanel && portfolioId && pageId && (
+            <aside
+              ref={(el) => { /* aside itself for sizing */ void el; }}
+              className="shrink-0 border-l-2 border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col relative"
+              style={{
+                flexBasis: `${aiPanelBasis}%`,
+                flexShrink: 0,
+                flexGrow: 0,
+                minWidth: 320,
+                maxWidth: '50%',
+              }}
+            >
+              {/* Drag / resize handle on left edge */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 flex items-center justify-center group"
+                style={{ transform: 'translateX(-3px)' }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const bodyEl = bodyRowRef.current;
+                  if (!bodyEl) return;
+                  const bodyWidth = bodyEl.getBoundingClientRect().width;
+                  aiDragRef.current = {
+                    startX: e.clientX,
+                    startBasis: aiPanelBasis,
+                    bodyWidth,
+                  };
+                  document.body.style.cursor = 'col-resize';
+                  document.body.style.userSelect = 'none';
+                  const onMove = (ev: MouseEvent) => {
+                    if (!aiDragRef.current) return;
+                    const delta = aiDragRef.current.startX - ev.clientX;
+                    const deltaPct = (delta / aiDragRef.current.bodyWidth) * 100;
+                    const newBasis = Math.max(20, Math.min(50, aiDragRef.current.startBasis + deltaPct));
+                    setAiPanelBasis(newBasis);
+                  };
+                  const onUp = () => {
+                    aiDragRef.current = null;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
+                  };
+                  window.addEventListener('mousemove', onMove);
+                  window.addEventListener('mouseup', onUp);
+                }}
+              >
+                {/* Visible divider pill */}
+                <div className="w-[3px] h-10 rounded-full bg-[var(--color-border)] group-hover:bg-violet-500/60 transition-colors" />
+              </div>
+
+              {/* AI Panel Header */}
+              <div
+                className="shrink-0 flex items-center gap-2 pl-5 pr-3 border-b border-[var(--color-border)]"
+                style={{ height: HEADER_H }}
+              >
+                <Sparkles size={14} className="text-violet-400" />
+                <span className="text-xs font-semibold text-[var(--color-text)] flex-1">AI Assistant</span>
+                <button
+                  onClick={() => setShowAiPanel(false)}
+                  title="Đóng AI panel"
+                  className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+
+              {/* AI Panel Content */}
+              <div className="flex-1 overflow-y-auto overscroll-contain p-3">
+                <AiGeneratePanel
+                  portfolioId={portfolioId}
+                  pageId={pageId}
+                  currentLayout={draftLayout}
+                  onLayoutGenerated={handleAiLayout}
+                />
+              </div>
+            </aside>
+          )}
+
+        </div>{/* end body row */}
 
         {/* Add Panel Modal */}
         {showAddPanel && (

@@ -16,3 +16,5 @@ export class Posttype extends Document {
     @Prop({ type: MongooseSchema.Types.Mixed, default: [] })
     customFieldsSchema: any;
 }
+
+export const PosttypeSchema = SchemaFactory.createForClass(Posttype);

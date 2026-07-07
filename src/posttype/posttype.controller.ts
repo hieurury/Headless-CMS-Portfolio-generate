@@ -19,16 +19,16 @@ export class PosttypeController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.posttypeService.findOne(+id);
+    return this.posttypeService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePosttypeDto: UpdatePosttypeDto) {
-    return this.posttypeService.update(+id, updatePosttypeDto);
+    return this.posttypeService.update(id, updatePosttypeDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.posttypeService.remove(+id);
+    return this.posttypeService.remove(id);
   }
 }
