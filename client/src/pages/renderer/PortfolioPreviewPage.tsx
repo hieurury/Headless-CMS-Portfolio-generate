@@ -27,8 +27,8 @@ export const PortfolioPreviewPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="animate-spin text-indigo-400" />
-          <p className="text-slate-400">Loading page...</p>
+          <Loader2 size={40} className="animate-spin text-[var(--color-text-muted)]" />
+          <p className="text-[var(--color-text-muted)]">Loading page...</p>
         </div>
       </div>
     );
@@ -39,7 +39,7 @@ export const PortfolioPreviewPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error ?? 'Page not found'}</p>
-          <Link to="/dashboard" className="text-indigo-400 hover:underline">
+          <Link to="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
             ← Back to dashboard
           </Link>
         </div>
@@ -73,7 +73,7 @@ export const PortfolioPreviewPage: React.FC = () => {
                 `<pre style="background:#0a0a0f;color:#e2e8f0;padding:2rem;font-family:monospace;font-size:13px;">${json}</pre>`,
               );
             }}
-            className="flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
           >
             <Code2 size={14} /> JSON
           </button>

@@ -373,7 +373,7 @@ const ComponentCard: React.FC<{
             {entry.description}
           </p>
         )}
-        <p className="text-[10px] text-slate-700 font-mono mt-1">
+        <p className="text-[10px] text-[var(--color-text-faint)] font-mono mt-1">
           {entry.type}
         </p>
       </div>
@@ -389,7 +389,7 @@ const EmptyState: React.FC<{ query: string }> = ({ query }) => {
 
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center">
-      <Search size={24} className="text-slate-700 mb-3" />
+      <Search size={24} className="text-[var(--color-text-faint)] mb-3" />
       <p className="text-sm text-[var(--color-text-faint)]">
         {tr.noResults.replace('{query}', query)}
       </p>

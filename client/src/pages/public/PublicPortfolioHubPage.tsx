@@ -46,7 +46,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
-        <Loader2 size={36} className="animate-spin text-indigo-500" />
+        <Loader2 size={36} className="animate-spin text-[var(--color-text-muted)]" />
       </div>
     );
   }
@@ -107,7 +107,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
             </Link>
             <span className="text-[var(--color-border)]">/</span>
             <span className="text-[var(--color-text)] text-sm font-semibold">{data.title}</span>
-            <div className="ml-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-500 border border-emerald-500/20 hidden sm:flex">
+            <div className="ml-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-surface-2)] text-xs font-medium text-[var(--color-text-muted)] border border-[var(--color-border)] hidden sm:flex">
               <Globe size={12} /> Published
             </div>
           </div>

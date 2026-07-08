@@ -196,7 +196,7 @@ export const DashboardPage: React.FC = () => {
         {/* Loading */}
         {isLoading && portfolios.length === 0 && (
           <div className="flex items-center justify-center py-24">
-            <Loader2 size={32} className="animate-spin text-indigo-400" />
+            <Loader2 size={32} className="animate-spin text-[var(--color-text-muted)]" />
           </div>
         )}
 
@@ -263,7 +263,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1.5">
                     {p.isPublished ? (
-                      <Globe size={14} className="text-emerald-500" />
+                      <Globe size={14} className="text-[var(--color-text-muted)]" />
                     ) : (
                       <Lock
                         size={14}
@@ -305,7 +305,7 @@ export const DashboardPage: React.FC = () => {
                         to={`/p/${p.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                        className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                         title="View public portfolio"
                       >
                         <Globe size={15} />
@@ -313,11 +313,11 @@ export const DashboardPage: React.FC = () => {
                       {/* Copy link */}
                       <button
                         onClick={() => handleCopyLink(p.slug, p._id)}
-                        className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-violet-500 hover:bg-violet-500/10 transition-colors"
+                        className="p-2 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                         title="Copy public link"
                       >
                         {copiedId === p._id ? (
-                          <Check size={15} className="text-emerald-500" />
+                          <Check size={15} className="text-[var(--color-text-muted)]" />
                         ) : (
                           <Copy size={15} />
                         )}

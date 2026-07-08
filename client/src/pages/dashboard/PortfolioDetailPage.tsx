@@ -110,7 +110,7 @@ export const PortfolioDetailPage: React.FC = () => {
                 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
                   portfolio.isPublished
-                    ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20'
+                    ? 'border-[var(--color-border-hover)] text-[var(--color-text)] bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)]'
                     : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
                 }`}
                 title={portfolio.isPublished ? 'Click to unpublish' : 'Click to publish'}
@@ -131,7 +131,7 @@ export const PortfolioDetailPage: React.FC = () => {
 
         {isLoading && pages.length === 0 && (
           <div className="flex items-center justify-center py-24">
-            <Loader2 size={32} className="animate-spin text-indigo-400" />
+            <Loader2 size={32} className="animate-spin text-[var(--color-text-muted)]" />
           </div>
         )}
 
@@ -171,7 +171,7 @@ export const PortfolioDetailPage: React.FC = () => {
                   {/* Published status badge */}
                   <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md ${
                     page.isPublished
-                      ? 'text-emerald-500 bg-emerald-500/10'
+                      ? 'text-[var(--color-text-muted)] bg-[var(--color-surface-2)]'
                       : 'text-[var(--color-text-faint)] border border-[var(--color-border)]'
                   }`}>
                     {page.isPublished ? <Globe size={10} /> : <Lock size={10} />}
@@ -189,8 +189,8 @@ export const PortfolioDetailPage: React.FC = () => {
                   }}
                   className={`p-2 rounded-lg transition-colors ${
                     page.isPublished
-                      ? 'text-emerald-500 hover:bg-emerald-500/10'
-                      : 'text-[var(--color-text-muted)] hover:text-emerald-500 hover:bg-[var(--color-surface-2)]'
+                      ? 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                   }`}
                   title={page.isPublished ? 'Unpublish page' : 'Publish page'}
                 >

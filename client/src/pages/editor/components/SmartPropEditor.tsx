@@ -76,7 +76,7 @@ const Toggle: React.FC<{
     type="button"
     onClick={() => onChange(!checked)}
     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none
-      ${checked ? 'bg-emerald-500/80' : 'bg-[var(--color-surface-2)] hover:brightness-110'}`}
+      ${checked ? 'bg-[var(--color-text)]' : 'bg-[var(--color-surface-2)] hover:brightness-110'}`}
   >
     <span
       className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform
@@ -685,7 +685,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.style.transition = 'box-shadow 0.3s';
-        el.style.boxShadow = '0 0 0 2px rgba(99,102,241,0.6)';
+        el.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.25)';
         setTimeout(() => {
           el.style.boxShadow = '';
         }, 1500);

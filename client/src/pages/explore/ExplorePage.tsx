@@ -223,7 +223,7 @@ export const ExplorePage: React.FC = () => {
                     >
                       <Folder size={20} className="text-[var(--color-text)]" />
                     </div>
-                    <span className="flex items-center gap-1 text-xs text-emerald-500 font-medium">
+                    <span className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] font-medium">
                       <Globe size={11} /> Live
                     </span>
                   </div>

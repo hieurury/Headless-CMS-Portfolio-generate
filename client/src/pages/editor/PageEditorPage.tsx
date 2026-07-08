@@ -27,6 +27,7 @@ import {
   Loader2,
   Check,
   ChevronRight,
+  ChevronLeft,
   Plus,
   X,
   PanelLeft,
@@ -129,6 +130,7 @@ export const PageEditorPage: React.FC = () => {
 
   // ── AI Panel state ─────────────────────────────────────────
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [isAiDragging, setIsAiDragging] = useState(false);
   // aiPanelBasis: % of total body width the AI pane occupies
   // default 30% (7/3 ratio), min 20% (8/2), max 50% (5/5)
   const [aiPanelBasis, setAiPanelBasis] = useState(30);
@@ -1117,9 +1119,9 @@ export const PageEditorPage: React.FC = () => {
           zIndex: 0,
           display: 'grid',
           gridTemplateColumns: showAiPanel
-            ? `${100 - aiPanelBasis}fr 6px ${aiPanelBasis}fr`
-            : '1fr 0px 0px',
-          transition: 'grid-template-columns 0.25s ease',
+            ? `minmax(0, ${100 - aiPanelBasis}fr) 6px minmax(0, ${aiPanelBasis}fr)`
+            : 'minmax(0, 100fr) 0px minmax(0, 0fr)',
+          transition: isAiDragging ? 'none' : 'grid-template-columns 0.25s ease',
           overflow: 'hidden',
           background: 'var(--color-bg)',
         }}
@@ -1199,7 +1201,7 @@ export const PageEditorPage: React.FC = () => {
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
                   showAiPanel
-                    ? 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/40'
+                    ? 'bg-[var(--color-surface-3)] text-[var(--color-text)] ring-1 ring-[var(--color-border-strong)]'
                     : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]/80',
                 )}
               >
@@ -1240,11 +1242,11 @@ export const PageEditorPage: React.FC = () => {
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all',
                   isSaving
-                    ? 'bg-emerald-500/10 text-emerald-400 cursor-wait'
+                    ? 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] cursor-wait'
                     : savedFeedback
                       ? 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-default opacity-50'
                       : isDirty
-                        ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 animate-pulse'
+                        ? 'bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/15'
                         : 'bg-[var(--color-surface-2)] text-[var(--color-text-faint)] cursor-not-allowed opacity-40',
                 )}
               >
@@ -1276,28 +1278,24 @@ export const PageEditorPage: React.FC = () => {
               <button
                 onClick={() => setShowLeftPanel((p) => !p)}
                 title={tr.topbar.toggleLeftPanel}
-                className="absolute left-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-r border-[var(--color-border)] rounded-r-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
+                className="absolute left-0 top-1/2 z-50 p-2 drop-shadow-md text-[var(--color-text-faint)] hover:text-[var(--color-text)] transition-all flex items-center justify-center cursor-pointer"
                 style={{
                   transform: `translateY(-50%) translateX(${showLeftPanel ? '240px' : '0'})`,
-                  width: 24,
-                  height: 48,
                 }}
               >
-                <PanelLeft size={15} />
+                {showLeftPanel ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
               </button>
 
               {/* Right panel toggle button */}
               <button
                 onClick={() => setShowRightPanel((p) => !p)}
                 title={tr.topbar.toggleRightPanel}
-                className="absolute right-0 top-1/2 z-50 p-1 bg-[var(--color-surface)] border-y border-l border-[var(--color-border)] rounded-l-md shadow-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all flex items-center justify-center"
+                className="absolute right-0 top-1/2 z-50 p-2 drop-shadow-md text-[var(--color-text-faint)] hover:text-[var(--color-text)] transition-all flex items-center justify-center cursor-pointer"
                 style={{
                   transform: `translateY(-50%) translateX(${showRightPanel ? '-300px' : '0'})`,
-                  width: 24,
-                  height: 48,
                 }}
               >
-                <PanelRight size={15} />
+                {showRightPanel ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
               </button>
 
               {/* LEFT: Layers / SEO */}
@@ -1551,6 +1549,7 @@ export const PageEditorPage: React.FC = () => {
           onMouseDown={(e) => {
             if (!showAiPanel) return;
             e.preventDefault();
+            setIsAiDragging(true);
             const bodyEl = bodyRowRef.current;
             if (!bodyEl) return;
             const bodyWidth = bodyEl.getBoundingClientRect().width;
@@ -1570,6 +1569,7 @@ export const PageEditorPage: React.FC = () => {
               setAiPanelBasis(newBasis);
             };
             const onUp = () => {
+              setIsAiDragging(false);
               aiDragRef.current = null;
               document.body.style.cursor = '';
               document.body.style.userSelect = '';
@@ -1580,19 +1580,13 @@ export const PageEditorPage: React.FC = () => {
             window.addEventListener('mouseup', onUp);
           }}
         >
-          <div
-            className="w-[3px] h-12 rounded-full"
-            style={{ background: 'var(--color-border)', transition: 'background 0.15s' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(139,92,246,0.6)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--color-border)'; }}
-          />
         </div>
 
         {/* ══════════════════════════════════════════════════════════ */}
         {/* COLUMN 2 — AI Panel (fully independent)                   */}
         {/* ══════════════════════════════════════════════════════════ */}
         <div
-          className="flex flex-col"
+          className="flex justify-end"
           style={{
             height: '100dvh',
             minWidth: 0,
@@ -1600,39 +1594,44 @@ export const PageEditorPage: React.FC = () => {
             background: 'var(--color-surface)',
             opacity: showAiPanel ? 1 : 0,
             pointerEvents: showAiPanel ? 'auto' : 'none',
-            transition: 'opacity 0.2s ease',
+            transition: 'opacity 0.25s ease-out',
           }}
         >
-          {/* AI Panel Header — same height as Editor header */}
           <div
-            className="shrink-0 flex items-center gap-3 px-4 border-b border-[var(--color-border)]"
-            style={{ height: HEADER_H, background: 'var(--color-surface)' }}
+            className="flex flex-col shrink-0 h-full"
+            style={{ width: `${aiPanelBasis}vw` }}
           >
-            <div className="w-6 h-6 rounded-md bg-violet-500/20 flex items-center justify-center shrink-0">
-              <Sparkles size={13} className="text-violet-400" />
-            </div>
-            <span className="text-sm font-semibold text-[var(--color-text)] flex-1 truncate">
-              AI Assistant
-            </span>
-            <button
-              onClick={() => setShowAiPanel(false)}
-              title="Đóng AI panel"
-              className="p-1.5 rounded-md text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all shrink-0"
+            {/* AI Panel Header — same height as Editor header */}
+            <div
+              className="shrink-0 flex items-center gap-3 px-4 border-b border-[var(--color-border)]"
+              style={{ height: HEADER_H, background: 'var(--color-surface)' }}
             >
-              <X size={14} />
-            </button>
-          </div>
+              <div className="w-6 h-6 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
+                <Sparkles size={13} className="text-[var(--color-text-muted)]" />
+              </div>
+              <span className="text-sm font-semibold text-[var(--color-text)] flex-1 truncate">
+                AI Assistant
+              </span>
+              <button
+                onClick={() => setShowAiPanel(false)}
+                title="Đóng AI panel"
+                className="p-1.5 rounded-md text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all shrink-0"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-          {/* AI Panel Content */}
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4">
-            {portfolioId && pageId && (
-              <AiGeneratePanel
-                portfolioId={portfolioId}
-                pageId={pageId}
-                currentLayout={draftLayout}
-                onLayoutGenerated={handleAiLayout}
-              />
-            )}
+            {/* AI Panel Content */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+              {portfolioId && pageId && (
+                <AiGeneratePanel
+                  portfolioId={portfolioId}
+                  pageId={pageId}
+                  currentLayout={draftLayout}
+                  onLayoutGenerated={handleAiLayout}
+                />
+              )}
+            </div>
           </div>
         </div>
 

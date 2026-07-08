@@ -40,8 +40,8 @@ const FlexCellDropZone: React.FC<{
         flex items-center justify-center transition-all duration-150
         rounded-md
         ${isOver
-          ? 'bg-indigo-500/15 text-indigo-400 shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.7)]'
-          : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-indigo-400 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.3)]'
+          ? 'bg-[var(--color-surface-3)] text-[var(--color-text-muted)] shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.2)]'
+          : 'bg-white/2 text-[var(--color-text-faint)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-[var(--color-text-muted)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]'
         }
       `}
     >

@@ -48,7 +48,7 @@ export const PublicPortfolioPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="animate-spin text-indigo-500" />
+          <Loader2 size={40} className="animate-spin text-[var(--color-text-muted)]" />
           <p className="text-[var(--color-text-muted)] text-sm">Loading portfolio...</p>
         </div>
       </div>
@@ -124,7 +124,7 @@ export const PublicPortfolioPage: React.FC = () => {
                     className={({ isActive }) =>
                       `shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         isActive
-                          ? 'bg-indigo-500 text-white shadow-sm'
+                          ? 'bg-[var(--color-text)] text-[var(--color-bg)] shadow-sm'
                           : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                       }`
                     }

@@ -1,0 +1,118 @@
+/*
+ * ============================================================
+ *  theme.css — Design Token Configuration
+ *  Single source of truth for all colors, typography & spacing
+ * ============================================================
+ *
+ *  Usage:  import './theme.css' in main.tsx (loaded before index.css)
+ *
+ *  Token groups:
+ *    --color-*       Surface, border, text hierarchy
+ *    --font-*        Font families
+ *    --text-*        Typographic scale
+ *    --radius-*      Border radius scale
+ * ============================================================
+ */
+
+@layer base {
+  /* ─── Dark Theme (Default) ─────────────────────────────── */
+  :root {
+    /* Backgrounds */
+    --color-bg:            #0c0c0c;
+    --color-surface:       #161616;
+    --color-surface-2:     #1e1e1e;
+    --color-surface-3:     #252525;
+
+    /* Borders */
+    --color-border:        rgba(255, 255, 255, 0.07);
+    --color-border-hover:  rgba(255, 255, 255, 0.16);
+    --color-border-strong: rgba(255, 255, 255, 0.28);
+
+    /* Text hierarchy */
+    --color-text:          #e4e4e4;
+    --color-text-muted:    #888888;
+    --color-text-faint:    #444444;
+
+    /* Accent (monochrome — same as text for B&W sites) */
+    --color-accent:        #e8e8e8;
+    --color-accent-2:      #ffffff;
+
+    /* Semantic — only RED is a true color exception (system errors) */
+    --color-error:         #ef4444;
+    --color-error-bg:      rgba(239, 68, 68, 0.10);
+    --color-error-border:  rgba(239, 68, 68, 0.20);
+
+    /* Success / ready — monochrome to stay B&W */
+    --color-success:       var(--color-text);
+    --color-success-bg:    rgba(255, 255, 255, 0.05);
+    --color-success-border:rgba(255, 255, 255, 0.12);
+
+    /* Interactive states */
+    --color-interactive-hover-bg:  rgba(255, 255, 255, 0.05);
+    --color-interactive-active-bg: rgba(255, 255, 255, 0.08);
+  }
+
+  /* ─── Light Theme ───────────────────────────────────────── */
+  .theme-light {
+    --color-bg:            #f8f8f8;
+    --color-surface:       #ffffff;
+    --color-surface-2:     #f5f5f5;
+    --color-surface-3:     #eeeeee;
+
+    --color-border:        rgba(0, 0, 0, 0.07);
+    --color-border-hover:  rgba(0, 0, 0, 0.16);
+    --color-border-strong: rgba(0, 0, 0, 0.28);
+
+    --color-text:          #1a1a1a;
+    --color-text-muted:    #666666;
+    --color-text-faint:    #aaaaaa;
+
+    --color-accent:        #1a1a1a;
+    --color-accent-2:      #000000;
+
+    --color-error:         #dc2626;
+    --color-error-bg:      rgba(220, 38, 38, 0.08);
+    --color-error-border:  rgba(220, 38, 38, 0.18);
+
+    --color-success:       var(--color-text);
+    --color-success-bg:    rgba(0, 0, 0, 0.04);
+    --color-success-border:rgba(0, 0, 0, 0.10);
+
+    --color-interactive-hover-bg:  rgba(0, 0, 0, 0.04);
+    --color-interactive-active-bg: rgba(0, 0, 0, 0.07);
+  }
+
+  /* ─── Typography ────────────────────────────────────────── */
+  :root {
+    --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono:  'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+    --text-xs:    0.6875rem;  /* 11px */
+    --text-sm:    0.8125rem;  /* 13px */
+    --text-base:  0.9375rem;  /* 15px */
+    --text-lg:    1.0625rem;  /* 17px */
+    --text-xl:    1.1875rem;  /* 19px */
+    --text-2xl:   1.4375rem;  /* 23px */
+
+    --leading-tight:   1.25;
+    --leading-normal:  1.6;
+    --leading-relaxed: 1.75;
+  }
+
+  /* ─── Border Radius ─────────────────────────────────────── */
+  :root {
+    --radius-sm:  4px;
+    --radius-md:  6px;
+    --radius-lg:  10px;
+    --radius-xl:  16px;
+    --radius-full:9999px;
+  }
+
+  /* ─── Elevation / Shadow ────────────────────────────────── */
+  :root {
+    --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-xl:  0 16px 48px rgba(0, 0, 0, 0.6);
+  }
+}
