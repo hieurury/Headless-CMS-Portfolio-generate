@@ -30,8 +30,6 @@ import {
   ChevronLeft,
   Plus,
   X,
-  PanelLeft,
-  PanelRight,
   Settings,
   Eye,
   PenLine,
