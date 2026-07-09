@@ -2,7 +2,7 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/icons.svg" sizes="any" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7c3aed" />
 
@@ -10,17 +10,17 @@
     <link rel="canonical" href="https://cms.hieurury.id.vn/" />
 
     <!-- ── Primary SEO ───────────────────────────────────────────────── -->
-    <title>Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động bởi HieuRury</title>
-    <meta name="description" content="Ruryfo CMS là nền tảng Headless CMS của HieuRury, giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt." />
-    <meta name="keywords" content="ruryfo, hieurury, ruryfo cms, cms portfolio cá nhân, tạo portfolio tự động, headless cms việt nam, hieurury portfolio, trang cá nhân online" />
-    <meta name="author" content="HieuRury" />
+    <title>Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động</title>
+    <meta name="description" content="Ruryfo CMS là nền tảng Headless CMS giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt." />
+    <meta name="keywords" content="ruryfo, ruryfo cms, cms portfolio cá nhân, tạo portfolio tự động, headless cms việt nam, trang cá nhân online" />
+    <meta name="author" content="Ruryfo CMS" />
     <meta name="robots" content="index, follow" />
 
     <!-- ── Open Graph / Facebook ─────────────────────────────────────── -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cms.hieurury.id.vn/" />
     <meta property="og:title" content="Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động" />
-    <meta property="og:description" content="Ruryfo CMS là nền tảng Headless CMS của HieuRury, giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt." />
+    <meta property="og:description" content="Ruryfo CMS là nền tảng Headless CMS giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt." />
     <meta property="og:image" content="https://cms.hieurury.id.vn/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -32,9 +32,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://cms.hieurury.id.vn/" />
     <meta name="twitter:title" content="Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động" />
-    <meta name="twitter:description" content="Ruryfo CMS là nền tảng Headless CMS của HieuRury, giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt." />
+    <meta name="twitter:description" content="Ruryfo CMS là nền tảng Headless CMS giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt." />
     <meta name="twitter:image" content="https://cms.hieurury.id.vn/og-image.png" />
-    <meta name="twitter:creator" content="@hieurury" />
 
     <!-- ── Structured Data — WebSite + Organization ──────────────────── -->
     <script type="application/ld+json" id="main-site-json-ld">
@@ -42,11 +41,13 @@
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "WebSite",
+          "@type": ["WebSite", "SoftwareApplication"],
           "@id": "https://cms.hieurury.id.vn/#website",
           "url": "https://cms.hieurury.id.vn/",
           "name": "Ruryfo CMS",
-          "description": "Nền tảng tạo portfolio cá nhân tự động bởi HieuRury",
+          "applicationCategory": "Content Management System",
+          "operatingSystem": "All",
+          "description": "Nền tảng tạo portfolio cá nhân tự động",
           "inLanguage": "vi",
           "potentialAction": {
             "@type": "SearchAction",
@@ -56,13 +57,6 @@
             },
             "query-input": "required name=search_term_string"
           }
-        },
-        {
-          "@type": "Person",
-          "@id": "https://cms.hieurury.id.vn/#person",
-          "name": "HieuRury",
-          "url": "https://cms.hieurury.id.vn/",
-          "knowsAbout": ["Headless CMS", "Portfolio Builder", "Web Development"]
         }
       ]
     }

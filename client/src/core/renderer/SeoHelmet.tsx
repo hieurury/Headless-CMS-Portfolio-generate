@@ -45,7 +45,7 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
 
     // 3. Meta Description
     const description = meta?.seo?.description ||
-      `${portfolioTitle} — portfolio trên Ruryfo CMS bởi HieuRury`;
+      `${portfolioTitle} — portfolio trên Ruryfo CMS`;
     setMetaTag('name', 'description', description);
 
     // 4. Robots
@@ -85,7 +85,6 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
     }
     // Always add platform-level keywords
     keywords.add('ruryfo cms');
-    keywords.add('hieurury');
     if (keywords.size > 0) {
       setMetaTag('name', 'keywords', Array.from(keywords).join(', '));
     }
@@ -118,7 +117,7 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
           image: meta?.seo?.ogImage || undefined,
         },
         isPartOf: {
-          '@type': 'WebSite',
+          '@type': ['WebSite', 'SoftwareApplication'],
           '@id': `${SITE_URL}/#website`,
           name: 'Ruryfo CMS',
           url: SITE_URL,
@@ -134,7 +133,7 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
         name: finalTitle,
         description: description,
         isPartOf: {
-          '@type': 'WebSite',
+          '@type': ['WebSite', 'SoftwareApplication'],
           '@id': `${SITE_URL}/#website`,
           name: 'Ruryfo CMS',
           url: SITE_URL,
