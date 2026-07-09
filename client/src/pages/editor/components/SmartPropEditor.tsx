@@ -13,6 +13,7 @@ import {
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import type { FieldSchema } from '../../../core/types/registry.types';
 import { ImageUploadField } from '../../../components/editor/ImageUploadField';
+import { localizeSchema } from '../../../core/utils/schemaTranslator';
 import { useUIStore } from '../../../store/uiStore';
 import { t } from '../../../i18n';
 
@@ -85,7 +86,11 @@ const Toggle: React.FC<{
   </button>
 );
 
-const SpacingInput: React.FC<{ value: string; onChange: (v: string) => void; label: string }> = ({ value, onChange, label }) => {
+const SpacingInput: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+}> = ({ value, onChange, label }) => {
   const [localY, setLocalY] = useState('');
   const [localX, setLocalX] = useState('');
 
@@ -100,7 +105,8 @@ const SpacingInput: React.FC<{ value: string; onChange: (v: string) => void; lab
 
   React.useEffect(() => {
     const stringVal = value || '';
-    const currentDerived = (!localY && !localX) ? '' : `${formatVal(localY)} ${formatVal(localX)}`;
+    const currentDerived =
+      !localY && !localX ? '' : `${formatVal(localY)} ${formatVal(localX)}`;
     if (stringVal !== currentDerived) {
       const parts = stringVal.trim().split(/\s+/);
       if (parts.length === 1 && parts[0] !== '') {
@@ -250,10 +256,10 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   // SPACING
   if (schema.type === 'spacing') {
     return (
-      <SpacingInput 
-        value={(value as string) ?? ''} 
-        onChange={handleChange} 
-        label={schema.label} 
+      <SpacingInput
+        value={(value as string) ?? ''}
+        onChange={handleChange}
+        label={schema.label}
       />
     );
   }
@@ -292,9 +298,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
               onChange={(e) => handleChange(e.target.value)}
               className="absolute inset-0 w-full h-full cursor-pointer opacity-0 z-10"
             />
-            <div 
-              className="absolute inset-0 m-2 rounded-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/10" 
-              style={{ backgroundColor: (value as string) || '#000000' }} 
+            <div
+              className="absolute inset-0 m-2 rounded-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/10"
+              style={{ backgroundColor: (value as string) || '#000000' }}
             />
           </div>
           <input
@@ -673,8 +679,19 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
   const [jsonError, setJsonError] = useState<string | null>(null);
   const fieldRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
 
+  // const entry = componentRegistry.getEntry(sectionType);
+  // const schema = entry?.schema;
+  const { language } = useUIStore();
+  const tr = t(language).editor.smartPropEditor;
+  const translationDict = t(language);
+
   const entry = componentRegistry.getEntry(sectionType);
-  const schema = entry?.schema;
+  const baseSchema = entry?.schema;
+
+  // 🔄 Localize schema labels based on current language
+  const schema = baseSchema
+    ? localizeSchema(baseSchema, sectionType, translationDict)
+    : undefined;
 
   // Auto-scroll to focused field when clicked from preview
   React.useEffect(() => {
@@ -738,8 +755,13 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
 
       {/* Section Name (Anchor) */}
       <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 space-y-1.5">
-        <label className="text-xs font-medium text-[var(--color-text)] font-semibold flex items-center gap-1.5">
+        {/* <label className="text-xs font-medium text-[var(--color-text)] font-semibold flex items-center gap-1.5">
           <span>#</span> Section Anchor Name
+        </label> */}
+        <label className="text-xs font-medium text-[var(--color-text)] font-semibold flex items-center gap-1.5">
+          <span>#</span>{' '}
+          {translationDict.components?.common?.anchorName ||
+            'Section Anchor Name'}
         </label>
         <input
           type="text"
@@ -751,12 +773,17 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           className="w-full px-3 py-2 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors font-mono"
         />
-        <p className="text-xs text-[var(--color-text-faint)]">
+        {/* <p className="text-xs text-[var(--color-text-faint)]">
           Navbar links can use{' '}
           <code className="text-[var(--color-text)] font-semibold">
             #{sectionName || 'name'}
           </code>{' '}
           to scroll to this section
+        </p> */}
+        <p className="text-xs text-[var(--color-text-faint)]">
+          {language === 'en'
+            ? `Navbar links can use #${sectionName || 'name'} to scroll to this section`
+            : `Liên kết thanh điều hướng có thể sử dụng #${sectionName || 'name'} để cuộn đến phần này`}
         </p>
       </div>
 
@@ -785,24 +812,27 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       {activeTab === 'form' && schema && (
         <div className="space-y-4">
           {Object.entries(schema)
-            .filter(([, fieldSchema]) => !['select', 'boolean', 'color'].includes(fieldSchema.type))
+            .filter(
+              ([, fieldSchema]) =>
+                !['select', 'boolean', 'color'].includes(fieldSchema.type),
+            )
             .map(([key, fieldSchema]) => (
-            <div
-              key={key}
-              ref={(el) => {
-                fieldRefs.current[key] = el;
-              }}
-              className="rounded-md transition-all"
-            >
-              <FieldRenderer
-                fieldKey={key}
-                schema={fieldSchema}
-                value={get(props, key)}
-                onChange={handleFieldChange}
-                sectionId={sectionId}
-              />
-            </div>
-          ))}
+              <div
+                key={key}
+                ref={(el) => {
+                  fieldRefs.current[key] = el;
+                }}
+                className="rounded-md transition-all"
+              >
+                <FieldRenderer
+                  fieldKey={key}
+                  schema={fieldSchema}
+                  value={get(props, key)}
+                  onChange={handleFieldChange}
+                  sectionId={sectionId}
+                />
+              </div>
+            ))}
         </div>
       )}
 
