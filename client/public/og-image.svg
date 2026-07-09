@@ -1,0 +1,51 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap');
+      .bg { fill: #0c0c0c; }
+      .grid { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; }
+      .title { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 80px; fill: #e4e4e4; }
+      .subtitle { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 32px; fill: #888888; }
+      .accent { fill: #ffffff; }
+    </style>
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="none" class="grid"/>
+      <path d="M 40 0 L 0 0 0 40" fill="none" class="grid"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.08)"/>
+      <stop offset="100%" stop-color="rgba(12, 12, 12, 0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" class="bg"/>
+  
+  <!-- Grid Pattern -->
+  <rect width="1200" height="630" fill="url(#gridPattern)"/>
+
+  <!-- Center Glow -->
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Content -->
+  <g text-anchor="middle" transform="translate(600, 315)">
+    <!-- Icon/Logo -->
+    <g transform="translate(-40, -120) scale(0.08)" fill="#e4e4e4">
+      <path d="M2590 6200 l0 -1080 1155 0 1155 0 0 1080 0 1080 -1155 0 -1155 0 0 -1080z"/>
+      <path d="M5160 6800 l0 -480 490 0 490 0 0 480 0 480 -490 0 -490 0 0 -480z"/>
+      <path d="M5160 5600 l0 -480 1295 0 1295 0 0 480 0 480 -1295 0 -1295 0 0 -480z"/>
+      <path d="M2590 4215 l0 -655 795 0 795 0 0 655 0 655 -795 0 -795 0 0 -655z"/>
+      <path d="M4430 3915 l0 -955 650 0 650 0 0 955 0 955 -650 0 -650 0 0 -955z"/>
+      <path d="M5980 4725 l0 -145 885 0 885 0 0 145 0 145 -885 0 -885 0 0 -145z"/>
+      <path d="M5980 4185 l0 -145 139 0 138 0 7 53 c3 28 6 94 6 145 l0 92 -145 0 -145 0 0 -145z"/>
+      <path d="M6510 4185 l0 -145 620 0 620 0 0 145 0 145 -620 0 -620 0 0 -145z"/>
+      <path d="M5980 3646 l0 -144 137 1 138 2 6 40 c4 22 7 86 8 143 l2 102 -146 0 -145 0 0 -144z"/>
+      <path d="M6510 3645 l0 -145 618 2 617 3 3 143 3 142 -621 0 -620 0 0 -145z"/>
+      <path d="M5980 3105 l0 -145 145 0 145 0 0 145 0 145 -145 0 -145 0 0 -145z"/>
+      <path d="M6510 3105 l0 -145 449 0 448 0 7 92 c3 50 6 115 6 145 l0 53 -455 0 -455 0 0 -145z"/>
+    </g>
+
+    <text y="40" class="title">Ruryfo CMS</text>
+    <text y="110" class="subtitle">Nền tảng tạo Portfolio cá nhân tự động</text>
+  </g>
+</svg>
