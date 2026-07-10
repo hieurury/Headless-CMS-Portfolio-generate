@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { PanelTop, Image as ImageIconLucide } from 'lucide-react';
+import { PanelTop, Image as ImageIconLucide, Compass, Puzzle } from 'lucide-react';
 import type { LayoutSection } from '../types/layout.types';
 
 export interface TemplateEntry {
@@ -107,7 +107,7 @@ export const templateLibrary: TemplateEntry[] = [
                   id: uid('btn-cta'),
                   type: 'button',
                   name: '',
-                  props: { label: 'Hire Me', href: '#contact', variant: 'primary', size: 'sm' },
+                  props: { label: 'Hire Me', href: '#contact', variant: 'solid', size: 'sm' },
                   children: [],
                 },
               ],
@@ -135,7 +135,7 @@ export const templateLibrary: TemplateEntry[] = [
       props: {
         style: 'card',
         padding: 'md',
-        borderRadius: 'lg',
+        borderRadius: 'md',
       },
       children: [
         {
@@ -169,7 +169,7 @@ export const templateLibrary: TemplateEntry[] = [
                   id: uid('badge'),
                   type: 'badge',
                   name: '',
-                  props: { text: 'New', variant: 'subtle', color: 'indigo', size: 'sm', shape: 'pill' },
+                  props: { text: 'New', variant: 'subtle', size: 'sm', shape: 'rounded' },
                   children: [],
                 },
                 {
@@ -196,7 +196,7 @@ export const templateLibrary: TemplateEntry[] = [
                       id: uid('btn1'),
                       type: 'button',
                       name: '',
-                      props: { label: 'Get Started', variant: 'primary', size: 'md', alignX: 'left' },
+                      props: { label: 'Get Started', variant: 'solid', size: 'md', alignX: 'left' },
                       children: [],
                     },
                     {
@@ -221,6 +221,6 @@ export const templateLibrary: TemplateEntry[] = [
 // ─── Category Meta ────────────────────────────────────────────────────────────
 
 export const TEMPLATE_CATEGORIES = [
-  { id: 'navigation', label: 'Navigation', icon: '🧭' },
-  { id: 'components', label: 'Components', icon: '🧩' },
+  { id: 'navigation', label: 'Navigation', icon: <Compass size={14} /> },
+  { id: 'components', label: 'Components', icon: <Puzzle size={14} /> },
 ];

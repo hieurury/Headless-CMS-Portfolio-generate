@@ -767,7 +767,6 @@ export const PageEditorPage: React.FC = () => {
 
       setAddChildParentId(null);
       setSelectedFieldKey(null);
-      setShowRightPanel(true);
       setTimeout(
         () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
         100,
@@ -847,7 +846,6 @@ export const PageEditorPage: React.FC = () => {
       }
       setAddChildParentId(null);
       setSelectedFieldKey(null);
-      setShowRightPanel(true);
       setTimeout(
         () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
         100,
@@ -1011,15 +1009,12 @@ export const PageEditorPage: React.FC = () => {
     setSelectedId(null);
     setSelectedFieldKey(null);
     setLeftTab('sections');
-    setShowLeftPanel(true);
-    setShowRightPanel(true);
   };
 
   // ── Selection from preview ─────────────────────────────────────────
   const handleSectionSelect = useCallback((id: string) => {
     setSelectedId(id);
     setSelectedFieldKey(null);
-    setShowRightPanel(true);
     setTimeout(
       () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
       80,
@@ -1030,7 +1025,6 @@ export const PageEditorPage: React.FC = () => {
     (sectionId: string, fieldKey: string) => {
       setSelectedId(sectionId);
       setSelectedFieldKey(fieldKey);
-      setShowRightPanel(true);
     },
     [],
   );
@@ -1332,7 +1326,6 @@ export const PageEditorPage: React.FC = () => {
                         onSelect={(id) => {
                           setSelectedId(id);
                           setSelectedFieldKey(null);
-                          setShowRightPanel(true);
                         }}
                         onDelete={handleRemoveSection}
                         onAddClick={() => {

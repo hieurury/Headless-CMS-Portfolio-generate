@@ -9,7 +9,9 @@ import {
   Link,
   Eye,
   EyeOff,
+  Search,
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import type { FieldSchema } from '../../../core/types/registry.types';
 import { ImageUploadField } from '../../../components/editor/ImageUploadField';
@@ -148,6 +150,113 @@ const SpacingInput: React.FC<{ value: string; onChange: (v: string) => void; lab
     </div>
   );
 };
+// ─── IconPicker ───────────────────────────────────────────────────────────────
+
+const IconPicker: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  hasPosition?: boolean;
+  positionValue?: string;
+  onPositionChange?: (val: string) => void;
+}> = ({ value, onChange, hasPosition, positionValue, onPositionChange }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  
+  const iconNames = Object.keys(LucideIcons).filter(
+    (name) => name !== 'createLucideIcon' && name !== 'default'
+  );
+  
+  const filteredIcons = iconNames.filter((name) =>
+    name.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  // Try to find the selected icon to render as preview
+  const SelectedIcon = value ? (LucideIcons as any)[
+    iconNames.find((k) => k.toLowerCase() === value.toLowerCase()) || 'Sparkles'
+  ] : null;
+
+  return (
+    <div className="relative w-full">
+      <div className="flex items-center gap-2 w-full">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="w-12 h-9 flex items-center justify-center shrink-0 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+            hover:border-[var(--color-border-hover)] transition-colors"
+        >
+          {SelectedIcon ? <SelectedIcon size={16} /> : <div className="w-4 h-4 bg-white/10 rounded-full" />}
+        </button>
+
+        {hasPosition && onPositionChange && (
+          <select
+            value={positionValue || 'left'}
+            onChange={(e) => onPositionChange(e.target.value)}
+            className="flex-1 px-3 py-2 h-9 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+              focus:outline-none focus:border-[var(--color-border)] transition-colors"
+          >
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        )}
+      </div>
+
+      {open && (
+        <div className="absolute z-50 bottom-full mb-1 left-0 w-[260px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-[var(--color-border)] flex items-center gap-2 bg-[var(--color-surface-2)]">
+            <Search size={14} className="text-[var(--color-text-faint)] shrink-0" />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search icons..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-transparent border-0 text-[var(--color-text)] text-xs focus:outline-none placeholder-[var(--color-text-faint)]"
+            />
+          </div>
+          <div className="p-2 max-h-[160px] overflow-y-auto">
+            {filteredIcons.length > 0 ? (
+              <div className="grid grid-cols-5 gap-1">
+                {filteredIcons.slice(0, 50).map((name) => {
+                  const Icon = (LucideIcons as any)[name];
+                  const isActive = value.toLowerCase() === name.toLowerCase();
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => {
+                        onChange(name);
+                        setOpen(false);
+                      }}
+                      title={name}
+                      className={`flex items-center justify-center p-2 rounded-md transition-colors ${
+                        isActive 
+                          ? 'bg-[var(--color-text)] text-[var(--color-bg)]' 
+                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]'
+                      }`}
+                    >
+                      <Icon size={16} />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-4 text-center text-xs text-[var(--color-text-faint)]">
+                No icons found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Click outside to close (simple overlay) */}
+      {open && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setOpen(false)} 
+        />
+      )}
+    </div>
+  );
+};
 
 // ─── FieldRenderer ─────────────────────────────────────────────────────────────
 
@@ -155,6 +264,7 @@ export interface FieldRendererProps {
   fieldKey: string;
   schema: FieldSchema;
   value: unknown;
+  allProps?: Record<string, unknown>;
   onChange: (key: string, value: unknown) => void;
   depth?: number;
   sectionId?: string;
@@ -164,6 +274,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   fieldKey,
   schema,
   value,
+  allProps,
   onChange,
   depth = 0,
   sectionId,
@@ -275,6 +386,22 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
             </option>
           ))}
         </select>
+      </div>
+    );
+  }
+
+  // ICON
+  if (schema.type === 'icon') {
+    return (
+      <div>
+        <Label description={schema.description}>{schema.label}</Label>
+        <IconPicker 
+          value={(value as string) ?? ''} 
+          onChange={handleChange} 
+          hasPosition={schema.hasPosition}
+          positionValue={(allProps?.iconPosition as string) ?? 'right'}
+          onPositionChange={schema.hasPosition ? (val) => onChange('iconPosition', val) : undefined}
+        />
       </div>
     );
   }
@@ -631,15 +758,16 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
       {!collapsed && (
         <div className="p-3 space-y-3">
           {Object.entries(itemSchema).map(([key, fieldSchema]) => (
-            <FieldRenderer
-              key={key}
-              fieldKey={key}
-              schema={fieldSchema}
-              value={item[key]}
-              onChange={(k, v) => onUpdate(k, v)}
-              depth={depth}
-              sectionId={sectionId}
-            />
+              <FieldRenderer
+                key={key}
+                fieldKey={key}
+                schema={fieldSchema}
+                value={item[key]}
+                allProps={item}
+                onChange={(k, v) => onUpdate(k, v)}
+                depth={depth}
+                sectionId={sectionId}
+              />
           ))}
         </div>
       )}
@@ -784,24 +912,29 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       {/* Form Fields */}
       {activeTab === 'form' && schema && (
         <div className="space-y-4">
-          {Object.entries(schema)
-            .map(([key, fieldSchema]) => (
-            <div
-              key={key}
-              ref={(el) => {
-                fieldRefs.current[key] = el;
-              }}
-              className="rounded-md transition-all"
-            >
-              <FieldRenderer
-                fieldKey={key}
-                schema={fieldSchema}
-                value={get(props, key)}
-                onChange={handleFieldChange}
-                sectionId={sectionId}
-              />
-            </div>
-          ))}
+            {Object.entries(schema).map(([key, fieldSchema]) => {
+              // skip rendering iconPosition explicitly since it's grouped with 'icon' field
+              if (key === 'iconPosition') return null;
+              
+              return (
+              <div
+                key={key}
+                ref={(el) => {
+                  fieldRefs.current[key] = el;
+                }}
+                className="rounded-md transition-all"
+              >
+                <FieldRenderer
+                  fieldKey={key}
+                  schema={fieldSchema}
+                  value={get(props, key)}
+                  allProps={props}
+                  onChange={handleFieldChange}
+                  sectionId={sectionId}
+                />
+              </div>
+              );
+            })}
         </div>
       )}
 

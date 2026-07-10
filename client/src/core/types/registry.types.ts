@@ -15,6 +15,7 @@ export interface FieldSchema {
     | 'textarea'
     | 'array'
     | 'table'
+    | 'icon'
     | 'spacing'; // free-form CSS shorthand, e.g. "8px 16px" or "4px 8px 12px 0"
   label: string;
   description?: string;
@@ -25,6 +26,7 @@ export interface FieldSchema {
   min?: number; // for 'number'
   max?: number; // for 'number'
   rows?: number; // for 'textarea'
+  hasPosition?: boolean; // for 'icon' - whether to show position dropdown next to it
 }
 
 // ─── Registry Entry ───────────────────────────────────────────────────────────
