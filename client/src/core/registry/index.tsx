@@ -21,6 +21,15 @@ import {
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const makeEmptyNode = () => ({
+  id: `_empty-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  type: '_empty' as const,
+  name: '',
+  props: {},
+  children: [],
+});
+
 // ─── Block Components ─────────────────────────────────────────────────────────
 import { NavBarWrapperBlock } from '../../components/blocks/NavBarWrapperBlock';
 import { ColumnsBlock } from '../../components/blocks/ColumnsBlock';
@@ -88,6 +97,10 @@ componentRegistry.register({
   icon: <Columns2 size={16} />,
   category: 'layout',
   isContainer: true,
+  defaultChildren: () => [
+    makeEmptyNode(),
+    makeEmptyNode(),
+  ],
   defaultProps: {
     columns: '2',
     gap: 'md',
@@ -111,6 +124,10 @@ componentRegistry.register({
   icon: <Rows2 size={16} />,
   category: 'layout',
   isContainer: true,
+  defaultChildren: () => [
+    makeEmptyNode(),
+    makeEmptyNode(),
+  ],
   defaultProps: {
     rows: '2',
     gap: 'md',
@@ -133,6 +150,7 @@ componentRegistry.register({
   icon: <LayoutList size={16} />,
   category: 'layout',
   isContainer: true,
+  defaultChildren: () => [makeEmptyNode()],
   defaultProps: {
     direction: 'row',
     gap: 'md',
