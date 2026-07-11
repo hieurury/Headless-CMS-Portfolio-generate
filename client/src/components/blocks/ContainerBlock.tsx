@@ -98,7 +98,7 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
         margin: margin || undefined,
       }}
     >
-      <div className={`w-full ${maxWidthClass} transition-all`}>
+      <div className={`w-full h-full flex flex-col ${maxWidthClass} transition-all`}>
         {children}
       </div>
     </div>

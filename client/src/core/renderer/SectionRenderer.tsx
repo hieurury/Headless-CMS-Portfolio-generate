@@ -411,7 +411,7 @@ export const EmptySlotBlock: React.FC<{
         width: isHorizontalCompact ? 48 : '100%',
         flexShrink: 0,
       }
-    : { width: '100%', minHeight: 40 };
+    : { width: '100%', height: '100%', flexGrow: 1, minHeight: 40 };
 
   const baseClass = [
     'group relative select-none cursor-pointer',
@@ -427,14 +427,14 @@ export const EmptySlotBlock: React.FC<{
     <div ref={setNodeRef} className={baseClass} style={sizeStyle}>
       <button
         onClick={handleClick}
-        className="flex items-center gap-1 flex-1 justify-center py-2 cursor-pointer"
+        className="flex items-center gap-1 justify-center px-3 py-1.5 cursor-pointer rounded-md hover:bg-white/5 transition-colors"
         title="Click to add a block"
       >
         {isOver ? (
           <span className="text-[10px] font-medium">Drop here</span>
         ) : (
           <>
-            <Plus size={isCompact ? 14 : 13} className="opacity-30 group-hover:opacity-80 transition-opacity" />
+            <Plus size={isCompact ? 14 : 13} className="opacity-40 group-hover:opacity-100 transition-opacity" />
             {!isCompact && (
               <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                 Add block
@@ -987,7 +987,8 @@ const ColumnsEditorWrapper: React.FC<{
       ref={setNodeRef}
       id={section.name || section.id}
       style={dragStyle}
-      className={`relative cms-block select-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
+      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
+      className={`relative cms-block select-none touch-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
         }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
       onContextMenu={(e) => {
@@ -1000,16 +1001,6 @@ const ColumnsEditorWrapper: React.FC<{
         }));
       }}
     >
-      {/* Editor chrome (drag handle) */}
-      {isEditorMode && !previewMode && isSelected && (
-        <div
-          className="absolute -left-3 -top-3 w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing border border-slate-600 transition-all z-50 opacity-100 scale-100"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={12} className="text-slate-400" />
-        </div>
-      )}
       {/* Selection ring */}
       <div
         className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''

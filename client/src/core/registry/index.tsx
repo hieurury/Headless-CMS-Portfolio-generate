@@ -110,7 +110,7 @@ componentRegistry.register({
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
-    columns: { type: 'select', label: 'Number of Columns', options: ['2', '3', '4'] },
+    columns: { type: 'number', label: 'Number of Columns', min: 1, max: 12 },
     gap: { type: 'select', label: 'Column Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
     alignY: { type: 'select', label: 'Vertical Align (Y)', options: ['start', 'center', 'end', 'stretch'] },
@@ -135,7 +135,7 @@ componentRegistry.register({
     alignY: 'stretch',
   },
   schema: {
-    rows: { type: 'select', label: 'Number of Rows', options: ['2', '3', '4'] },
+    rows: { type: 'number', label: 'Number of Rows', min: 1, max: 12 },
     gap: { type: 'select', label: 'Row Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
     alignY: { type: 'select', label: 'Vertical Align (Y)', options: ['start', 'center', 'end', 'stretch'] },

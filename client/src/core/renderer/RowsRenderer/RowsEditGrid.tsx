@@ -102,7 +102,7 @@ const _RowsEditGrid: React.FC<{
                                     // Use EmptySlotBlock for _empty nodes (new standard)
                                     if (emptyNode) {
                                         return (
-                                            <div key={emptyNode.id} style={{ width: '100%', minHeight: 48 * span }}>
+                                            <div key={emptyNode.id} style={{ width: '100%', height: '100%', minHeight: 48 * span }}>
                                                 <EmptySlotBlock section={emptyNode} variant="row" />
                                             </div>
                                         );

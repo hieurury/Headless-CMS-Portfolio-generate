@@ -944,6 +944,90 @@ export const PageEditorPage: React.FC = () => {
   const handleRemoveSection = useCallback(
     (sectionId: string) => {
       updateLayout((layout) => {
+        const parentInfo = findParent(layout.sections, sectionId);
+
+        if (parentInfo && parentInfo.parent) {
+          const parent = parentInfo.parent;
+          const sectionToRemove = parent.children?.[parentInfo.index];
+          const isOnlyChild = (parent.children?.length ?? 0) === 1;
+
+          // If removing the ONLY child, and it's an _empty slot -> DELETE THE PARENT
+          if (isOnlyChild && sectionToRemove?.type === '_empty') {
+            const [newSections] = removeSection(layout.sections, parent.id);
+            return { ...layout, sections: newSections };
+          }
+
+          // If removing the ONLY child, and it's a filled block -> REPLACE WITH _empty
+          if (isOnlyChild && sectionToRemove?.type !== '_empty') {
+            const newChildren = [makeEmptySlot()];
+            const newParent = { ...parent, children: newChildren };
+            return { ...layout, sections: replaceSection(layout.sections, parent.id, newParent) };
+          }
+
+          if (parent.type === 'columns') {
+            if (sectionToRemove && sectionToRemove.type === '_empty') {
+              const current = Number(parent.props['columns'] ?? 2);
+              if (current > 1) {
+                const rawSpans = parent.props['colSpans'] as number[] | undefined;
+                const colSpans = Array.isArray(rawSpans) && rawSpans.length === current
+                  ? [...rawSpans]
+                  : Array(current).fill(1);
+
+                const newSpans = [...colSpans];
+                newSpans.splice(parentInfo.index, 1);
+
+                const newChildren = [...(parent.children ?? [])];
+                newChildren.splice(parentInfo.index, 1);
+
+                const newParent = {
+                  ...parent,
+                  props: { ...parent.props, columns: String(current - 1), colSpans: newSpans },
+                  children: newChildren,
+                };
+                return { ...layout, sections: replaceSection(layout.sections, parent.id, newParent) };
+              }
+            } else {
+              const newChildren = [...(parent.children ?? [])];
+              newChildren[parentInfo.index] = makeEmptySlot();
+              const newParent = { ...parent, children: newChildren };
+              return { ...layout, sections: replaceSection(layout.sections, parent.id, newParent) };
+            }
+          } else if (parent.type === 'rows') {
+            if (sectionToRemove && sectionToRemove.type === '_empty') {
+              const current = Number(parent.props['rows'] ?? 2);
+              if (current > 1) {
+                const rawSpans = parent.props['rowSpans'] as number[] | undefined;
+                const rowSpans = Array.isArray(rawSpans) && rawSpans.length === current
+                  ? [...rawSpans]
+                  : Array(current).fill(1);
+
+                const newSpans = [...rowSpans];
+                newSpans.splice(parentInfo.index, 1);
+
+                const newChildren = [...(parent.children ?? [])];
+                newChildren.splice(parentInfo.index, 1);
+
+                const newParent = {
+                  ...parent,
+                  props: { ...parent.props, rows: String(current - 1), rowSpans: newSpans },
+                  children: newChildren,
+                };
+                return { ...layout, sections: replaceSection(layout.sections, parent.id, newParent) };
+              }
+            } else {
+              const newChildren = [...(parent.children ?? [])];
+              newChildren[parentInfo.index] = makeEmptySlot();
+              const newParent = { ...parent, children: newChildren };
+              return { ...layout, sections: replaceSection(layout.sections, parent.id, newParent) };
+            }
+          } else {
+            const newChildren = [...(parent.children ?? [])];
+            newChildren.splice(parentInfo.index, 1);
+            const newParent = { ...parent, children: newChildren };
+            return { ...layout, sections: replaceSection(layout.sections, parent.id, newParent) };
+          }
+        }
+
         const [newSections] = removeSection(layout.sections, sectionId);
         return { ...layout, sections: newSections };
       });
@@ -957,6 +1041,18 @@ export const PageEditorPage: React.FC = () => {
     (targetId: string, sectionToPaste: LayoutSection) => {
       const newSection = cloneSection(sectionToPaste);
       updateLayout((layout) => {
+        // Check if the focused target is a container with an empty slot
+        const targetSection = findSectionById(layout.sections, targetId);
+        if (targetSection && targetSection.children) {
+          const emptySlotIndex = targetSection.children.findIndex((c) => c && c.type === '_empty');
+          if (emptySlotIndex !== -1) {
+            const emptySlotId = targetSection.children[emptySlotIndex].id;
+            const newSections = replaceSection(layout.sections, emptySlotId, newSection);
+            return { ...layout, sections: newSections };
+          }
+        }
+        
+        // Default: insert after the target
         const newSections = insertSectionAfter(layout.sections, targetId, newSection);
         return { ...layout, sections: newSections };
       });
@@ -1069,10 +1165,60 @@ export const PageEditorPage: React.FC = () => {
   // ── Props change (by section id, any depth) ───────────────────────
   const handlePropsChange = useCallback(
     (sectionId: string, newProps: Record<string, unknown>) => {
-      updateLayout((layout) => ({
-        ...layout,
-        sections: updateSectionProps(layout.sections, sectionId, newProps),
-      }));
+      updateLayout((layout) => {
+        const section = findSectionById(layout.sections, sectionId);
+
+        if (section) {
+          if (section.type === 'columns' && newProps.columns !== undefined) {
+             const newCount = Number(newProps.columns);
+             const oldCount = Number(section.props.columns ?? 2);
+             if (newCount !== oldCount && newCount > 0) {
+                let newChildren = [...(section.children ?? [])];
+                let newSpans = (section.props.colSpans as number[]) ?? Array(oldCount).fill(1);
+                
+                if (newCount > oldCount) {
+                  for (let i = oldCount; i < newCount; i++) {
+                     newChildren.push(makeEmptySlot());
+                     newSpans.push(1);
+                  }
+                } else {
+                  newChildren = newChildren.slice(0, newCount);
+                  newSpans = newSpans.slice(0, newCount);
+                }
+                newProps.colSpans = newSpans;
+                const newSection = { ...section, props: { ...section.props, ...newProps }, children: newChildren };
+                return { ...layout, sections: replaceSection(layout.sections, sectionId, newSection) };
+             }
+          }
+          
+          if (section.type === 'rows' && newProps.rows !== undefined) {
+             const newCount = Number(newProps.rows);
+             const oldCount = Number(section.props.rows ?? 2);
+             if (newCount !== oldCount && newCount > 0) {
+                let newChildren = [...(section.children ?? [])];
+                let newSpans = (section.props.rowSpans as number[]) ?? Array(oldCount).fill(1);
+                
+                if (newCount > oldCount) {
+                  for (let i = oldCount; i < newCount; i++) {
+                     newChildren.push(makeEmptySlot());
+                     newSpans.push(1);
+                  }
+                } else {
+                  newChildren = newChildren.slice(0, newCount);
+                  newSpans = newSpans.slice(0, newCount);
+                }
+                newProps.rowSpans = newSpans;
+                const newSection = { ...section, props: { ...section.props, ...newProps }, children: newChildren };
+                return { ...layout, sections: replaceSection(layout.sections, sectionId, newSection) };
+             }
+          }
+        }
+
+        return {
+          ...layout,
+          sections: updateSectionProps(layout.sections, sectionId, newProps),
+        };
+      });
     },
     [updateLayout],
   );
