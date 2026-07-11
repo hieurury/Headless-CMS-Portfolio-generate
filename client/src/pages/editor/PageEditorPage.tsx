@@ -34,6 +34,8 @@ import {
   Eye,
   PenLine,
   Globe,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -102,7 +104,6 @@ export const PageEditorPage: React.FC = () => {
   const { current: portfolio, fetchOne: fetchPortfolio } = usePortfolioStore();
 
   // ── Draft ──────────────────────────────────────────────────────────
-  const [draftLayout, setDraftLayout] = useState<PageLayout>({ sections: [] });
   // Selected section id (works at any depth)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
@@ -152,10 +153,31 @@ export const PageEditorPage: React.FC = () => {
   }, [portfolioId, pageId, fetchOne, fetchPortfolio]);
 
   // -- Sync draft when page loads ---------------------------------------------
+  const [editorState, setEditorState] = useState<{
+    past: PageLayout[];
+    present: PageLayout;
+    future: PageLayout[];
+    lastUpdated: number;
+  }>({
+    past: [],
+    present: { sections: [] },
+    future: [],
+    lastUpdated: 0,
+  });
+
+  const draftLayout = editorState.present;
+  const history = editorState.past;
+  const future = editorState.future;
+
   useEffect(() => {
     if (page) {
       const layout = page.layout ?? { sections: [] };
-      setDraftLayout(layout);
+      setEditorState({
+        past: [],
+        present: layout,
+        future: [],
+        lastUpdated: 0,
+      });
       setIsDirty(false);
       if (layout.sections.length === 0) {
         setShowLeftPanel(false);
@@ -170,11 +192,55 @@ export const PageEditorPage: React.FC = () => {
   // -- Immutable layout updater -----------------------------------------------
   const updateLayout = useCallback(
     (updater: (prev: PageLayout) => PageLayout) => {
-      setDraftLayout((prev) => updater(prev));
+      setEditorState((prevState) => {
+        const nextPresent = updater(prevState.present);
+        if (nextPresent === prevState.present) return prevState;
+
+        const now = Date.now();
+        // If within 1000ms, group with last edit
+        const isBatched = now - prevState.lastUpdated < 1000 && prevState.past.length > 0;
+        
+        return {
+          past: isBatched ? prevState.past : [...prevState.past, prevState.present],
+          present: nextPresent,
+          future: [],
+          lastUpdated: now,
+        };
+      });
       setIsDirty(true);
     },
     [],
   );
+
+  const handleUndo = useCallback(() => {
+    setEditorState((s) => {
+      if (s.past.length === 0) return s;
+      const previous = s.past[s.past.length - 1];
+      const newPast = s.past.slice(0, s.past.length - 1);
+      return {
+        past: newPast,
+        present: previous,
+        future: [s.present, ...s.future],
+        lastUpdated: 0, // Reset to force next edit to push new history
+      };
+    });
+    setIsDirty(true);
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    setEditorState((s) => {
+      if (s.future.length === 0) return s;
+      const next = s.future[0];
+      const newFuture = s.future.slice(1);
+      return {
+        past: [...s.past, s.present],
+        future: newFuture,
+        present: next,
+        lastUpdated: 0, // Reset timer
+      };
+    });
+    setIsDirty(true);
+  }, []);
 
   // -- Scroll Preview to Selected Block ---------------------------------------
   useEffect(() => {
@@ -250,11 +316,9 @@ export const PageEditorPage: React.FC = () => {
     return () => window.removeEventListener('cms:removeLastRow', handler);
   }, [updateLayout]);
 
-  // ── Listen for cms:addRowCell — "+" on Rows control bar ──────────────
-  // Increments rows count by 1. No child added — new row is an empty drop zone.
+  // ── Listen for cms:addRowCell — "+" on Rows control bar ────────────
+  // Increments rows count by 1 AND adds an _empty node to children.
   // IMPORTANT: also append 1 to rowSpans so its length stays in sync with `rows`.
-  // Without this, RowsGridRenderer detects length mismatch and resets ALL spans to 1,
-  // causing merged cells to lose their span value.
   useEffect(() => {
     const handler = (e: Event) => {
       const { rowsId } = (e as CustomEvent<{ rowsId: string }>).detail;
@@ -269,22 +333,27 @@ export const PageEditorPage: React.FC = () => {
             ? rawSpans
             : Array(current).fill(1);
         const newRowSpans = [...existingSpans, 1];
+        // Add _empty node so the new row cell has a data-backed slot
+        const newChildren = [...(rowBlock.children ?? []), makeEmptySlot()];
         return {
           ...layout,
-          sections: updateSectionProps(layout.sections, rowsId, {
-            ...rowBlock.props,
-            rows: String(current + 1),
-            rowSpans: newRowSpans,
-          }),
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, rowsId, { children: newChildren })),
+            rowsId,
+            {
+              ...rowBlock.props,
+              rows: String(current + 1),
+              rowSpans: newRowSpans,
+            },
+          ),
         };
       });
     };
     window.addEventListener('cms:addRowCell', handler);
     return () => window.removeEventListener('cms:addRowCell', handler);
   }, [updateLayout]);
-  // ── Listen for cms:addColCell — "+" on Columns control bar ────────────
-  // Increments columns count (adds 1 more empty cell).
-  // No child block is added — the new cell is an empty drop zone.
+  // ── Listen for cms:addColCell — "+" on Columns control bar ──────────
+  // Increments columns count AND adds an _empty node to children.
   useEffect(() => {
     const handler = (e: Event) => {
       const { columnsId } = (e as CustomEvent<{ columnsId: string }>).detail;
@@ -292,12 +361,18 @@ export const PageEditorPage: React.FC = () => {
         const colBlock = findSectionById(layout.sections, columnsId);
         if (!colBlock) return layout;
         const current = Number(colBlock.props['columns'] ?? 2);
+        // Add _empty node so the new column cell has a data-backed slot
+        const newChildren = [...(colBlock.children ?? []), makeEmptySlot()];
         return {
           ...layout,
-          sections: updateSectionProps(layout.sections, columnsId, {
-            ...colBlock.props,
-            columns: String(current + 1),
-          }),
+          sections: updateSectionProps(
+            layout.sections.map((s) => patchSection(s, columnsId, { children: newChildren })),
+            columnsId,
+            {
+              ...colBlock.props,
+              columns: String(current + 1),
+            },
+          ),
         };
       });
     };
@@ -1015,7 +1090,12 @@ export const PageEditorPage: React.FC = () => {
 
   // ── AI layout replace ─────────────────────────────────────────────
   const handleAiLayout = (layout: PageLayout) => {
-    setDraftLayout(layout);
+    setEditorState({
+      past: [],
+      present: layout,
+      future: [],
+      lastUpdated: 0,
+    });
     setIsDirty(true);
     setSelectedId(null);
     setSelectedFieldKey(null);
@@ -1114,7 +1194,7 @@ export const PageEditorPage: React.FC = () => {
 
       await update(portfolioId, pageId, { layout: finalLayout } as Parameters<typeof update>[2]);
       setPendingUploads([]);
-      setDraftLayout(finalLayout);
+      setEditorState((s) => ({ ...s, present: finalLayout }));
       setIsDirty(false);
       setSavedFeedback(true);
       setTimeout(() => setSavedFeedback(false), 2000);
@@ -1130,11 +1210,21 @@ export const PageEditorPage: React.FC = () => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         void handleSave();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedo();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  });
+  }, [handleSave, handleUndo, handleRedo]);
 
   if (isLoading && !page) {
     return (
@@ -1237,6 +1327,26 @@ export const PageEditorPage: React.FC = () => {
               </span>
 
               <div className="flex-1" />
+
+              {/* Undo / Redo */}
+              <div className="flex items-center gap-1 mr-2">
+                <button
+                  onClick={handleUndo}
+                  disabled={history.length === 0}
+                  title="Undo (Ctrl+Z)"
+                  className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <Undo2 size={15} />
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={future.length === 0}
+                  title="Redo (Ctrl+Y)"
+                  className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <Redo2 size={15} />
+                </button>
+              </div>
 
               {/* AI Toggle */}
               <button

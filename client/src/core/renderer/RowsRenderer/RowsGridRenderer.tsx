@@ -29,6 +29,10 @@ const RowsGridRenderer: React.FC<{
     const gridTemplate = rowSpans.map(() => 'auto').join(' ');
 
     if (!isEditing) {
+        // Real children only — skip _empty and legacy _colpad/_column nodes
+        const realChildren = (section.children ?? []).filter(
+            (c) => c && c.type !== '_colpad' && c.type !== '_column' && c.type !== '_empty'
+        );
         return (
             <div
                 id={section.name || section.id}
@@ -43,9 +47,7 @@ const RowsGridRenderer: React.FC<{
                 }}
             >
                 {Array.from({ length: rowCount }, (_, i) => {
-                    const raw = section.children?.[i] ?? null;
-                    // Treat null or legacy _colpad entries as empty cells
-                    const child = (raw && raw.type !== '_colpad' && raw.type !== '_column') ? raw : null;
+                    const child = realChildren[i] ?? null;
                     if (!child) return <div key={`cell-empty-${i}`} />;
                     return (
                         <div key={child.id} style={{ width: '100%', height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -57,11 +59,13 @@ const RowsGridRenderer: React.FC<{
         );
     }
 
+    const allChildren = section.children ?? [];
     const cells = Array.from({ length: rowCount }, (_, i) => {
-        const raw = section.children?.[i] ?? null;
-        // Treat null or legacy _colpad entries as empty
-        const child = (raw && raw.type !== '_colpad' && raw.type !== '_column') ? raw : null;
-        return { index: i, span: rowSpans[i], child, isEmpty: !child };
+        const raw = allChildren[i] ?? null;
+        // _empty node = empty cell with data; null/_colpad/_column = legacy empty
+        const isEmpty = !raw || raw.type === '_colpad' || raw.type === '_column' || raw.type === '_empty';
+        const emptyNode = (raw && raw.type === '_empty') ? raw : null;
+        return { index: i, span: rowSpans[i], child: isEmpty ? null : raw, emptyNode, isEmpty };
     });
 
     const cumulativeSpans = rowSpans.reduce<number[]>((acc, s) => {

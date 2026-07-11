@@ -103,13 +103,13 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 sm:p-8">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Split-Pane Layout Modal */}
       <div
         className="relative w-full max-w-[1000px] h-[75vh] min-h-[500px] flex bg-[var(--color-bg)] border border-[var(--color-border)] shadow-2xl rounded-sm overflow-hidden"
@@ -117,7 +117,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
       >
         {/* ─── Left Sidebar ────────────────────────────────────────── */}
         <div className="w-[260px] shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col">
-          
+
           {/* Header & Search */}
           <div className="p-4 border-b border-[var(--color-border)]">
             <div className="flex items-center justify-between mb-4">

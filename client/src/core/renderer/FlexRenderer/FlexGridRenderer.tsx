@@ -40,7 +40,7 @@ const FlexGridRenderer: React.FC<{
   // ── PREVIEW / PRODUCTION path ──────────────────────────────────────────
   if (!isEditing) {
     const validChildren = (section.children ?? []).filter(
-      (c) => c && c.type !== '_colpad' && c.type !== '_column'
+      (c) => c && c.type !== '_colpad' && c.type !== '_column' && c.type !== '_empty'
     );
     return (
       <div id={section.name || section.id} style={flexStyle}>
