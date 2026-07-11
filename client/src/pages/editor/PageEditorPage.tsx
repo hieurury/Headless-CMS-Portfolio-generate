@@ -890,6 +890,17 @@ export const PageEditorPage: React.FC = () => {
     [updateLayout],
   );
 
+  // ── Listen for cms:pasteSection ───────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ targetId: string; pastedData: any }>) => {
+      if (e.detail && e.detail.targetId && e.detail.pastedData) {
+        handlePasteSection(e.detail.targetId, e.detail.pastedData);
+      }
+    };
+    window.addEventListener('cms:pasteSection', handler as EventListener);
+    return () => window.removeEventListener('cms:pasteSection', handler as EventListener);
+  }, [handlePasteSection]);
+
   // ── Move a section into a container (or to top level if containerId is null) ──
   const handleMoveToContainer = useCallback(
     (sectionId: string, toContainerId: string | null, toIndex?: number) => {
@@ -1011,8 +1022,20 @@ export const PageEditorPage: React.FC = () => {
     setLeftTab('sections');
   };
 
+  const handleTogglePageVisibility = async () => {
+    if (!portfolioId || !pageId) return;
+    try {
+      const resp = await PageService.updatePage(portfolioId, pageId, {
+        isPublished: !page?.isPublished,
+      });
+      setPage(resp);
+    } catch (error) {
+      console.error('Failed to toggle page visibility:', error);
+    }
+  };
+
   // ── Selection from preview ─────────────────────────────────────────
-  const handleSectionSelect = useCallback((id: string) => {
+  const handleSectionSelect = useCallback((id: string | null) => {
     setSelectedId(id);
     setSelectedFieldKey(null);
     setTimeout(
@@ -1028,6 +1051,35 @@ export const PageEditorPage: React.FC = () => {
     },
     [],
   );
+
+  // ── Global click outside to deselect ─────────────────────────────────────
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('[data-editor-chrome]')) return;
+      if (target.closest('aside')) return;
+      if (target.closest('header')) return;
+      
+      // If a block is selected, check if we clicked inside it
+      if (selectedId) {
+        const activeBlock = document.querySelector('.cms-block.z-10');
+        if (activeBlock && activeBlock.contains(target)) {
+          return; // Clicked inside the active block, do nothing
+        }
+      }
+      
+      // If we clicked on the canvas area (including other blocks or empty space)
+      if (target.closest('.editor-preview-container')) {
+        handleSectionSelect(null);
+      }
+    };
+    
+    // Use mousedown to trigger before focus/blur events
+    window.addEventListener('mousedown', handleGlobalClick);
+    return () => window.removeEventListener('mousedown', handleGlobalClick);
+  }, [handleSectionSelect, selectedId]);
+
 
   // ── Save ───────────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -1355,7 +1407,7 @@ export const PageEditorPage: React.FC = () => {
               {/* CENTER: Preview Canvas */}
               <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[var(--color-bg)]">
                 <div
-                  className="shrink-0 flex items-center gap-2 px-4 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]"
+                  className="shrink-0 relative z-50 flex items-center gap-2 px-4 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]"
                   style={{ height: HEADER_H }}
                 >
                   <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
