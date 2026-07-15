@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal, GripVertical } from 'lucide-react';
+import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal } from 'lucide-react';
 
 
 import type { LayoutSection } from '../types/layout.types';
