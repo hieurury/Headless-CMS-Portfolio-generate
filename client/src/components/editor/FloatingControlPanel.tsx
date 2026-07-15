@@ -1,27 +1,15 @@
-import React, { useLayoutEffect, useRef, useState, useCallback } from 'react';
-import {
-  GripVertical, Trash2, Plus, Minus, Settings,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Trash2, Plus, Minus, Settings, Copy, Scissors, ClipboardPaste, CopyPlus } from 'lucide-react';
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import { useEditorContext } from '../../core/context/EditorContext';
 import { findSectionById } from '../../core/utils/layoutUtils';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface PanelPos { x: number; y: number }
-
-// Sentinel meaning "not yet positioned" — placed by useLayoutEffect
-const UNSET: PanelPos = { x: -9999, y: -9999 };
-
 // ─── FloatingControlPanel ─────────────────────────────────────────────────────
 /**
- * FloatingControlPanel — a draggable floating toolbar for the selected block.
+ * FloatingControlPanel — a pinned floating toolbar for the selected block.
  *
- * Default position: horizontally centred at the bottom of the viewport
- * (above a 24px margin), so it never covers the canvas content by default.
- *
- * The user can drag it anywhere via the grip handle.
- * Position resets to bottom-centre whenever the selected block changes.
+ * Positioned fixed at the top center of the canvas.
+ * Animations: slides down to appear, slides up to disappear.
  */
 const FloatingControlPanel: React.FC = () => {
   const {
@@ -32,226 +20,251 @@ const FloatingControlPanel: React.FC = () => {
     onRemoveSection,
   } = useEditorContext();
 
-  // ── Position state ───────────────────────────────────────────────────────
-  const [pos, setPos] = useState<PanelPos>(UNSET);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const dragStart = useRef<{ mx: number; my: number; px: number; py: number }>({
-    mx: 0, my: 0, px: 0, py: 0,
-  });
+  const [activeData, setActiveData] = useState<{ section: any; entry: any } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [hasClipboard, setHasClipboard] = useState(false);
 
-  // Centre-bottom by default every time selection changes
-  useLayoutEffect(() => {
-    const el = panelRef.current;
-    if (!el || !selectedSectionId) return;
-    const w = el.offsetWidth || 320;
-    const h = el.offsetHeight || 64;
-    setPos({
-      x: Math.round((window.innerWidth - w) / 2),
-      y: Math.round(window.innerHeight - h - 24),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSectionId]);
+  useEffect(() => {
+    const section = selectedSectionId ? findSectionById(sections, selectedSectionId) : null;
+    const entry = section ? componentRegistry.getEntry(section.type) : null;
 
-  // Grip drag
-  const onGripMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    dragging.current = true;
-    dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
+    if (section && entry) {
+      setActiveData({ section, entry });
+      setHasClipboard(!!localStorage.getItem('cms-editor-clipboard'));
+    } else {
+      const t = setTimeout(() => {
+        setActiveData(null);
+      }, 200); // reduced timeout for snappier disappearance
+      return () => clearTimeout(t);
+    }
+  }, [selectedSectionId, sections]);
 
-    const onMove = (ev: MouseEvent) => {
-      if (!dragging.current) return;
-      setPos({
-        x: dragStart.current.px + ev.clientX - dragStart.current.mx,
-        y: dragStart.current.py + ev.clientY - dragStart.current.my,
-      });
+  useEffect(() => {
+    if (!selectedSectionId) return;
+
+    const updatePos = () => {
+      const el = document.querySelector('.cms-block.z-10');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setPos({
+          top: rect.bottom,
+          left: rect.left + rect.width / 2,
+        });
+      } else {
+        setPos(null);
+      }
     };
-    const onUp = () => {
-      dragging.current = false;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+
+    updatePos();
+    
+    // Update on scroll or resize
+    window.addEventListener('resize', updatePos);
+    const container = document.querySelector('.editor-preview-container');
+    if (container) {
+      container.addEventListener('scroll', updatePos);
+    }
+    
+    // ResizeObserver in case the block itself changes size
+    const el = document.querySelector('.cms-block.z-10');
+    let ro: ResizeObserver;
+    if (el) {
+      ro = new ResizeObserver(updatePos);
+      ro.observe(el);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      if (container) container.removeEventListener('scroll', updatePos);
+      if (ro) ro.disconnect();
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, [pos]);
+  }, [selectedSectionId, activeData]);
 
-  // ── Selected section ─────────────────────────────────────────────────────
-  const selectedSection = selectedSectionId
-    ? findSectionById(sections, selectedSectionId)
-    : null;
+  if (!isEditorMode || previewMode || !activeData) return null;
 
-  const entry = selectedSection ? componentRegistry.getEntry(selectedSection.type) : null;
-  if (!isEditorMode || previewMode || !selectedSection || !entry) return null;
+  const { section: selectedSection, entry } = activeData;
+  const isVisible = !!selectedSectionId && !!pos;
 
   const isColumns = selectedSection.type === 'columns';
   const isRows = selectedSection.type === 'rows';
   const isContainer = !!(entry.isContainer) && !isColumns && !isRows;
   const passChildrenDirect = !!(entry as { passChildrenDirect?: boolean }).passChildrenDirect;
-  const canAddFreeChild    = isContainer && !passChildrenDirect && selectedSection.type !== 'container';
+  const canAddFreeChild = isContainer && !passChildrenDirect;
   const colCount = isColumns ? Number(selectedSection.props?.columns ?? 2) : 0;
-  const colSpans = isColumns ? (selectedSection.props?.colSpans as number[] | undefined) : undefined;
   const rowCount = isRows ? Number(selectedSection.props?.rows ?? 1) : 0;
-  // Determine visibility: initially hidden until layout effect fires
-  const isVisible = pos !== UNSET;
+
   return (
     <div
-      ref={panelRef}
       data-editor-chrome
       style={{
-        position: 'fixed',
-        left: pos.x,
-        top: pos.y,
-        zIndex: 9999,
-        userSelect: 'none',
-        minWidth: 260,
-        maxWidth: 420,
-        visibility: isVisible ? 'visible' : 'hidden',
+        top: pos?.top ?? 0,
+        left: pos?.left ?? 0,
+        transform: `translateX(-50%) ${isVisible ? 'translateY(0)' : 'translateY(-8px)'}`,
+        opacity: isVisible ? 1 : 0,
+        pointerEvents: isVisible ? 'auto' : 'none',
       }}
-      className="flex flex-col rounded-md overflow-hidden shadow-2xl shadow-black/70 border border-white/12 bg-[#0c0c1a]/97 backdrop-blur-md"
+      className={`
+        fixed z-[100] flex items-center p-0.5 gap-0.5
+        rounded-b-md shadow-xl shadow-black/30 border border-[var(--color-border)] border-t-0
+        bg-[var(--color-surface)]/95 backdrop-blur-md select-none
+        transition-[opacity,transform] duration-200 ease-out
+      `}
     >
-      {/* ── Header / Grip ──────────────────────────────────────────────── */}
+      {/* ── Info / Icon ──────────────────────────────────────────────── */}
       <div
-        className="flex items-center gap-2 px-3 py-2.5 border-b border-white/8 cursor-grab active:cursor-grabbing select-none bg-white/3"
-        onMouseDown={onGripMouseDown}
-        data-editor-chrome
+        className="flex flex-col items-center justify-center px-1.5 py-0.5 cursor-default text-[var(--color-text)] min-w-[36px]"
+        title={entry.displayName ?? selectedSection.type}
       >
-        <GripVertical size={14} className="text-[var(--color-text-faint)] shrink-0" />
-
-        {/* Block icon */}
-        <span className="shrink-0 text-[var(--color-text)] font-semibold flex items-center" style={{ lineHeight: 1 }}>
-          {entry.icon ?? <Settings size={14} />}
-        </span>
-
-        {/* Display name */}
-        <span className="text-sm font-semibold text-[var(--color-text)] truncate flex-1">
+        {entry.icon ?? <Settings size={13} />}
+        <span className="text-[8px] uppercase tracking-wider text-[var(--color-text-muted)] mt-[2px] leading-none">
           {entry.displayName ?? selectedSection.type}
         </span>
-
-        {/* Columns badge */}
-        {isColumns && (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-[var(--color-text-muted)] shrink-0">
-            {colCount} col
-            {colSpans && colSpans.some(s => s !== 1) && (
-              <span className="ml-1 text-[var(--color-text)] font-semibold">
-                {colSpans.map(s => `${s}fr`).join(' · ')}
-              </span>
-            )}
-          </span>
-        )}
-        {isRows && (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white/6 text-[var(--color-text-muted)] shrink-0">
-            {colCount} row
-            {colSpans && colSpans.some(s => s !== 1) && (
-              <span className="ml-1 text-[var(--color-text)] font-semibold">
-                {colSpans.map(s => `${s}fr`).join(' · ')}
-              </span>
-            )}
-          </span>
-        )}
-        {/* Anchor name */}
-        {selectedSection.name && (
-          <span className="text-[10px] font-mono text-[var(--color-text-faint)] shrink-0">
-            #{selectedSection.name}
-          </span>
-        )}
       </div>
 
+      <div className="w-px h-5 bg-white/10 mx-0.5" />
+
       {/* ── Actions ────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 px-3 py-2" data-editor-chrome>
-
-        {/* Add slot — free-child containers */}
-        {canAddFreeChild && (
-          <ActionBtn
-            icon={<Plus size={14} />}
-            label="Add slot"
-            color="indigo"
-            onClick={() =>
-              window.dispatchEvent(
-                new CustomEvent('cms:addEmptySlot', { detail: { parentId: selectedSection.id } }),
-              )
-            }
-          />
-        )}
-
-        {/* Columns controls */}
-        {isColumns && (
-          <>
+      {(canAddFreeChild || isColumns || isRows) && (
+        <>
+          {/* Add slot — free-child containers */}
+          {canAddFreeChild && (
             <ActionBtn
               icon={<Plus size={14} />}
-              label="Add column"
+              label="Add slot"
               color="indigo"
               onClick={() =>
                 window.dispatchEvent(
-                  new CustomEvent('cms:addColCell', { detail: { columnsId: selectedSection.id } }),
+                  new CustomEvent('cms:addEmptySlot', { detail: { parentId: selectedSection.id } }),
                 )
               }
             />
-            {colCount > 1 && (
+          )}
+
+          {/* Columns controls */}
+          {isColumns && (
+            <>
               <ActionBtn
-                icon={<Minus size={14} />}
-                label="Remove last column"
-                color="rose"
+                icon={<Plus size={14} />}
+                label="Add column"
+                color="indigo"
                 onClick={() =>
                   window.dispatchEvent(
-                    new CustomEvent('cms:removeLastCol', { detail: { columnsId: selectedSection.id } }),
+                    new CustomEvent('cms:addColCell', { detail: { columnsId: selectedSection.id } }),
                   )
                 }
               />
-            )}
-            {/* Column count readout */}
-            <span className="text-[11px] text-[var(--color-text-faint)] font-mono px-2">
-              {colCount} col
-            </span>
-          </>
-        )}
+              {colCount > 1 && (
+                <ActionBtn
+                  icon={<Minus size={14} />}
+                  label="Remove last column"
+                  color="rose"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent('cms:removeLastCol', { detail: { columnsId: selectedSection.id } }),
+                    )
+                  }
+                />
+              )}
+            </>
+          )}
 
-        {/* Rows controls */}
-        {isRows && (
-          <>
-            <ActionBtn
-              icon={<Plus size={14} />}
-              label="Add row"
-              color="indigo"
-              onClick={() =>
-                window.dispatchEvent(
-                  new CustomEvent('cms:addRowCell', { detail: { rowsId: selectedSection.id } }),
-                )
-              }
-            />
-            {rowCount > 1 && (
+          {/* Rows controls */}
+          {isRows && (
+            <>
               <ActionBtn
-                icon={<Minus size={14} />}
-                label="Remove last row"
-                color="rose"
+                icon={<Plus size={14} />}
+                label="Add row"
+                color="indigo"
                 onClick={() =>
                   window.dispatchEvent(
-                    new CustomEvent('cms:removeLastRow', { detail: { rowsId: selectedSection.id } }),
+                    new CustomEvent('cms:addRowCell', { detail: { rowsId: selectedSection.id } }),
                   )
                 }
               />
-            )}
-            {/* Column count readout */}
-            <span className="text-[11px] text-[var(--color-text-faint)] font-mono px-2">
-              {rowCount} row
-            </span>
-          </>
-        )}
+              {rowCount > 1 && (
+                <ActionBtn
+                  icon={<Minus size={14} />}
+                  label="Remove last row"
+                  color="rose"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent('cms:removeLastRow', { detail: { rowsId: selectedSection.id } }),
+                    )
+                  }
+                />
+              )}
+            </>
+          )}
 
-        {/* Spacer */}
-        <div className="flex-1" />
+          {/* Separator before clipboard actions */}
+          <div className="w-px h-5 bg-white/10 mx-0.5" />
+        </>
+      )}
 
-        {/* Delete */}
+      {/* Clipboard actions */}
+      
+      <ActionBtn
+        icon={<Copy size={14} />}
+        label="Copy"
+        color="slate"
+        onClick={() => {
+          localStorage.setItem('cms-editor-clipboard', JSON.stringify(selectedSection));
+          setHasClipboard(true);
+        }}
+      />
+      <ActionBtn
+        icon={<Scissors size={14} />}
+        label="Cut"
+        color="slate"
+        onClick={() => {
+          localStorage.setItem('cms-editor-clipboard', JSON.stringify(selectedSection));
+          setHasClipboard(true);
+          onRemoveSection(selectedSection.id);
+        }}
+      />
+      {hasClipboard && (
         <ActionBtn
-          icon={<Trash2 size={14} />}
-          label={`Delete ${entry.displayName}`}
-          color="red"
+          icon={<ClipboardPaste size={14} />}
+          label="Paste Below"
+          color="slate"
           onClick={() => {
-            if (confirm(`Remove "${entry.displayName ?? selectedSection.type}"?`)) {
-              onRemoveSection(selectedSection.id);
+            const data = localStorage.getItem('cms-editor-clipboard');
+            if (data) {
+              try {
+                const parsed = JSON.parse(data);
+                window.dispatchEvent(
+                  new CustomEvent('cms:pasteSection', { detail: { targetId: selectedSection.id, pastedData: parsed } })
+                );
+              } catch (e) {
+                console.error('Failed to parse clipboard data', e);
+              }
             }
           }}
         />
-      </div>
+      )}
+      <ActionBtn
+        icon={<CopyPlus size={14} />}
+        label="Duplicate"
+        color="slate"
+        onClick={() => {
+          window.dispatchEvent(
+            new CustomEvent('cms:pasteSection', { detail: { targetId: selectedSection.id, pastedData: selectedSection } })
+          );
+        }}
+      />
+
+      <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+      {/* Delete */}
+      <ActionBtn
+        icon={<Trash2 size={14} />}
+        label={`Delete ${entry.displayName ?? selectedSection.type}`}
+        color="red"
+        onClick={() => {
+          if (confirm(`Remove "${entry.displayName ?? selectedSection.type}"?`)) {
+            onRemoveSection(selectedSection.id);
+          }
+        }}
+      />
     </div>
   );
 };
@@ -264,10 +277,10 @@ const ActionBtn: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, color, onClick }) => {
   const colorMap = {
-    indigo: 'hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] border-[var(--color-border)]',
-    rose:   'hover:bg-red-500/15 hover:text-red-300 border-red-500/20',
-    red:    'hover:bg-red-500/20 hover:text-red-300 border-red-500/20',
-    slate:  'hover:bg-[var(--color-surface-2)] hover:brightness-110 hover:text-[var(--color-text)] border-[var(--color-border)]',
+    indigo: 'hover:bg-[var(--color-text)]/10 hover:text-[var(--color-text)] border-transparent text-[var(--color-text-muted)]',
+    rose:   'hover:bg-red-500/15 hover:text-red-300 border-transparent text-red-400/80',
+    red:    'hover:bg-red-500/20 hover:text-red-300 border-transparent text-red-400/90',
+    slate:  'hover:bg-[var(--color-text)]/10 hover:brightness-110 hover:text-[var(--color-text)] border-transparent text-[var(--color-text-muted)]',
   };
   return (
     <button
@@ -275,14 +288,12 @@ const ActionBtn: React.FC<{
       title={label}
       data-editor-chrome
       className={`
-        flex items-center gap-1.5 px-2.5 py-1.5 rounded-md
-        text-[var(--color-text-muted)] text-xs font-medium
+        flex items-center justify-center w-7 h-7 rounded
         border border-transparent transition-all duration-150
         ${colorMap[color]}
       `}
     >
       {icon}
-      <span>{label}</span>
     </button>
   );
 };

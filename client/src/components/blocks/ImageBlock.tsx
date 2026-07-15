@@ -21,7 +21,7 @@ export interface ImageBlockProps {
   alt?: string;
   aspectRatio?: 'auto' | '16/9' | '4/3' | '1/1' | '3/4';
   objectFit?: 'cover' | 'contain' | 'fill';
-  borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  borderRadius?: 'none' | 'sm' | 'md';
   alignX?: AlignX;
   alignY?: AlignY;
   textColor?: string;
@@ -42,10 +42,6 @@ const RADIUS_MAP: Record<string, string> = {
   none:  '',
   sm:    'rounded-sm',
   md:    'rounded-md',
-  lg:    'rounded-lg',
-  xl:    'rounded-xl',
-  '2xl': 'rounded-2xl',
-  full:  'rounded-full',
 };
 
 function isValidImageFile(file: File): boolean {
@@ -130,7 +126,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
           onClick={() => isEditorMode && !previewMode && inputRef.current?.click()}
           className={`
             w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed 
-            ${isDragging ? 'border-white/30 bg-white/6' : 'border-white/15 bg-white/3 hover:border-white/25 hover:bg-white/5'}
+            ${isDragging ? 'border-[var(--color-border-strong)] bg-[var(--color-surface-2)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'}
             ${radiusClass} transition-all
             ${isEditorMode && !previewMode ? 'cursor-pointer' : ''}
           `}
@@ -139,7 +135,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
             minHeight: '120px',
           }}
         >
-          <ImageIcon size={32} className={isDragging ? 'text-white/40' : 'text-white/20'} />
+          <ImageIcon size={32} className={isDragging ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-faint)]'} />
           {errorMsg ? (
             <p className="text-xs text-red-400 font-medium">{errorMsg}</p>
           ) : (
@@ -188,7 +184,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
         {isEditorMode && !previewMode && (
            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
              <button 
-                className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 text-white text-xs font-medium backdrop-blur-sm"
+                className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] text-[var(--color-text)] border border-[var(--color-border)] text-xs font-medium backdrop-blur-sm"
                 onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
              >
                 <Upload size={14} /> Change Image

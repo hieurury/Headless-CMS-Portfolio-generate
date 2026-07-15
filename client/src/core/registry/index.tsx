@@ -21,6 +21,15 @@ import {
 } from 'lucide-react';
 import { componentRegistry } from './ComponentRegistry';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const makeEmptyNode = () => ({
+  id: `_empty-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  type: '_empty' as const,
+  name: '',
+  props: {},
+  children: [],
+});
+
 // ─── Block Components ─────────────────────────────────────────────────────────
 import { NavBarWrapperBlock } from '../../components/blocks/NavBarWrapperBlock';
 import { ColumnsBlock } from '../../components/blocks/ColumnsBlock';
@@ -88,6 +97,10 @@ componentRegistry.register({
   icon: <Columns2 size={16} />,
   category: 'layout',
   isContainer: true,
+  defaultChildren: () => [
+    makeEmptyNode(),
+    makeEmptyNode(),
+  ],
   defaultProps: {
     columns: '2',
     gap: 'md',
@@ -97,7 +110,7 @@ componentRegistry.register({
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
-    columns: { type: 'select', label: 'Number of Columns', options: ['2', '3', '4'] },
+    columns: { type: 'number', label: 'Number of Columns', min: 1, max: 12 },
     gap: { type: 'select', label: 'Column Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
     alignY: { type: 'select', label: 'Vertical Align (Y)', options: ['start', 'center', 'end', 'stretch'] },
@@ -111,6 +124,10 @@ componentRegistry.register({
   icon: <Rows2 size={16} />,
   category: 'layout',
   isContainer: true,
+  defaultChildren: () => [
+    makeEmptyNode(),
+    makeEmptyNode(),
+  ],
   defaultProps: {
     rows: '2',
     gap: 'md',
@@ -118,7 +135,7 @@ componentRegistry.register({
     alignY: 'stretch',
   },
   schema: {
-    rows: { type: 'select', label: 'Number of Rows', options: ['2', '3', '4'] },
+    rows: { type: 'number', label: 'Number of Rows', min: 1, max: 12 },
     gap: { type: 'select', label: 'Row Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
     alignY: { type: 'select', label: 'Vertical Align (Y)', options: ['start', 'center', 'end', 'stretch'] },
@@ -133,6 +150,7 @@ componentRegistry.register({
   icon: <LayoutList size={16} />,
   category: 'layout',
   isContainer: true,
+  defaultChildren: () => [makeEmptyNode()],
   defaultProps: {
     direction: 'row',
     gap: 'md',
@@ -199,7 +217,7 @@ componentRegistry.register({
       options: ['top', 'middle', 'bottom'],
     },
     style: { type: 'select', label: 'Box Style', options: ['none', 'card', 'glass', 'outlined', 'filled'] },
-    borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+    borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md'] },
     margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px (T/B · L/R) or 4px 8px 12px 0' },
     padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px (T/B · L/R) or 4px 8px 12px 0' },
   },
@@ -288,7 +306,7 @@ componentRegistry.register({
   defaultProps: {
     label: 'Click Me',
     href: '#',
-    variant: 'primary',
+    variant: 'solid',
     size: 'md',
     shape: 'default',
     alignX: 'left',
@@ -303,12 +321,12 @@ componentRegistry.register({
     backgroundColor: { type: 'color', label: 'Background Color' },
     label: { type: 'string', label: 'Button Label', placeholder: 'Click Me' },
     href: { type: 'link', label: 'Link / URL', placeholder: '#about or /page or https://...' },
-    variant: { type: 'select', label: 'Style', options: ['primary', 'secondary', 'ghost', 'danger', 'success', 'warning', 'outline'] },
+    variant: { type: 'select', label: 'Style', options: ['solid', 'ghost', 'outline'] },
     size: { type: 'select', label: 'Size', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
-    shape: { type: 'select', label: 'Shape', options: ['default', 'pill', 'square', 'icon-only'] },
+    shape: { type: 'select', label: 'Shape', options: ['default', 'square', 'icon-only'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
-    icon: { type: 'string', label: 'Icon (emoji)', placeholder: '🚀' },
+    icon: { type: 'icon', label: 'Icon', hasPosition: true },
     iconPosition: { type: 'select', label: 'Icon Position', options: ['left', 'right'] },
     fullWidth: { type: 'boolean', label: 'Full Width' },
     external: { type: 'boolean', label: 'Open in new tab' },
@@ -329,7 +347,6 @@ componentRegistry.register({
     name: 'Sparkles',
     size: 'md',
     shape: 'rounded',
-    accent: 'indigo',
     alignX: 'left',
     alignY: 'middle',
     margin: '',
@@ -338,10 +355,9 @@ componentRegistry.register({
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
-    name: { type: 'string', label: 'Icon Name (Lucide)', placeholder: 'Sparkles, Star, Code2, Zap…' },
+    name: { type: 'icon', label: 'Icon Name (Lucide)' },
     size: { type: 'select', label: 'Size', options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'] },
-    shape: { type: 'select', label: 'Background Shape', options: ['none', 'circle', 'square', 'rounded'] },
-    accent: { type: 'select', label: 'Accent Color', options: ['indigo', 'violet', 'emerald', 'amber', 'rose', 'sky', 'slate'] },
+    shape: { type: 'select', label: 'Background Shape', options: ['none', 'square', 'rounded'] },
     color: { type: 'color', label: 'Custom Icon Color' },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
@@ -374,7 +390,7 @@ componentRegistry.register({
     alt: { type: 'string', label: 'Alt Text', placeholder: 'Description of the image' },
     aspectRatio: { type: 'select', label: 'Aspect Ratio', options: ['auto', '16/9', '4/3', '1/1', '3/4'] },
     objectFit: { type: 'select', label: 'Object Fit', options: ['cover', 'contain', 'fill'] },
-    borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'] },
+    borderRadius: { type: 'select', label: 'Border Radius', options: ['none', 'sm', 'md'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
   },
@@ -421,9 +437,8 @@ componentRegistry.register({
   defaultProps: {
     text: 'New Feature',
     variant: 'subtle',
-    color: 'indigo',
     size: 'sm',
-    shape: 'pill',
+    shape: 'rounded',
     alignX: 'left',
     alignY: 'middle',
     margin: '',
@@ -434,9 +449,8 @@ componentRegistry.register({
     backgroundColor: { type: 'color', label: 'Background Color' },
     text: { type: 'string', label: 'Badge Text', placeholder: 'New Feature' },
     variant: { type: 'select', label: 'Style Variant', options: ['solid', 'outline', 'subtle'] },
-    color: { type: 'select', label: 'Color', options: ['indigo', 'rose', 'emerald', 'amber', 'sky', 'slate', 'violet'] },
     size: { type: 'select', label: 'Size', options: ['sm', 'md', 'lg'] },
-    shape: { type: 'select', label: 'Shape', options: ['rounded', 'pill'] },
+    shape: { type: 'select', label: 'Shape', options: ['rounded', 'square'] },
     alignX: { type: 'select', label: 'Horizontal (X)', options: ['left', 'center', 'right'] },
     alignY: { type: 'select', label: 'Vertical (Y)', options: ['top', 'middle', 'bottom'] },
     margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },

@@ -160,9 +160,11 @@ const ColumnsGridRenderer: React.FC<{
   // CSS grid template — use actual span weights
   const gridTemplate = colSpans.map(s => `${s}fr`).join(' ');
 
-  // ── PREVIEW / PRODUCTION path — pure CSS grid, zero DnD ──────────────
-  // Must be identical layout to edit mode so preview matches exactly.
+  // ── PREVIEW / PRODUCTION path — pure CSS grid, zero DnD ──────────
   if (!isEditing) {
+    const realChildren = (section.children ?? []).filter(
+      (c) => c && c.type !== '_colpad' && c.type !== '_empty'
+    );
     return (
       <div
         id={section.name || section.id}
@@ -176,9 +178,7 @@ const ColumnsGridRenderer: React.FC<{
         }}
       >
         {Array.from({ length: colCount }, (_, i) => {
-          const raw = section.children?.[i] ?? null;
-          // Treat null or legacy _colpad entries as empty cells
-          const child = (raw && raw.type !== '_colpad') ? raw : null;
+          const child = realChildren[i] ?? null;
           if (!child) return <div key={`cell-empty-${i}`} />;
           return (
             <div key={child.id} style={{ width: '100%', height: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
@@ -190,12 +190,13 @@ const ColumnsGridRenderer: React.FC<{
     );
   }
 
-  // ── EDIT path — DnD enabled, drop zones, merge buttons ───────────────
+  // ── EDIT path — children[] is source of truth ─────────────────
+  const allChildren = section.children ?? [];
   const cells = Array.from({ length: colCount }, (_, i) => {
-    const raw = section.children?.[i] ?? null;
-    // Treat null or legacy _colpad entries as empty
-    const child = (raw && raw.type !== '_colpad') ? raw : null;
-    return { index: i, span: colSpans[i], child, isEmpty: !child };
+    const raw = allChildren[i] ?? null;
+    const isEmpty = !raw || raw.type === '_colpad' || raw.type === '_empty';
+    const emptyNode = (raw && raw.type === '_empty') ? raw : null;
+    return { index: i, span: colSpans[i], child: isEmpty ? null : raw, emptyNode, isEmpty };
   });
 
   const cumulativeSpans = colSpans.reduce<number[]>((acc, s) => {
@@ -232,7 +233,7 @@ const _ColumnsEditGrid: React.FC<{
   colSpans: number[];
   totalSpan: number;
   gridTemplate: string;
-  cells: { index: number; span: number; child: LayoutSection | null; isEmpty: boolean }[];
+  cells: { index: number; span: number; child: LayoutSection | null; emptyNode: LayoutSection | null; isEmpty: boolean }[];
   cumulativeSpans: number[];
   ALIGN_MAP: Record<string, string>;
 }> = ({ section, depth, colCount, gapValue, alignX, alignY, colSpans, totalSpan, gridTemplate, cells, cumulativeSpans, ALIGN_MAP }) => {
@@ -270,8 +271,17 @@ const _ColumnsEditGrid: React.FC<{
             width: '100%',
           }}
         >
-          {cells.map(({ index: i, child, isEmpty, span }) => {
+          {cells.map(({ index: i, child, isEmpty, emptyNode, span }) => {
             if (isEmpty) {
+              // Use EmptySlotBlock for _empty nodes (new standard)
+              if (emptyNode) {
+                return (
+                  <div key={emptyNode.id} style={{ width: '100%', height: '100%', minHeight: 48 }}>
+                    <EmptySlotBlock section={emptyNode} variant="col" />
+                  </div>
+                );
+              }
+              // Fallback: ColCellDropZone for null children (legacy / after merge/split)
               return (
                 <ColCellDropZone
                   key={`cell-empty-${i}`}
@@ -356,28 +366,28 @@ const ColCellSortable: React.FC<{
       {...attributes}
       {...listeners}
     >
-      <SectionRenderer section={child} isChild depth={depth + 1} />
+      <SectionRenderer section={child} isChild depth={depth + 1} parentType="columns" />
     </div>
   );
 };
 
 // ─── Empty Slot Block ─────────────────────────────────────────────────────────
 /**
- * EmptySlotBlock — a placeholder that renders as a droppable drop zone.
+ * EmptySlotBlock — unified droppable placeholder for all layout types.
  *
- * Flow:
- * 1. User presses "+" on a container control → `_empty` block added as child
- * 2. Empty slot renders here as a visible drop target
- * 3. User clicks the empty slot → opens AddPanel to pick a block type
- * 4. PageEditorPage replaces this `_empty` block with the chosen block
- *
- * The slot does NOT use useDroppable — it relies on being a SortableContext
- * item. When the parent ContainerDropZone's droppable fires and activeId lands
- * at an _empty slot position, PageEditorPage swaps it.
+ * variant controls the size/shape:
+ *   'full'   → Container (full-width dashed block)
+ *   'col'    → Columns cell (full cell, fills column width)
+ *   'row'    → Rows cell (full cell, fills row height)
+ *   'flex-h' → Flex row direction (compact horizontal chip)
+ *   'flex-v' → Flex column direction (compact vertical bar)
  */
-const EmptySlotBlock: React.FC<{
+export type EmptySlotVariant = 'full' | 'col' | 'row' | 'flex-h' | 'flex-v';
+
+export const EmptySlotBlock: React.FC<{
   section: LayoutSection;
-}> = ({ section }) => {
+  variant?: EmptySlotVariant;
+}> = ({ section, variant = 'full' }) => {
   const { isEditorMode, previewMode, onRemoveSection } = useEditorContext();
   const { isOver, setNodeRef } = useDroppable({ id: toDropId(section.id) });
 
@@ -390,112 +400,101 @@ const EmptySlotBlock: React.FC<{
     );
   };
 
+  // Variant-based sizing
+  const isCompact = variant === 'flex-h' || variant === 'flex-v';
+  const isHorizontalCompact = variant === 'flex-h';
+
+  const sizeStyle: React.CSSProperties = isCompact
+    ? {
+        minWidth: isHorizontalCompact ? 48 : '100%',
+        minHeight: isHorizontalCompact ? '100%' : 48,
+        width: isHorizontalCompact ? 48 : '100%',
+        flexShrink: 0,
+      }
+    : { width: '100%', height: '100%', flexGrow: 1, minHeight: 40 };
+
+  const baseClass = [
+    'group relative select-none cursor-pointer',
+    'flex items-center justify-center transition-all duration-150',
+    isCompact ? 'rounded-md' : 'rounded-lg border border-dashed',
+    isOver
+      ? 'border-[var(--color-border-hover)] bg-[var(--color-surface-2)] text-[var(--color-text)]'
+      : 'border-white/10 bg-white/2 text-slate-700 hover:border-[var(--color-border-hover)]/40 hover:text-[var(--color-text)] hover:bg-white/4',
+    !isCompact && isOver ? 'min-h-[48px]' : '',
+  ].join(' ');
+
   return (
-    <div
-      ref={setNodeRef}
-      className={`
-        group relative w-full rounded-lg border border-dashed select-none
-        flex items-center justify-center
-        transition-all duration-150
-        ${isOver
-          ? 'border-[var(--color-border-hover)] bg-[var(--color-surface-2)] text-[var(--color-text)] min-h-[48px]'
-          : 'border-white/10 bg-white/2 text-slate-700 hover:border-[var(--color-border-hover)]/40 hover:text-[var(--color-text)] hover:bg-white/4'
-        }
-      `}
-      style={{ minHeight: 40 }}
-    >
-      {/* Click area to open AddPanel */}
+    <div ref={setNodeRef} className={baseClass} style={sizeStyle}>
       <button
         onClick={handleClick}
-        className="flex items-center gap-1.5 flex-1 justify-center py-2 cursor-pointer"
+        className="flex items-center gap-1 justify-center px-3 py-1.5 cursor-pointer rounded-md hover:bg-white/5 transition-colors"
         title="Click to add a block"
       >
         {isOver ? (
           <span className="text-[10px] font-medium">Drop here</span>
         ) : (
           <>
-            <Plus size={13} className="opacity-50 group-hover:opacity-100 transition-opacity" />
-            <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-              Add block
-            </span>
+            <Plus size={isCompact ? 14 : 13} className="opacity-40 group-hover:opacity-100 transition-opacity" />
+            {!isCompact && (
+              <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                Add block
+              </span>
+            )}
           </>
         )}
       </button>
 
-      {/* Delete empty slot */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onRemoveSection(section.id); }}
-        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-        title="Remove empty slot"
-      >
-        <X size={11} />
-      </button>
+      {/* Delete empty slot — only shown for full/col/row variants where there's room */}
+      {!isCompact && (
+        <button
+          data-editor-chrome
+          onClick={(e) => { e.stopPropagation(); onRemoveSection(section.id); }}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+          title="Remove empty slot"
+        >
+          <X size={11} />
+        </button>
+      )}
     </div>
   );
 };
 
 
-
 // ─── Container Drop Zone ──────────────────────────────────────────────────────
 /**
- * Container drop zone — wraps children of a container block.
- *
- * IMPORTANT CONSTRAINTS:
- * - If the container has NO children: shows a non-interactive empty state.
- *   The user must press "+" on the control bar to create an empty slot first.
- * - If the container HAS at least one `_empty` slot: that slot is droppable.
- * - Regular (non-empty) children are sortable within the container.
- *
- * This prevents accidental drops into containers that are already "full"
- * or don't have an explicit empty slot.
+ * Container drop zone — wraps children of a generic container block (not columns/rows/flex).
+ * Children always include _empty slots, so we never need the "Press +" placeholder.
  */
 const ContainerDropZone: React.FC<{
   section: LayoutSection;
   renderedChildren: React.ReactNode;
-  isEmpty: boolean;
-}> = ({ section, renderedChildren, isEmpty }) => {
-  // Only register a droppable if container has NO children at all
-  // (the EmptySlotBlock handles its own droppable when it exists)
+}> = ({ section, renderedChildren }) => {
   const hasEmptySlot = section.children?.some((c) => c.type === EMPTY_SLOT_TYPE) ?? false;
+  const hasChildren = (section.children?.length ?? 0) > 0;
   const { isOver, setNodeRef } = useDroppable({
     id: toDropId(section.id),
-    // Disable the container-level droppable when we have content without empty slots
-    // This forces the user to use "+" to add an empty slot first
-    disabled: !isEmpty && !hasEmptySlot,
+    disabled: hasChildren && !hasEmptySlot,
   });
 
   return (
     <div
       ref={setNodeRef}
-      className={`relative w-full transition-all duration-150 ${isOver && (isEmpty || hasEmptySlot)
-        ? 'bg-white/5 ring-1 ring-inset ring-[var(--color-border-hover)] rounded-lg'
-        : ''
-        }`}
-      style={{ minHeight: isEmpty ? 48 : undefined }}
+      className={`relative w-full transition-all duration-150 ${
+        isOver && hasEmptySlot
+          ? 'bg-white/5 ring-1 ring-inset ring-[var(--color-border-hover)] rounded-lg'
+          : ''
+      }`}
+      style={{ minHeight: hasChildren ? undefined : 48 }}
     >
-      {isEmpty ? (
-        /* ── Truly empty container — non-droppable placeholder ── */
-        /* User must press "+" on the control bar first */
-        <div
-          className="flex items-center justify-center w-full rounded-lg border border-dashed border-white/8 text-slate-700"
-          style={{ minHeight: 48 }}
-        >
-          <span className="text-[10px] font-medium select-none">
-            Press + to add blocks
-          </span>
-        </div>
-      ) : (
-        /* ── Has children (including possible empty slots) ── */
-        <SortableContext
-          items={(section.children ?? []).map((c) => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {renderedChildren}
-          {isOver && hasEmptySlot && (
-            <div className="h-0.5 mx-2 mt-1 rounded-full bg-[var(--color-border-hover)] animate-pulse" />
-          )}
-        </SortableContext>
-      )}
+      <SortableContext
+        items={(section.children ?? []).map((c) => c.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {renderedChildren}
+        {isOver && hasEmptySlot && (
+          <div className="h-0.5 mx-2 mt-1 rounded-full bg-[var(--color-border-hover)] animate-pulse" />
+        )}
+      </SortableContext>
     </div>
   );
 };
@@ -655,9 +654,11 @@ interface SectionRendererProps {
    *  Used by DragOverlay to clone the block without interactive features. */
   isOverlay?: boolean;
   depth?: number;
+  /** The parent layout type — used to pick the correct EmptySlotBlock variant */
+  parentType?: string;
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOverlay = false, depth = 0 }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOverlay = false, depth = 0, parentType }) => {
   const {
     isEditorMode,
     previewMode,
@@ -674,7 +675,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
   // ── Empty slot: special rendering ─────────────────────────────────────────
   if (section.type === EMPTY_SLOT_TYPE) {
     if (!effectiveEditorMode || effectivePreviewMode) return null;
-    return <EmptySlotBlock section={section} />;
+    // Map parent type to EmptySlotBlock variant
+    let variant: EmptySlotVariant = 'full';
+    if (parentType === 'columns') variant = 'col';
+    else if (parentType === 'rows') variant = 'row';
+    else if (parentType === 'flex') variant = 'flex-h'; // actual direction determined by parent
+    return <EmptySlotBlock section={section} variant={variant} />;
   }
 
   // ── Columns block: special grid renderer — no _column wrappers ────────────
@@ -781,6 +787,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
             isRoot={false}
             isChild={true}
             depth={depth + 1}
+            parentType={section.type}
           />
         ))}
       </>
@@ -802,7 +809,6 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       <ContainerDropZone
         section={section}
         renderedChildren={renderedChildren}
-        isEmpty={!section.children?.length}
       />
     );
   }
@@ -981,7 +987,8 @@ const ColumnsEditorWrapper: React.FC<{
       ref={setNodeRef}
       id={section.name || section.id}
       style={dragStyle}
-      className={`relative cms-block select-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
+      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
+      className={`relative cms-block select-none touch-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
         }${isSelected ? ' z-10' : ''}`}
       onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
       onContextMenu={(e) => {
@@ -994,16 +1001,6 @@ const ColumnsEditorWrapper: React.FC<{
         }));
       }}
     >
-      {/* Editor chrome (drag handle) */}
-      {isEditorMode && !previewMode && isSelected && (
-        <div
-          className="absolute -left-3 -top-3 w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing border border-slate-600 transition-all z-50 opacity-100 scale-100"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={12} className="text-slate-400" />
-        </div>
-      )}
       {/* Selection ring */}
       <div
         className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-[var(--color-text)] z-20' : ''

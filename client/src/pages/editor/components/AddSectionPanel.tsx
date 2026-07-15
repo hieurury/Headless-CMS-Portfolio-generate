@@ -14,10 +14,8 @@ import clsx from 'clsx';
 
 interface AddSectionPanelProps {
   onAdd: (type: string) => void;
-  /** Called when a full template tree should be injected */
   onAddTemplate: (tree: LayoutSection) => void;
   onClose: () => void;
-  /** If true, show hint that block will be added inside a container */
   addingToContainer?: boolean;
 }
 
@@ -66,7 +64,6 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
     [containerEntries, search, filterEntries],
   );
 
-  // Template filtering
   const filteredTemplates = useMemo(() => {
     let list = templateLibrary;
     if (search.trim()) {
@@ -88,142 +85,170 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
     [],
   );
 
+  const tabs = [
+    {
+      key: 'templates' as const,
+      label: tr.templates,
+      icon: Wand2,
+      count: filteredTemplates.length,
+    },
+    {
+      key: 'blocks' as const,
+      label: tr.blocks,
+      icon: Box,
+      count: filteredAtoms.length,
+    },
+    {
+      key: 'layout' as const,
+      label: tr.layout,
+      icon: LayoutDashboard,
+      count: filteredContainers.length,
+    },
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 sm:p-8">
+      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-[var(--color-surface)] backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
+
+      {/* Split-Pane Layout Modal */}
       <div
-        className="relative w-full max-w-xl glass rounded-md shadow-2xl animate-slide-up overflow-hidden flex flex-col max-h-[85vh]"
+        className="relative w-full max-w-[1000px] h-[75vh] min-h-[500px] flex bg-[var(--color-bg)] border border-[var(--color-border)] shadow-2xl rounded-sm overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)] shrink-0">
-          <div>
-            <h3 className="text-base font-bold text-[var(--color-text)]">
-              {addingToContainer ? tr.addBlockToContainer : tr.addToPage}
-            </h3>
-            {addingToContainer && (
-              <p className="text-xs text-[var(--color-text)] font-semibold mt-0.5">
-                {tr.containerHint}
-              </p>
-            )}
+        {/* ─── Left Sidebar ────────────────────────────────────────── */}
+        <div className="w-[260px] shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col">
+          {/* Header & Search */}
+          <div className="p-4 border-b border-[var(--color-border)]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text)]">
+                {addingToContainer ? tr.addBlockToContainer : tr.addToPage}
+              </h3>
+              <button
+                onClick={onClose}
+                className="text-[var(--color-text-faint)] hover:text-[var(--color-text)] transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={tr.searchTemplates || 'Tìm kiếm...'}
+                autoFocus
+                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text)] text-sm rounded-sm pl-9 pr-3 py-2 focus:outline-none focus:border-[var(--color-text-muted)] transition-colors placeholder-[var(--color-text-muted)]"
+              />
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] hover:brightness-110 transition-all"
-          >
-            <X size={18} />
-          </button>
-        </div>
 
-        {/* Search */}
-        <div className="px-5 py-3 border-b border-[var(--color-border)] shrink-0">
-          <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={
-                activeTab === 'templates'
-                  ? tr.searchTemplates
-                  : activeTab === 'blocks'
-                    ? tr.searchBlocks
-                    : tr.searchLayout
-              }
-              autoFocus
-              className="w-full pl-9 pr-4 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
-                placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-[var(--color-border)] shrink-0 px-5">
-          {[
-            {
-              key: 'templates' as const,
-              label: tr.templates,
-              icon: Wand2,
-              count: filteredTemplates.length,
-            },
-            {
-              key: 'blocks' as const,
-              label: tr.blocks,
-              icon: Box,
-              count: filteredAtoms.length,
-            },
-            {
-              key: 'layout' as const,
-              label: tr.layout,
-              icon: LayoutDashboard,
-              count: filteredContainers.length,
-            },
-          ].map(({ key, label, icon: Icon, count }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={clsx(
-                'flex items-center gap-1.5 py-3 pr-4 text-sm font-medium transition-all border-b-2',
-                activeTab === key
-                  ? 'text-[var(--color-text)] border-[var(--color-text)]'
-                  : 'text-[var(--color-text-faint)] border-transparent hover:text-[var(--color-text)]',
-              )}
-            >
-              <Icon size={13} /> {label}
-              <span className="ml-1 text-xs text-[var(--color-text-faint)] font-mono">
-                {count}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* ─── Templates Tab ───────────────────────────────────────── */}
-          {activeTab === 'templates' && (
-            <>
-              {/* Category filter chips */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategory('all')}
+          {/* Main Tabs (Vertical) */}
+          <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-0.5">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key !== 'templates') setSelectedCategory('all');
+                }}
+                className={clsx(
+                  'flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-colors text-left group',
+                  activeTab === tab.key
+                    ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]',
+                )}
+              >
+                <tab.icon
+                  size={16}
+                  className={
+                    activeTab === tab.key
+                      ? 'text-[var(--color-bg)]'
+                      : 'text-[var(--color-text-faint)] group-hover:text-[var(--color-text)]'
+                  }
+                />
+                <span className="flex-1">{tab.label}</span>
+                <span
                   className={clsx(
-                    'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                    selectedCategory === 'all'
-                      ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
-                      : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:brightness-110',
+                    'text-[10px] px-1.5 py-0.5 rounded-sm font-mono',
+                    activeTab === tab.key
+                      ? 'bg-[var(--color-bg)]/20 text-[var(--color-bg)]'
+                      : 'bg-[var(--color-border)] text-[var(--color-text-faint)] group-hover:bg-[var(--color-border-hover)] group-hover:text-[var(--color-text)]',
                   )}
                 >
-                  {tr.all}
-                </button>
-                {allCategories.map((cat) => {
-                  const meta = TEMPLATE_CATEGORIES.find((c) => c.id === cat);
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={clsx(
-                        'px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1',
-                        selectedCategory === cat
-                          ? 'bg-[var(--color-accent)] text-[var(--color-bg)]'
-                          : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:brightness-110',
-                      )}
-                    >
-                      {meta?.icon} {meta?.label}
-                    </button>
-                  );
-                })}
-              </div>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
 
+          {/* Category Filters (Only for templates) */}
+          <div className="flex-1 p-3 overflow-y-auto">
+            {activeTab === 'templates' && (
+              <>
+                <p className="text-[10px] font-bold text-[var(--color-text-faint)] uppercase tracking-widest mb-2 px-3">
+                  Danh mục
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={clsx(
+                      'px-3 py-2 text-xs font-medium rounded-sm transition-colors text-left',
+                      selectedCategory === 'all'
+                        ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
+                        : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]',
+                    )}
+                  >
+                    {tr.all}
+                  </button>
+                  {allCategories.map((cat) => {
+                    const meta = TEMPLATE_CATEGORIES.find((c) => c.id === cat);
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={clsx(
+                          'flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-sm transition-colors text-left group',
+                          selectedCategory === cat
+                            ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
+                            : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]',
+                        )}
+                      >
+                        <span
+                          className={clsx(
+                            'opacity-50',
+                            selectedCategory === cat
+                              ? 'text-[var(--color-text)]'
+                              : 'group-hover:text-[var(--color-text)]',
+                          )}
+                        >
+                          {meta?.icon}
+                        </span>
+                        <span>{meta?.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Right Pane (Content Grid) ─────────────────────────── */}
+        <div className="flex-1 bg-[var(--color-bg)] overflow-y-auto p-6">
+          {activeTab === 'templates' && (
+            <>
               {filteredTemplates.length === 0 ? (
                 <EmptyState query={search} />
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
                   {filteredTemplates.map((template) => (
                     <TemplateCard
                       key={template.id}
@@ -236,13 +261,9 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-[var(--color-text-faint)] text-center">
-                {tr.templatesHint}
-              </p>
             </>
           )}
 
-          {/* ─── Blocks Tab ─────────────────────────────────────────── */}
           {activeTab === 'blocks' && (
             <>
               {filteredAtoms.length === 0 ? (
@@ -261,13 +282,9 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-[var(--color-text-faint)] mt-4 text-center">
-                {tr.blocksHint}
-              </p>
             </>
           )}
 
-          {/* ─── Layout Tab ────────────────────────────────────────── */}
           {activeTab === 'layout' && (
             <>
               {filteredContainers.length === 0 ? (
@@ -287,9 +304,6 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-[var(--color-text-faint)] mt-4 text-center">
-                {tr.containersHint}
-              </p>
             </>
           )}
         </div>
@@ -316,10 +330,9 @@ const TemplateCard: React.FC<{
   return (
     <button
       onClick={onAdd}
-      className="flex flex-col gap-3 p-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] hover:border-[var(--color-border)] hover:brightness-110 text-left transition-all group"
+      className="flex flex-col p-4 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] text-left transition-colors group h-full"
     >
-      {/* Lucide icon preview */}
-      <div className="w-12 h-12 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] font-semibold group-hover:border-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors">
+      <div className="w-10 h-10 rounded-sm bg-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] font-semibold mb-4 group-hover:text-[var(--color-text)] transition-colors">
         {template.icon}
       </div>
       <div className="min-w-0">
@@ -359,22 +372,10 @@ const ComponentCard: React.FC<{
   return (
     <button
       onClick={onAdd}
-      className={clsx(
-        'flex items-start gap-3 p-3 rounded-md text-left transition-all group',
-        isContainer
-          ? 'border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] hover:border-solid hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
-          : 'border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
-      )}
+      className="flex flex-col p-4 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] text-left transition-colors group h-full"
     >
-      <div
-        className={clsx(
-          'w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors',
-          isContainer
-            ? 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20'
-            : 'bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold group-hover:bg-[var(--color-text)]/20',
-        )}
-      >
-        {entry.icon ?? <Settings size={16} />}
+      <div className="w-10 h-10 rounded-sm bg-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center shrink-0 text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors mb-3">
+        {entry.icon ?? <Settings size={18} />}
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
@@ -382,7 +383,7 @@ const ComponentCard: React.FC<{
             {displayName}
           </p>
           {isContainer && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono uppercase tracking-wide shrink-0">
+            <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono uppercase tracking-wide shrink-0 border border-[var(--color-border)]">
               {tr.containerLabel}
             </span>
           )}
@@ -392,9 +393,6 @@ const ComponentCard: React.FC<{
             {description}
           </p>
         )}
-        <p className="text-[10px] text-[var(--color-text-faint)] font-mono mt-1">
-          {entry.type}
-        </p>
       </div>
     </button>
   );
@@ -407,12 +405,14 @@ const EmptyState: React.FC<{ query: string }> = ({ query }) => {
   const tr = t(language).editor.addSectionPanel;
 
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
-      <Search size={24} className="text-[var(--color-text-faint)] mb-3" />
-      <p className="text-sm text-[var(--color-text-faint)]">
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <div className="w-12 h-12 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center mb-4">
+        <Search size={20} className="text-[var(--color-text-muted)]" />
+      </div>
+      <p className="text-sm font-medium text-[var(--color-text)]">
         {tr.noResults.replace('{query}', query)}
       </p>
-      <p className="text-xs text-[var(--color-text-faint)] mt-1">
+      <p className="text-xs text-[var(--color-text-faint)] mt-2">
         {tr.tryDifferentKeyword}
       </p>
     </div>

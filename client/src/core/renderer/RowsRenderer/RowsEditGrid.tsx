@@ -7,6 +7,7 @@ import { Merge } from 'lucide-react';
 import type { LayoutSection } from "../../types/layout.types";
 import RowCellDropZone from "./RowCellDropZone";
 import RowCellSortable from './RowCellSortable';
+import { EmptySlotBlock } from '../SectionRenderer';
 
 const _RowsEditGrid: React.FC<{
     section: LayoutSection;
@@ -17,7 +18,7 @@ const _RowsEditGrid: React.FC<{
     rowSpans: number[];
     totalSpan: number;
     gridTemplate: string;
-    cells: { index: number; span: number; child: LayoutSection | null; isEmpty: boolean }[];
+    cells: { index: number; span: number; child: LayoutSection | null; emptyNode: LayoutSection | null; isEmpty: boolean }[];
     cumulativeSpans: number[];
     ALIGN_MAP: Record<string, string>;
 }> = ({
@@ -38,12 +39,13 @@ const _RowsEditGrid: React.FC<{
             (event: import('@dnd-kit/core').DragEndEvent) => {
                 const { active, over } = event;
                 if (!over || active.id === over.id) return;
-                const oldIdx = cells.findIndex((c) => c.child?.id === active.id);
-                const newIdx = cells.findIndex((c) => c.child?.id === over.id);
+                const filledCells = cells.filter((c) => c.child !== null);
+                const oldIdx = filledCells.findIndex((c) => c.child?.id === active.id);
+                const newIdx = filledCells.findIndex((c) => c.child?.id === over.id);
                 if (oldIdx === -1 || newIdx === -1) return;
-                const currentChildren = section.children ?? [];
+                const currentChildren = section.children?.filter((c) => c.type !== '_empty') ?? [];
                 const reordered = dndArrayMove(currentChildren, oldIdx, newIdx);
-                const reorderedSpans = dndArrayMove(rowSpans, oldIdx, newIdx);
+                const reorderedSpans = dndArrayMove(rowSpans.filter((_, i) => cells[i]?.child !== null), oldIdx, newIdx);
                 window.dispatchEvent(
                     new CustomEvent('cms:reorderRowCells', {
                         detail: { rowId: section.id, children: reordered, rowSpans: reorderedSpans },
@@ -95,8 +97,17 @@ const _RowsEditGrid: React.FC<{
                                 height: '100%',
                             }}
                         >
-                            {cells.map(({ index: i, child, isEmpty, span }) => {
+                            {cells.map(({ index: i, child, isEmpty, emptyNode, span }) => {
                                 if (isEmpty) {
+                                    // Use EmptySlotBlock for _empty nodes (new standard)
+                                    if (emptyNode) {
+                                        return (
+                                            <div key={emptyNode.id} style={{ width: '100%', height: '100%', minHeight: 48 * span }}>
+                                                <EmptySlotBlock section={emptyNode} variant="row" />
+                                            </div>
+                                        );
+                                    }
+                                    // Fallback: RowCellDropZone for null/legacy children
                                     return (
                                         <RowCellDropZone
                                             key={`cell-empty-${i}`}
@@ -151,7 +162,5 @@ const _RowsEditGrid: React.FC<{
             </DndContext>
         );
     };
-
-// ─── RowCellSortable ──────────────────────────────────────────────────────────
 
 export default _RowsEditGrid;

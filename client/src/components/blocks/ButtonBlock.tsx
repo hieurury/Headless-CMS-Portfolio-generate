@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, ExternalLink } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { useEditorContext } from '../../core/context/EditorContext';
 
 // ─── Shared position maps ─────────────────────────────────────────────────────
@@ -18,16 +19,14 @@ const ALIGN_ITEMS_MAP: Record<AlignY, string> = {
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
-interface ButtonBlockProps {
+export interface ButtonBlockProps {
   label?: string;
   href?: string;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'outline';
+  variant?: 'solid' | 'outline' | 'ghost';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  shape?: 'default' | 'pill' | 'square' | 'icon-only';
+  shape?: 'default' | 'square' | 'icon-only';
 
-  /** Horizontal position within the cell */
   alignX?: AlignX;
-  /** Vertical position within the cell */
   alignY?: AlignY;
   icon?: string;
   iconPosition?: 'left' | 'right';
@@ -36,29 +35,19 @@ interface ButtonBlockProps {
   textColor?: string;
   backgroundColor?: string;
   sectionId?: string;
-  /** CSS shorthand, e.g. "8px 16px" */
   margin?: string;
-  /** CSS shorthand, e.g. "8px 16px" */
   padding?: string;
   [key: string]: unknown;
 }
 
 // ─── Style Maps ───────────────────────────────────────────────────────────────
 const VARIANT_STYLES: Record<string, string> = {
-  primary:
-    'gradient-bg text-white hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105',
-  secondary:
-    'glass glass-hover text-white border border-white/10',
-  ghost:
-    'text-indigo-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10',
-  danger:
-    'bg-rose-600 hover:bg-rose-500 text-white hover:shadow-lg hover:shadow-rose-500/25',
-  success:
-    'bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25',
-  warning:
-    'bg-amber-500 hover:bg-amber-400 text-black font-semibold hover:shadow-lg hover:shadow-amber-500/25',
+  solid:
+    'bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 border border-[var(--color-text)]',
   outline:
-    'border border-indigo-500/50 text-indigo-400 hover:border-indigo-400 hover:bg-indigo-500/10',
+    'bg-transparent border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
+  ghost:
+    'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] border border-transparent',
 };
 
 const SIZE_BASE: Record<string, string> = {
@@ -70,16 +59,15 @@ const SIZE_BASE: Record<string, string> = {
 };
 
 const SHAPE_RADIUS: Record<string, string> = {
-  default: 'rounded-xl',
-  pill: 'rounded-full',
+  default: 'rounded-sm',
   square: 'rounded-none',
-  'icon-only': 'rounded-xl aspect-square p-0 flex items-center justify-center',
+  'icon-only': 'rounded-sm aspect-square p-0 flex items-center justify-center',
 };
 
 export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   label = 'Click Me',
   href = '#',
-  variant = 'primary',
+  variant = 'solid',
   size = 'md',
   shape = 'default',
   alignX = 'left',
@@ -95,8 +83,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   padding,
 }) => {
 
-
-  const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.primary;
+  const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.solid;
   const baseSize = SIZE_BASE[size] ?? SIZE_BASE.md;
   const shapeClass = SHAPE_RADIUS[shape] ?? SHAPE_RADIUS.default;
 
@@ -115,9 +102,20 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
     }
   };
 
-  const iconEl = icon ? (
+  let SelectedIcon: React.ElementType | null = null;
+  if (icon) {
+    const iconNames = Object.keys(LucideIcons);
+    const foundName = iconNames.find((k) => k.toLowerCase() === icon.toLowerCase());
+    if (foundName) {
+      SelectedIcon = (LucideIcons as any)[foundName];
+    }
+  }
+
+  const iconEl = SelectedIcon ? (
+    <SelectedIcon size={16} className="shrink-0" aria-hidden="true" />
+  ) : icon ? (
     <span aria-hidden="true">{icon}</span>
-  ) : variant === 'primary' && !isIconOnly ? (
+  ) : variant === 'solid' && !isIconOnly ? (
     <ArrowRight size={16} className="transition-transform group-hover:translate-x-1 shrink-0" />
   ) : isExternalHref && !isIconOnly ? (
     <ExternalLink size={14} className="shrink-0 opacity-70" />
@@ -125,7 +123,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
 
   const hasUrl = Boolean(href && href !== '#');
   const sharedClasses = `
-    group inline-flex items-center gap-2 font-semibold transition-all duration-300
+    group inline-flex items-center gap-2 font-medium transition-all duration-200
     ${variantClass} ${baseSize} ${shapeClass}
     ${fullWidth ? 'w-full justify-center' : ''}
   `.trim();
