@@ -8,9 +8,10 @@ import { Model } from 'mongoose';
 @Injectable()
 export class PosttypeService {
   constructor(@InjectModel(Posttype.name) private readonly posttypeModel: Model<Posttype>) { }
-  create(createPosttypeDto: CreatePosttypeDto) {
+  create(createPosttypeDto: CreatePosttypeDto, authorId: string) {
+
     const slug = this.createSlug(createPosttypeDto.name);
-    return this.posttypeModel.create({ ...createPosttypeDto, slug });
+    return this.posttypeModel.create({ ...createPosttypeDto, slug, authorId });
   }
 
   createSlug(text: string): string {
@@ -20,19 +21,19 @@ export class PosttypeService {
       .replace(/^-|-$/g, '');
   }
 
-  findAll() {
-    return this.posttypeModel.find().exec();
+  findAll(authorId: string) {
+    return this.posttypeModel.find({ authorId }).exec();
   }
 
-  findOne(id: string) {
-    return this.posttypeModel.findById(id).exec();
+  findOne(id: string, authorId: string) {
+    return this.posttypeModel.findOne({ _id: id, authorId }).exec();
   }
 
-  update(id: string, updatePosttypeDto: UpdatePosttypeDto) {
-    return this.posttypeModel.findByIdAndUpdate(id, updatePosttypeDto, { new: true }).exec();
+  update(id: string, updatePosttypeDto: UpdatePosttypeDto, authorId: string) {
+    return this.posttypeModel.findOneAndUpdate({ _id: id, authorId }, updatePosttypeDto, { new: true }).exec();
   }
 
-  remove(id: string) {
-    return this.posttypeModel.findByIdAndDelete(id).exec();
+  remove(id: string, authorId: string) {
+    return this.posttypeModel.findOneAndDelete({ _id: id, authorId }).exec();
   }
 }
