@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
+import { getModelToken } from '@nestjs/mongoose';
 
 describe('PostsController', () => {
   let controller: PostsController;
@@ -8,7 +9,13 @@ describe('PostsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PostsController],
-      providers: [PostsService],
+      providers: [
+        PostsService,
+        {
+          provide: getModelToken('Post'),
+          useValue: {},
+        },
+      ],
     }).compile();
 
     controller = module.get<PostsController>(PostsController);
