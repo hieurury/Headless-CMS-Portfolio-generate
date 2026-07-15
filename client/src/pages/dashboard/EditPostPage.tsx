@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePostStore } from "../../store/postStore";
 import type { PostType } from "../../services/post.service";
 import { uploadService } from "../../services/post.service";
@@ -21,8 +21,8 @@ const FIELD_ICONS: Record<string, React.ReactNode> = {
 };
 
 // Image Upload Field
-interface ImageFieldProps { value: string | undefined; onChange: (url: string) => void; fieldId: string; ref: React.RefObject<HTMLDivElement> }
-const ImageField: React.FC<ImageFieldProps> = ({ value, onChange, fieldId, ref }) => {
+interface ImageFieldProps { value: string | undefined; onChange: (url: string) => void; fieldId: string; }
+const ImageField: React.FC<ImageFieldProps> = ({ value, onChange, fieldId }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +69,7 @@ const FieldInput: React.FC<FieldInputProps> = ({ field, index, value, onChange }
         </div>
       );
     case "image":
-      return <ImageField fieldId={`field-${index}`} value={value} onChange={onChange} ref={undefined} />;
+      return <ImageField fieldId={`field-${index}`} value={value} onChange={onChange} />;
     case "textarea":
       return <textarea id={`field-${index}`} value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={`Enter ${field.label}...`} rows={4} className={`${base} resize-none `} />;
     case "number":

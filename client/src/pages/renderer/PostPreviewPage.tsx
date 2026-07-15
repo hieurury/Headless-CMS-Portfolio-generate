@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePostStore } from '../../store/postStore';
-import { ArrowLeft, Loader2, Calendar, Tag, User } from 'lucide-react';
+import { ArrowLeft, Loader2, Calendar, Tag } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 
 /**

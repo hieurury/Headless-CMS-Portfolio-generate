@@ -127,7 +127,7 @@ export const CreatePostPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const postTypeId = searchParams.get("postTypeId") ?? "";
   const navigate = useNavigate();
-  const { createPost, fetchPostTypeById, currentPostType, isLoading } = usePostStore();
+  const { createPost, fetchPostTypeById, currentPostType } = usePostStore();
   const [title, setTitle] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [status, setStatus] = useState<"draft" | "published">("draft");
