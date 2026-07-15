@@ -10,6 +10,7 @@ import {
   Eye,
   EyeOff,
   Search,
+  Copy,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
@@ -17,6 +18,7 @@ import type { FieldSchema } from '../../../core/types/registry.types';
 import { ImageUploadField } from '../../../components/editor/ImageUploadField';
 import { localizeSchema } from '../../../core/utils/schemaTranslator';
 import { useUIStore } from '../../../store/uiStore';
+import { usePageStore } from '../../../store/pageStore';
 import { t } from '../../../i18n';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -93,8 +95,10 @@ const SpacingInput: React.FC<{
   onChange: (v: string) => void;
   label: string;
 }> = ({ value, onChange, label }) => {
-  const [localY, setLocalY] = useState('');
-  const [localX, setLocalX] = useState('');
+  const [top, setTop] = useState('');
+  const [right, setRight] = useState('');
+  const [bottom, setBottom] = useState('');
+  const [left, setLeft] = useState('');
 
   const formatVal = useCallback((val: string) => {
     const trimmed = val.trim();
@@ -107,50 +111,75 @@ const SpacingInput: React.FC<{
 
   React.useEffect(() => {
     const stringVal = value || '';
-    const currentDerived =
-      !localY && !localX ? '' : `${formatVal(localY)} ${formatVal(localX)}`;
-    if (stringVal !== currentDerived) {
-      const parts = stringVal.trim().split(/\s+/);
-      if (parts.length === 1 && parts[0] !== '') {
-        setLocalY(parts[0]);
-        setLocalX(parts[0]);
-      } else if (parts.length >= 2) {
-        setLocalY(parts[0]);
-        setLocalX(parts[1]);
-      } else {
-        setLocalY('');
-        setLocalX('');
-      }
+    const parts = stringVal.trim().split(/\s+/).filter(Boolean);
+    let parsedTop = '', parsedRight = '', parsedBottom = '', parsedLeft = '';
+    
+    if (parts.length === 1) {
+      parsedTop = parts[0]; parsedRight = parts[0]; parsedBottom = parts[0]; parsedLeft = parts[0];
+    } else if (parts.length === 2) {
+      parsedTop = parts[0]; parsedBottom = parts[0];
+      parsedRight = parts[1]; parsedLeft = parts[1];
+    } else if (parts.length === 3) {
+      parsedTop = parts[0];
+      parsedRight = parts[1]; parsedLeft = parts[1];
+      parsedBottom = parts[2];
+    } else if (parts.length >= 4) {
+      parsedTop = parts[0]; parsedRight = parts[1]; parsedBottom = parts[2]; parsedLeft = parts[3];
     }
-  }, [value, localY, localX, formatVal]);
 
-  const handleYChange = (newY: string) => {
-    setLocalY(newY);
-    if (!newY && !localX) onChange('');
-    else onChange(`${formatVal(newY)} ${formatVal(localX)}`);
-  };
+    if (
+      formatVal(top) !== formatVal(parsedTop) ||
+      formatVal(right) !== formatVal(parsedRight) ||
+      formatVal(bottom) !== formatVal(parsedBottom) ||
+      formatVal(left) !== formatVal(parsedLeft)
+    ) {
+      setTop(parsedTop);
+      setRight(parsedRight);
+      setBottom(parsedBottom);
+      setLeft(parsedLeft);
+    }
+  }, [value, top, right, bottom, left, formatVal]);
 
-  const handleXChange = (newX: string) => {
-    setLocalX(newX);
-    if (!localY && !newX) onChange('');
-    else onChange(`${formatVal(localY)} ${formatVal(newX)}`);
+  const triggerChange = (t: string, r: string, b: string, l: string) => {
+    if (!t && !r && !b && !l) onChange('');
+    else onChange(`${formatVal(t)} ${formatVal(r)} ${formatVal(b)} ${formatVal(l)}`);
   };
 
   return (
     <div>
       <Label>{label}</Label>
-      <div className="flex items-center gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Input
           type="text"
-          value={localX}
-          placeholder="X"
-          onChange={(e) => handleXChange(e.target.value)}
+          value={top}
+          placeholder="Top"
+          title="Top"
+          className="text-center px-1"
+          onChange={(e) => { setTop(e.target.value); triggerChange(e.target.value, right, bottom, left); }}
         />
         <Input
           type="text"
-          value={localY}
-          placeholder="Y"
-          onChange={(e) => handleYChange(e.target.value)}
+          value={right}
+          placeholder="Right"
+          title="Right"
+          className="text-center px-1"
+          onChange={(e) => { setRight(e.target.value); triggerChange(top, e.target.value, bottom, left); }}
+        />
+        <Input
+          type="text"
+          value={bottom}
+          placeholder="Bottom"
+          title="Bottom"
+          className="text-center px-1"
+          onChange={(e) => { setBottom(e.target.value); triggerChange(top, right, e.target.value, left); }}
+        />
+        <Input
+          type="text"
+          value={left}
+          placeholder="Left"
+          title="Left"
+          className="text-center px-1"
+          onChange={(e) => { setLeft(e.target.value); triggerChange(top, right, bottom, e.target.value); }}
         />
       </div>
     </div>
@@ -264,6 +293,145 @@ const IconPicker: React.FC<{
       )}
 
       {/* Click outside to close (simple overlay) */}
+      {open && (
+        <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+      )}
+    </div>
+  );
+};
+
+// ─── ColorPicker ───────────────────────────────────────────────────────────────
+
+const ColorPicker: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}> = ({ value, onChange, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const [hexInput, setHexInput] = useState(value || '');
+  const { current: page } = usePageStore();
+  
+  React.useEffect(() => {
+    setHexInput(value || '');
+  }, [value]);
+
+  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.trim();
+    if (val && !val.startsWith('#') && val.toLowerCase() !== 'transparent') {
+      val = '#' + val;
+    }
+    setHexInput(val);
+    onChange(val);
+  };
+
+  const handleCopy = () => {
+    if (value) {
+      navigator.clipboard.writeText(value);
+    }
+  };
+
+  const pageColors = page?.meta?.colors?.light || {};
+  const predefinedColors = [
+    'transparent',
+    '#ffffff',
+    '#f8fafc',
+    '#f1f5f9',
+    '#e2e8f0',
+    '#000000',
+    pageColors.primary || '#6366f1',
+    pageColors.secondary || '#8b5cf6',
+    ...(pageColors.accents || [])
+  ].filter(Boolean);
+
+  while (predefinedColors.length < 10) {
+    predefinedColors.push(['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#64748b'][predefinedColors.length - 8] || '#cccccc');
+  }
+  const finalPredefined = predefinedColors.slice(0, 10);
+
+  return (
+    <div className="relative w-full">
+      <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-strong)] transition-colors h-9">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="relative w-9 h-9 shrink-0 border-r border-[var(--color-border)] hover:bg-[var(--color-surface-3)] transition-colors"
+        >
+          {value === 'transparent' || !value ? (
+            <div className="absolute inset-0 flex items-center justify-center opacity-40">
+              <div 
+                className="w-full h-full"
+                style={{ backgroundImage: "url('data:image/svg+xml;utf8,<svg width=\"6\" height=\"6\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"3\" height=\"3\" fill=\"%23ccc\"/><rect x=\"3\" y=\"3\" width=\"3\" height=\"3\" fill=\"%23ccc\"/></svg>')" }}
+              ></div>
+            </div>
+          ) : (
+            <div
+              className="absolute inset-0 m-1.5 rounded-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/10"
+              style={{ backgroundColor: value }}
+            />
+          )}
+        </button>
+        <input
+          type="text"
+          value={hexInput}
+          placeholder={placeholder || '#...'}
+          onChange={handleHexChange}
+          className="flex-1 bg-transparent px-3 text-sm text-[var(--color-text)] focus:outline-none w-full"
+        />
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] shrink-0"
+          title="Copy Hex"
+        >
+          <Copy size={14} />
+        </button>
+      </div>
+
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 w-[200px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl p-2.5 flex flex-col gap-2.5">
+          <div className="text-[10px] font-semibold text-[var(--color-text-faint)] uppercase tracking-wider">Màu gợi ý</div>
+          <div className="grid grid-cols-5 gap-1.5">
+            {finalPredefined.map((c, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  onChange(c);
+                  setOpen(false);
+                }}
+                className="w-7 h-7 rounded-md shadow-sm border border-[var(--color-border)] hover:scale-110 transition-transform relative overflow-hidden"
+                title={c}
+              >
+                {c === 'transparent' ? (
+                  <div 
+                    className="w-full h-full relative" 
+                    style={{ backgroundImage: "url('data:image/svg+xml;utf8,<svg width=\"6\" height=\"6\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"3\" height=\"3\" fill=\"%23ccc\"/><rect x=\"3\" y=\"3\" width=\"3\" height=\"3\" fill=\"%23ccc\"/></svg>')" }}
+                  >
+                     <div className="absolute inset-0 flex items-center justify-center text-red-500 font-bold rotate-45 transform text-xs">|</div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full" style={{ backgroundColor: c }} />
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full h-7 rounded-md border border-[var(--color-border)] hover:bg-[var(--color-surface-2)] overflow-hidden transition-colors flex items-center justify-center cursor-pointer group">
+            <span className="text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors">Tùy chỉnh...</span>
+            <input
+              type="color"
+              value={value === 'transparent' ? '#000000' : (value || '#000000')}
+              onChange={(e) => {
+                const c = e.target.value;
+                setHexInput(c);
+                onChange(c);
+              }}
+              className="absolute -inset-2 w-full h-20 opacity-0 cursor-pointer z-10"
+              title="Màu tùy chỉnh"
+            />
+          </div>
+        </div>
+      )}
+
       {open && (
         <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
       )}
@@ -428,42 +596,11 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     return (
       <div>
         <Label description={schema.description}>{schema.label}</Label>
-        <div className="flex items-center rounded-md bg-black/20 border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-text-muted)] transition-colors">
-          <div className="relative w-9 h-9 shrink-0 border-r border-[var(--color-border)] bg-white/5">
-            <input
-              type="color"
-              value={(value as string) || '#000000'}
-              onChange={(e) => handleChange(e.target.value)}
-              className="absolute inset-0 w-full h-full cursor-pointer opacity-0 z-10"
-            />
-            <div
-              className="absolute inset-0 m-2 rounded-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/10"
-              style={{ backgroundColor: (value as string) || '#000000' }}
-            />
-          </div>
-          <input
-            type="text"
-            value={(value as string) ?? ''}
-            placeholder={tr.colorPlaceholder}
-            onChange={(e) => {
-              let val = e.target.value.trim();
-              if (val && !val.startsWith('#')) {
-                val = '#' + val;
-              }
-              handleChange(val);
-            }}
-            className="flex-1 bg-transparent border-0 px-3 py-2 text-[var(--color-text)] text-sm placeholder-slate-600 focus:outline-none focus:ring-0"
-          />
-          {Boolean(value) && (
-            <button
-              onClick={() => handleChange('')}
-              className="px-3 text-[var(--color-text-faint)] hover:text-red-400 text-xs transition-colors"
-              title={tr.clearColor}
-            >
-              ✕
-            </button>
-          )}
-        </div>
+        <ColorPicker
+          value={(value as string) ?? ''}
+          onChange={handleChange}
+          placeholder={tr.colorPlaceholder}
+        />
       </div>
     );
   }

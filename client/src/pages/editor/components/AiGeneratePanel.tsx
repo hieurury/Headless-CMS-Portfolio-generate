@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2, AlertCircle, Zap } from 'lucide-react';
 import { useUIStore } from '../../../store/uiStore';
+import { usePortfolioStore } from '../../../store/portfolioStore';
 import { t } from '../../../i18n';
 import { aiService } from '../../../services/ai.service';
 import type { PageLayout } from '../../../core/types/layout.types';
@@ -20,6 +21,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
 }) => {
   const { language } = useUIStore();
   const tr = t(language).editor.aiPanel;
+  const { current: portfolio } = usePortfolioStore();
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +38,21 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
     setError(null);
     setLastSectionsCount(null);
     try {
+      // Build portfolio design meta to help AI pick consistent colors/fonts
+      const portfolioMeta = portfolio?.meta
+        ? {
+            pageLayout: portfolio.meta.pageLayout,
+            colors: portfolio.meta.colors,
+            fonts: portfolio.meta.fonts,
+          }
+        : undefined;
+
       const result = await aiService.generateLayout(
         prompt,
         portfolioId,
         pageId,
         currentLayout,
+        portfolioMeta,
       );
       onLayoutGenerated(result.layout);
       setLastSectionsCount(result.sectionsGenerated);

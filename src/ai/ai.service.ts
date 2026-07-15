@@ -592,9 +592,82 @@ export class AiService {
       .filter((s): s is RawNode => s !== null);
   }
 
+  /** Builds a DESIGN SYSTEM section to inject into the AI prompt from page meta. */
+  private buildDesignSystemSection(dto: GenerateLayoutDto): string {
+    const meta = dto.pageMeta;
+    if (!meta) return '';
+
+    const lines: string[] = [
+      '═══════════════════════════════════════════════════',
+      'DESIGN SYSTEM — APPLY THESE SETTINGS TO YOUR OUTPUT',
+      '═══════════════════════════════════════════════════',
+      '',
+      'The portfolio owner has configured a custom design system. You MUST respect these settings when choosing colors and fonts for blocks:',
+      '',
+    ];
+
+    // Colors
+    if (meta.colors?.light) {
+      const l = meta.colors.light;
+      lines.push('COLOR PALETTE (Light Mode):');
+      if (l.primary) lines.push(`  - Primary color: ${l.primary}`);
+      if (l.secondary) lines.push(`  - Secondary color: ${l.secondary}`);
+      if (l.accents?.length) lines.push(`  - Accent colors: ${l.accents.join(', ')}`);
+      lines.push('');
+    }
+    if (meta.colors?.dark) {
+      const d = meta.colors.dark;
+      lines.push('COLOR PALETTE (Dark Mode):');
+      if (d.primary) lines.push(`  - Primary color: ${d.primary}`);
+      if (d.secondary) lines.push(`  - Secondary color: ${d.secondary}`);
+      if (d.accents?.length) lines.push(`  - Accent colors: ${d.accents.join(', ')}`);
+      lines.push('');
+    }
+
+    // Fonts
+    if (meta.fonts) {
+      lines.push('TYPOGRAPHY:');
+      if (meta.fonts.main) lines.push(`  - Main font family: ${meta.fonts.main}`);
+      lines.push('');
+    }
+
+    // Layout
+    if (meta.pageLayout) {
+      lines.push('PAGE LAYOUT:');
+      lines.push(`  - Layout type: ${meta.pageLayout.type}`);
+      if (meta.pageLayout.type === 'custom' && meta.pageLayout.padding) {
+        const p = meta.pageLayout.padding;
+        lines.push(`  - Custom padding: top=${p.top}px, right=${p.right}px, bottom=${p.bottom}px, left=${p.left}px`);
+      } else if (meta.pageLayout.type === 'fluid') {
+        lines.push('  - Page content is constrained with horizontal side margins (similar to a container class)');
+      } else {
+        lines.push('  - Page content spans the full frame width');
+      }
+      lines.push('');
+    }
+
+    lines.push(
+      'RULES FOR DESIGN SYSTEM:',
+      '1. Use the primary color for main CTAs, hero backgrounds, accent elements, and highlighted text.',
+      '2. Use the secondary color for secondary actions, gradients, and supporting elements.',
+      '3. Use accent colors for tags, badges, icons, and decorative elements.',
+      '4. When setting textColor or backgroundColor on blocks, prefer hex values from the palette above over generic color names.',
+      '5. Do NOT override user-specified colors — these are the brand guidelines.',
+      '',
+    );
+
+    return lines.join('\n') + '\n';
+  }
+
   /** Builds the full prompt (system context + optional modification block + user request). */
   private buildPrompt(dto: GenerateLayoutDto, isModification: boolean): string {
     let fullPrompt = `${COMPONENT_CONTEXT}\n\n`;
+
+    // Inject design system if portfolio has custom settings
+    const designSection = this.buildDesignSystemSection(dto);
+    if (designSection) {
+      fullPrompt += designSection + '\n';
+    }
 
     if (dto.currentLayout) {
       fullPrompt += `

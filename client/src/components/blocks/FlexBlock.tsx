@@ -9,6 +9,8 @@ export interface FlexBlockProps {
   children?: React.ReactNode;
   textColor?: string;
   backgroundColor?: string;
+  margin?: string;
+  padding?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -53,6 +55,8 @@ export const FlexBlock: React.FC<FlexBlockProps> = ({
   wrap = 'wrap',
   textColor,
   backgroundColor,
+  margin,
+  padding,
   children,
   sectionId,
 }) => {
@@ -69,6 +73,8 @@ export const FlexBlock: React.FC<FlexBlockProps> = ({
         width: '100%',
         backgroundColor,
         color: textColor,
+        margin: margin || undefined,
+        padding: padding || undefined,
       }}
     >
       {children}
