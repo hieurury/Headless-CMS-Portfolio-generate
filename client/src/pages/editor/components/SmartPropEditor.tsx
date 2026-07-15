@@ -330,7 +330,7 @@ const ColorPicker: React.FC<{
     }
   };
 
-  const pageColors = page?.meta?.colors?.light || {};
+  const pageColors: any = page?.meta?.colors?.light || {};
   const predefinedColors = [
     'transparent',
     '#ffffff',
@@ -958,7 +958,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
   // const entry = componentRegistry.getEntry(sectionType);
   // const schema = entry?.schema;
   const { language } = useUIStore();
-  const tr = t(language).editor.smartPropEditor;
   const translationDict = t(language);
 
   const entry = componentRegistry.getEntry(sectionType);

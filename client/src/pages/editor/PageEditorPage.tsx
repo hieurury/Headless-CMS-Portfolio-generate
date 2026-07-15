@@ -32,7 +32,6 @@ import {
   Plus,
   X,
   Settings,
-  Settings2,
   Eye,
   PenLine,
   Globe,

@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal, GripVertical } from 'lucide-react';
+import { ImageIcon, Plus, X, Merge, SplitSquareHorizontal } from 'lucide-react';
 
 
 import type { LayoutSection } from '../types/layout.types';
@@ -406,11 +406,11 @@ export const EmptySlotBlock: React.FC<{
 
   const sizeStyle: React.CSSProperties = isCompact
     ? {
-        minWidth: isHorizontalCompact ? 48 : '100%',
-        minHeight: isHorizontalCompact ? '100%' : 48,
-        width: isHorizontalCompact ? 48 : '100%',
-        flexShrink: 0,
-      }
+      minWidth: isHorizontalCompact ? 48 : '100%',
+      minHeight: isHorizontalCompact ? '100%' : 48,
+      width: isHorizontalCompact ? 48 : '100%',
+      flexShrink: 0,
+    }
     : { width: '100%', height: '100%', flexGrow: 1, minHeight: 40 };
 
   const baseClass = [
@@ -479,11 +479,10 @@ const ContainerDropZone: React.FC<{
   return (
     <div
       ref={setNodeRef}
-      className={`relative w-full transition-all duration-150 ${
-        isOver && hasEmptySlot
+      className={`relative w-full transition-all duration-150 ${isOver && hasEmptySlot
           ? 'bg-white/5 ring-1 ring-inset ring-[var(--color-border-hover)] rounded-lg'
           : ''
-      }`}
+        }`}
       style={{ minHeight: hasChildren ? undefined : 48 }}
     >
       <SortableContext
