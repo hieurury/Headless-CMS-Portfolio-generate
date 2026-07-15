@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PosttypeController } from './posttype.controller';
 import { PosttypeService } from './posttype.service';
+import { getModelToken } from '@nestjs/mongoose';
 
 describe('PosttypeController', () => {
   let controller: PosttypeController;
@@ -8,7 +9,13 @@ describe('PosttypeController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PosttypeController],
-      providers: [PosttypeService],
+      providers: [
+        PosttypeService,
+        {
+          provide: getModelToken('Posttype'),
+          useValue: {},
+        },
+      ],
     }).compile();
 
     controller = module.get<PosttypeController>(PosttypeController);
