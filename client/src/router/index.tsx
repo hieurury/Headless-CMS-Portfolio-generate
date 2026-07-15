@@ -10,7 +10,10 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { PortfolioDetailPage } from '../pages/dashboard/PortfolioDetailPage';
+import { CreatePostPage } from '../pages/dashboard/CreatePostPage';
+import { EditPostPage } from '../pages/dashboard/EditPostPage';
 import { PortfolioPreviewPage } from '../pages/renderer/PortfolioPreviewPage';
+import { PostPreviewPage } from '../pages/renderer/PostPreviewPage';
 import { PageEditorPage } from '../pages/editor/PageEditorPage';
 import { PublicPortfolioPage } from '../pages/public/PublicPortfolioPage';
 import { PublicPortfolioHubPage } from '../pages/public/PublicPortfolioHubPage';
@@ -72,7 +75,16 @@ const router = createBrowserRouter([
         path: '/dashboard/portfolios/:portfolioId/pages/:pageId/edit',
         element: <PageEditorPage />,
       },
+      {
+        path: '/dashboard/portfolios/:portfolioId/posts/new',
+        element: <CreatePostPage />,
+      },
+      {
+        path: '/dashboard/portfolios/:portfolioId/posts/:postId/edit',
+        element: <EditPostPage />,
+      },
       { path: '/preview/:portfolioId/:pageId', element: <PortfolioPreviewPage /> },
+      { path: '/preview-post/:portfolioId/:postId', element: <PostPreviewPage /> },
     ],
   },
 

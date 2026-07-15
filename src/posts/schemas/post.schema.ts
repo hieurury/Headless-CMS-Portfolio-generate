@@ -23,7 +23,8 @@ export class Post extends Document {
     authorId: string;
 
     // Ảnh bìa đại diện của bài viết
-
+    @Prop()
+    coverImage: string;
 
     // LƯU NỘI DUNG (Content / Layout): Dùng kiểu Mixed để lưu cục JSON linh hoạt
     @Prop({ type: MongooseSchema.Types.Mixed, required: true })
