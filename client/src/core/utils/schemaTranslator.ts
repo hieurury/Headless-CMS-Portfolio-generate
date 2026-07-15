@@ -1,5 +1,4 @@
 import type { FieldSchema } from '../types/registry.types';
-import type { Language } from '../../i18n';
 
 // Mapping: componentType.fieldKey → translation path
 const SCHEMA_TRANSLATION_MAP: Record<string, Record<string, string>> = {
