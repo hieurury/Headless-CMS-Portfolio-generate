@@ -264,10 +264,10 @@ const ActionBtn: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, color, onClick }) => {
   const colorMap = {
-    indigo: 'hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:text-indigo-300 border-[var(--color-border)]',
-    rose: 'hover:bg-rose-500/20 hover:text-rose-300 border-rose-500/20',
-    red: 'hover:bg-red-500/20 hover:text-red-300 border-red-500/20',
-    slate: 'hover:bg-[var(--color-surface-2)] hover:brightness-110 hover:text-[var(--color-text)] border-[var(--color-border)]',
+    indigo: 'hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] border-[var(--color-border)]',
+    rose:   'hover:bg-red-500/15 hover:text-red-300 border-red-500/20',
+    red:    'hover:bg-red-500/20 hover:text-red-300 border-red-500/20',
+    slate:  'hover:bg-[var(--color-surface-2)] hover:brightness-110 hover:text-[var(--color-text)] border-[var(--color-border)]',
   };
   return (
     <button

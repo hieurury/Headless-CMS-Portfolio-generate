@@ -130,7 +130,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
           onClick={() => isEditorMode && !previewMode && inputRef.current?.click()}
           className={`
             w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed 
-            ${isDragging ? 'border-indigo-400 bg-indigo-500/10' : 'border-white/15 bg-white/3 hover:border-indigo-400/60 hover:bg-white/5'}
+            ${isDragging ? 'border-white/30 bg-white/6' : 'border-white/15 bg-white/3 hover:border-white/25 hover:bg-white/5'}
             ${radiusClass} transition-all
             ${isEditorMode && !previewMode ? 'cursor-pointer' : ''}
           `}
@@ -139,7 +139,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
             minHeight: '120px',
           }}
         >
-          <ImageIcon size={32} className={isDragging ? 'text-indigo-400' : 'text-white/20'} />
+          <ImageIcon size={32} className={isDragging ? 'text-white/40' : 'text-white/20'} />
           {errorMsg ? (
             <p className="text-xs text-red-400 font-medium">{errorMsg}</p>
           ) : (

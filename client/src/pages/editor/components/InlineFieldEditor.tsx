@@ -314,7 +314,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
         top: position.top,
         left: position.left,
         background: 'rgba(10, 10, 20, 0.96)',
-        border: '1px solid rgba(99,102,241,0.3)',
+        border: '1px solid rgba(255,255,255,0.12)',
         backdropFilter: 'blur(20px)',
       }}
     >

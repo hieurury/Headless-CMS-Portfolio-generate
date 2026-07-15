@@ -1,33 +1,7 @@
 @import "tailwindcss";
 
 @layer base {
-  :root {
-    /* Dark Theme (Default) */
-    --color-bg: #0c0c0c;
-    --color-surface: #161616;
-    --color-surface-2: #1e1e1e;
-    --color-border: rgba(255, 255, 255, 0.07);
-    --color-border-hover: rgba(255, 255, 255, 0.14);
-    --color-accent: #e8e8e8;
-    --color-accent-2: #ffffff;
-    --color-text: #e4e4e4;
-    --color-text-muted: #888888;
-    --color-text-faint: #444444;
-  }
-
-  .theme-light {
-    /* Light Theme */
-    --color-bg: #f8f8f8;
-    --color-surface: #ffffff;
-    --color-surface-2: #f5f5f5;
-    --color-border: rgba(0, 0, 0, 0.07);
-    --color-border-hover: rgba(0, 0, 0, 0.14);
-    --color-accent: #1a1a1a;
-    --color-accent-2: #000000;
-    --color-text: #1a1a1a;
-    --color-text-muted: #666666;
-    --color-text-faint: #aaaaaa;
-  }
+  /* Color tokens & typography are defined in theme.css */
 
   *, *::before, *::after {
     box-sizing: border-box;
@@ -54,8 +28,8 @@
 
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--color-surface); }
-  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
 }
 
 @layer utilities {
@@ -122,8 +96,8 @@
   /* ─── Grid pattern overlay ───────────────────────────────── */
   .grid-pattern {
     background-image:
-      linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 

@@ -133,11 +133,11 @@ const _RowsEditGrid: React.FC<{
                                         }}
                                         className="
                                         w-6 h-6 rounded-full
-                                            bg-[#1a1a2e] border border-indigo-500/60
+                                            bg-[var(--color-surface)] border border-[var(--color-border-hover)]
                                             flex items-center justify-center
-                                            text-indigo-400 hover:text-white
-                                            hover:bg-indigo-600 hover:border-indigo-400
-                                            hover:shadow-lg hover:shadow-indigo-500/30
+                                            text-[var(--color-text-muted)] hover:text-[var(--color-text)]
+                                            hover:bg-[var(--color-surface-2)] hover:border-[var(--color-border-strong)]
+                                            hover:shadow-lg hover:shadow-black/20
                                             transition-all duration-150 cursor-pointer
                                         "
                                     >

@@ -126,7 +126,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
           </div>
           {/* Pending badge */}
           {pendingUpload && (
-            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-500/90 text-[10px] font-semibold text-black">
+            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[var(--color-surface-3)] border border-[var(--color-border-hover)] text-[10px] font-semibold text-[var(--color-text-muted)]">
               Not uploaded yet
             </div>
           )}
@@ -142,8 +142,8 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
             relative flex flex-col items-center justify-center gap-2 w-full h-32 rounded-lg cursor-pointer
             border-2 border-dashed transition-all
             ${isDragging
-              ? 'border-indigo-400 bg-indigo-500/10'
-              : 'border-[var(--color-border)] hover:border-indigo-400/60 hover:bg-white/3'
+              ? 'border-[var(--color-border-strong)] bg-[var(--color-surface-2)]'
+              : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)] hover:bg-white/3'
             }
           `}
         >
@@ -170,7 +170,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
 
       {/* ── Status badge ── */}
       {pendingUpload && (
-        <div className="flex items-center justify-center py-2 rounded-md bg-indigo-500/10 text-white text-sm font-semibold border border-indigo-500/20">
+        <div className="flex items-center justify-center py-2 rounded-md bg-[var(--color-surface-2)] text-[var(--color-text-muted)] text-sm font-semibold border border-[var(--color-border)]">
           Will upload on Save
         </div>
       )}

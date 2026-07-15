@@ -37,7 +37,7 @@ const RowsEditorWrapper: React.FC<{
             ref={setNodeRef} style={dragStyle}
             id={section.name || section.id}
             {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
-            className={`relative cms-block cms-container-block select-none touch-none${isDragging ? ' shadow-2xl shadow-indigo-500/20' : ''
+            className={`relative cms-block cms-container-block select-none touch-none${isDragging ? ' shadow-2xl shadow-black/30' : ''
                 }${isSelected ? ' z-10' : ''}`}
             onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
             onContextMenu={(e) => {
@@ -52,7 +52,7 @@ const RowsEditorWrapper: React.FC<{
         >
             {/* Selection ring */}
             <div
-                className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-indigo-500 z-20' : ''
+                className={`absolute inset-0 pointer-events-none rounded-sm transition-all duration-100 ${isSelected ? 'ring-2 ring-inset ring-[rgba(255,255,255,0.4)] z-20' : ''
                     }`}
             />
 
@@ -60,7 +60,7 @@ const RowsEditorWrapper: React.FC<{
             {!isSelected && (
                 <div
                     className="cms-hover-ring absolute inset-0 pointer-events-none rounded-sm z-10"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(129,140,248,0.35)', opacity: 0, transition: 'opacity 0.1s' }}
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.15)', opacity: 0, transition: 'opacity 0.1s' }}
                 />
             )}
             <RowsGridRenderer section={section} depth={depth} />

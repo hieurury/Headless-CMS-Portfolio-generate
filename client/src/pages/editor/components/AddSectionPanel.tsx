@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { X, Search, Box, LayoutDashboard, Settings, Wand2 } from 'lucide-react';
 import { useUIStore } from '../../../store/uiStore';
 import { t } from '../../../i18n';
@@ -42,24 +42,28 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
     (e) => e.isContainer && !e.isInternal,
   );
 
-  const filterEntries = (entries: RegistryEntry[]) => {
-    if (!search.trim()) return entries;
-    const q = search.toLowerCase();
-    return entries.filter(
-      (e) =>
-        e.displayName.toLowerCase().includes(q) ||
-        e.type.toLowerCase().includes(q) ||
-        e.description?.toLowerCase().includes(q),
-    );
-  };
+  const filterEntries = useCallback(
+    (entries: RegistryEntry[], qRaw: string) => {
+      const q = qRaw?.trim();
+      if (!q) return entries;
+      const qq = q.toLowerCase();
+      return entries.filter(
+        (e) =>
+          e.displayName.toLowerCase().includes(qq) ||
+          e.type.toLowerCase().includes(qq) ||
+          e.description?.toLowerCase().includes(qq),
+      );
+    },
+    [],
+  );
 
   const filteredAtoms = useMemo(
-    () => filterEntries(atomEntries),
-    [atomEntries, search],
+    () => filterEntries(atomEntries, search),
+    [atomEntries, search, filterEntries],
   );
   const filteredContainers = useMemo(
-    () => filterEntries(containerEntries),
-    [containerEntries, search],
+    () => filterEntries(containerEntries, search),
+    [containerEntries, search, filterEntries],
   );
 
   // Template filtering
@@ -245,7 +249,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                 <EmptyState query={search} />
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {filteredAtoms.map((entry) => (
+                  {filteredAtoms.map((entry: RegistryEntry) => (
                     <ComponentCard
                       key={entry.type}
                       entry={entry}
@@ -270,7 +274,7 @@ export const AddSectionPanel: React.FC<AddSectionPanelProps> = ({
                 <EmptyState query={search} />
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {filteredContainers.map((entry) => (
+                  {filteredContainers.map((entry: RegistryEntry) => (
                     <ComponentCard
                       key={entry.type}
                       entry={entry}
@@ -300,7 +304,15 @@ const TemplateCard: React.FC<{
   template: TemplateEntry;
   onAdd: () => void;
 }> = ({ template, onAdd }) => {
+  const { language } = useUIStore();
+  const tr = t(language).editor.addSectionPanel;
   const meta = TEMPLATE_CATEGORIES.find((c) => c.id === template.category);
+  const templateMap = tr.templateEntries as
+    | Record<string, { name: string; description: string }>
+    | undefined;
+  const displayName = templateMap?.[template.id]?.name ?? template.name;
+  const description =
+    templateMap?.[template.id]?.description ?? template.description;
   return (
     <button
       onClick={onAdd}
@@ -313,14 +325,14 @@ const TemplateCard: React.FC<{
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
           <p className="text-sm font-semibold text-[var(--color-text)] truncate">
-            {template.name}
+            {displayName}
           </p>
           <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono shrink-0">
             {meta?.icon} {meta?.label}
           </span>
         </div>
         <p className="text-[11px] text-[var(--color-text-faint)] leading-snug line-clamp-2">
-          {template.description}
+          {description}
         </p>
       </div>
     </button>
@@ -336,6 +348,13 @@ const ComponentCard: React.FC<{
 }> = ({ entry, onAdd, isContainer }) => {
   const { language } = useUIStore();
   const tr = t(language).editor.addSectionPanel;
+
+  const componentMap = tr.componentEntries as
+    | Record<string, { name: string; description: string }>
+    | undefined;
+  const entryTr = componentMap?.[entry.type];
+  const displayName = entryTr?.name ?? entry.displayName;
+  const description = entryTr?.description ?? entry.description;
 
   return (
     <button
@@ -360,7 +379,7 @@ const ComponentCard: React.FC<{
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-medium text-[var(--color-text)] truncate">
-            {entry.displayName}
+            {displayName}
           </p>
           {isContainer && (
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-text)]/10 text-[var(--color-text)] font-semibold font-mono uppercase tracking-wide shrink-0">
@@ -368,12 +387,12 @@ const ComponentCard: React.FC<{
             </span>
           )}
         </div>
-        {entry.description && (
+        {description && (
           <p className="text-[11px] text-[var(--color-text-faint)] mt-0.5 leading-snug line-clamp-2">
-            {entry.description}
+            {description}
           </p>
         )}
-        <p className="text-[10px] text-slate-700 font-mono mt-1">
+        <p className="text-[10px] text-[var(--color-text-faint)] font-mono mt-1">
           {entry.type}
         </p>
       </div>
@@ -389,7 +408,7 @@ const EmptyState: React.FC<{ query: string }> = ({ query }) => {
 
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center">
-      <Search size={24} className="text-slate-700 mb-3" />
+      <Search size={24} className="text-[var(--color-text-faint)] mb-3" />
       <p className="text-sm text-[var(--color-text-faint)]">
         {tr.noResults.replace('{query}', query)}
       </p>

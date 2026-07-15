@@ -262,7 +262,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
             style={{
               opacity: 0.92,
               borderRadius: 12,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(99,102,241,0.5)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(255,255,255,0.2)',
               pointerEvents: 'none',
               transform: 'scale(1.02)',
               transformOrigin: 'top left',

@@ -119,7 +119,7 @@ export const SeoSettingsPanel: React.FC = () => {
         {/* AI CONTEXT SECTION */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-[var(--color-text)] flex items-center gap-2">
-            <Sparkles size={14} className="text-indigo-400" /> AI Optimization
+            <Sparkles size={14} className="text-[var(--color-text-muted)]" /> AI Optimization
             (GEO)
           </h3>
           <p className="text-xs text-[var(--color-text-faint)] leading-relaxed">

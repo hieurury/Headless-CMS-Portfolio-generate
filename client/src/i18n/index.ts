@@ -233,16 +233,91 @@ export const translations = {
         searchBlocks: 'Search blocks...',
         searchLayout: 'Search layout containers...',
         all: 'All',
-        templates: 'Templates',
+        templates: 'Patterns', // sửa
         blocks: 'Blocks',
-        layout: 'Layout',
+        layout: 'Layouts',
         templatesHint:
           'Templates are pre-built layout trees — every element inside is directly editable',
         blocksHint:
           'Atomic blocks — combine them inside Layout containers for complex designs',
         containersHint:
           'Containers — hold and arrange blocks. Nest freely: Card inside Columns, Rows of Buttons...',
-        containerLabel: 'container',
+        containerLabel: 'CONTAINER',
+        // Mapping entries for templates (by template id) and components (by entry.type)
+        templateEntries: {
+          'navbar-default': {
+            name: 'Navbar',
+            description: 'Sticky navigation bar with logo and links',
+          },
+          'image-card': {
+            name: 'Image Card',
+            description: 'A feature card with an image and descriptive content',
+          },
+        },
+        componentEntries: {
+          'nav-bar-wrapper': {
+            name: 'Navbar Wrapper',
+            description:
+              'Sticky navbar container. Drop Columns(2) inside → left: Logo. right: NavGroup with Links + Button.',
+          },
+          columns: {
+            name: 'Columns',
+            description:
+              'Split into N side-by-side columns — each column holds one block directly',
+          },
+          rows: {
+            name: 'Rows',
+            description: 'Split into N rows',
+          },
+          flex: {
+            name: 'Flex',
+            description:
+              'Flexible container — children auto-size to content. Perfect for button groups, icon rows, tags, and any layout where items should not be forced into equal-width cells.',
+          },
+          container: {
+            name: 'Container',
+            description:
+              'Full-size position wrapper — places one block at any of 9 positions within the cell using separate X/Y controls',
+          },
+          heading: {
+            name: 'Heading',
+            description:
+              'A title or heading text with size, weight, and color options',
+          },
+          link: {
+            name: 'Link',
+            description:
+              'A single hyperlink — nav style, inline, underline, or pill. Atomic unit for navigation and text links.',
+          },
+          button: {
+            name: 'Button',
+            description: 'A call-to-action button with customizable style',
+          },
+          icon: {
+            name: 'Icon',
+            description:
+              'A Lucide icon with optional background shape and accent color. Atomic — use inside cards, feature rows, or headings.',
+          },
+          image: {
+            name: 'Image',
+            description:
+              'An image block with customizable aspect ratio, fit, and rounded corners',
+          },
+          description: {
+            name: 'Description',
+            description:
+              'A block of text suitable for paragraphs, descriptions, or body copy',
+          },
+          badge: {
+            name: 'Badge',
+            description:
+              'A small tag or badge used to highlight status, tags, or features',
+          },
+          table: {
+            name: 'Table',
+            description: 'A data table with rows and columns',
+          },
+        },
         noResults: 'No results for "{query}"',
         tryDifferentKeyword: 'Try a different keyword',
       },
@@ -296,6 +371,7 @@ export const translations = {
         align: 'Alignment',
         fontSize: 'Font Size',
         fontWeight: 'Font Weight',
+        gradientEffect: 'Gradient Effect',
       },
       link: {
         linkText: 'Link Text',
@@ -303,6 +379,9 @@ export const translations = {
         openInNewTab: 'Open in New Tab',
         underline: 'Underline',
         hoverColor: 'Hover Color',
+        style: 'Link Style',
+        size: 'Link Size',
+        showArrowIcon: 'Show Arrow / External Icon',
       },
       button: {
         buttonText: 'Button Text',
@@ -311,6 +390,9 @@ export const translations = {
         url: 'URL / Anchor',
         variant: 'Button Style',
         size: 'Button Size',
+        shape: 'Button Shape',
+        iconPosition: 'Icon Position',
+        fullWidth: 'Full Width',
       },
       image: {
         imageUrl: 'Image URL',
@@ -319,6 +401,7 @@ export const translations = {
         width: 'Width',
         height: 'Height',
         objectFit: 'Object Fit',
+        aspectRatio: 'Aspect Ratio',
       },
       description: {
         descriptionText: 'Description Text',
@@ -336,11 +419,17 @@ export const translations = {
       },
       table: {
         tableData: 'Table Data (JSON)',
+        headerBgColor: 'Header Background Color',
+        borderColor: 'Border Color',
+        striped: 'Striped Rows',
+        bordered: 'Bordered',
       },
       icon: {
         iconName: 'Icon Name',
         size: 'Size',
         color: 'Color',
+        bgShape: 'Background Shape',
+        accentColor: 'Accent Color',
       },
     },
   },
@@ -574,7 +663,7 @@ export const translations = {
         searchBlocks: 'Tìm kiếm block...',
         searchLayout: 'Tìm kiếm bố cục...',
         all: 'Tất cả',
-        templates: 'Mẫu',
+        templates: 'Mẫu', // sửa
         blocks: 'Block',
         layout: 'Bố cục',
         templatesHint:
@@ -583,7 +672,85 @@ export const translations = {
           'Block atomic — kết hợp chúng bên trong các container Layout để thiết kế phức tạp',
         containersHint:
           'Container — chứa và sắp xếp block. Lồng tự do: Card trong Columns, Rows của Buttons...',
-        containerLabel: 'container',
+        containerLabel: 'CONTAINER',
+        // Mapping entries for templates (by template id) and components (by entry.type)
+        templateEntries: {
+          'navbar-default': {
+            name: 'Thanh điều hướng',
+            description:
+              'Thanh điều hướng cố định tích hợp logo và các liên kết',
+          },
+          'image-card': {
+            name: 'Thẻ hình ảnh',
+            description:
+              'Thẻ tính năng bao gồm một hình ảnh và nội dung mô tả đi kèm',
+          },
+        },
+        componentEntries: {
+          'nav-bar-wrapper': {
+            name: 'Khung thanh điều hướng',
+            description:
+              'Khung chứa thanh điều hướng cố định. Thả các Cột (2) vào bên trong, bên trái: Logo....',
+          },
+          columns: {
+            name: 'Chia cột',
+            description:
+              'Chia thành N cột song song cạnh nhau, mỗi cột chứa một khối block...',
+          },
+          rows: {
+            name: 'Chia hàng',
+            description: 'Chia thành N hàng dọc xếp chồng lên nhau',
+          },
+          flex: {
+            name: 'Khung linh hoạt (Flex)',
+            description:
+              'Khung chứa linh hoạt — các phần tử con tự động điều chỉnh kích thước theo nội dung. Hoàn hảo cho nút bấm...',
+          },
+          container: {
+            name: 'Khung chứa',
+            description:
+              'Khung bao vị trí kích thước đầy đủ — đặt một khối tại bất kỳ vị trí nào trong 9 vị trí với...',
+          },
+          heading: {
+            name: 'Tiêu đề',
+            description:
+              'Đoạn văn bản tiêu đề với các tùy chọn về kích thước, độ đậm và màu sắc',
+          },
+          link: {
+            name: 'Liên kết',
+            description:
+              'Một đường dẫn liên kết đơn lẻ — kiểu điều hướng, nội dòng, gạch chân hoặc dạng hạt đậu. Đơn vị cơ bản cho...',
+          },
+          button: {
+            name: 'Nút bấm',
+            description:
+              'Nút kêu gọi hành động với phong cách có thể tùy chỉnh linh hoạt',
+          },
+          icon: {
+            name: 'Biểu tượng',
+            description:
+              'Một biểu tượng Lucide với tùy chọn hình nền và màu sắc điểm nhấn...',
+          },
+          image: {
+            name: 'Hình ảnh',
+            description:
+              'Khối hình ảnh với các tùy chọn tùy chỉnh tỷ lệ khung hình, chế độ hiển thị và bo góc',
+          },
+          description: {
+            name: 'Đoạn văn mô tả',
+            description:
+              'Một khối văn bản phù hợp cho các đoạn văn, mô tả hoặc nội dung chính...',
+          },
+          badge: {
+            name: 'Nhãn / Thẻ phụ',
+            description:
+              'Một thẻ nhỏ hoặc nhãn dùng để làm nổi bật trạng thái, từ khóa hoặc các tính năng',
+          },
+          table: {
+            name: 'Bảng dữ liệu',
+            description: 'Bảng dữ liệu cấu trúc dạng các hàng và các cột',
+          },
+        },
         noResults: 'Không tìm thấy kết quả cho "{query}"',
         tryDifferentKeyword: 'Thử từ khóa khác',
       },
@@ -606,8 +773,8 @@ export const translations = {
       common: {
         textColor: 'Màu chữ',
         backgroundColor: 'Màu nền',
-        margin: 'Căn lề ngoài',
-        padding: 'Khoảng đệm trong',
+        margin: 'Căn lề ngoài (Margin)',
+        padding: 'Khoảng đệm trong (Padding)',
         borderRadius: 'Bán kính bo góc',
         alignment: 'Căn chỉnh',
         alignmentX: 'Căn ngang (X)',
@@ -634,9 +801,10 @@ export const translations = {
       heading: {
         text: 'Văn bản tiêu đề',
         level: 'Cấp độ tiêu đề (H1-H6)',
-        align: 'Căn chỉnh',
+        align: 'Căn chỉnh chữ',
         fontSize: 'Kích thước chữ',
         fontWeight: 'Độ đậm chữ',
+        gradientEffect: 'Hiệu ứng màu Gradient',
       },
       link: {
         linkText: 'Chữ hiển thị liên kết',
@@ -644,6 +812,9 @@ export const translations = {
         openInNewTab: 'Mở trong tab mới',
         underline: 'Gạch chân',
         hoverColor: 'Màu sắc khi di chuột (Hover)',
+        style: 'Kiểu dáng liên kết',
+        size: 'Kích thước liên kết',
+        showArrowIcon: 'Hiển thị mũi tên / Biểu tượng ngoài',
       },
       button: {
         buttonText: 'Chữ trên nút bấm',
@@ -652,6 +823,9 @@ export const translations = {
         url: 'Đường dẫn / Neo trang',
         variant: 'Kiểu dáng nút',
         size: 'Kích thước nút',
+        shape: 'Hình dáng nút',
+        iconPosition: 'Vị trí biểu tượng',
+        fullWidth: 'Chiều rộng tối đa (100%)',
       },
       image: {
         imageUrl: 'Đường dẫn ảnh (URL)',
@@ -660,6 +834,7 @@ export const translations = {
         width: 'Chiều rộng',
         height: 'Chiều cao',
         objectFit: 'Chế độ thu phóng ảnh (Object Fit)',
+        aspectRatio: 'Tỷ lệ khung hình (Aspect Ratio)',
       },
       description: {
         descriptionText: 'Văn bản mô tả',
@@ -677,11 +852,17 @@ export const translations = {
       },
       table: {
         tableData: 'Dữ liệu bảng cấu trúc (JSON)',
+        headerBgColor: 'Màu nền tiêu đề bảng',
+        borderColor: 'Màu sắc đường viền',
+        striped: 'Dòng kẻ sọc xen kẽ',
+        bordered: 'Hiển thị đầy đủ đường viền',
       },
       icon: {
         iconName: 'Tên biểu tượng',
         size: 'Kích thước',
         color: 'Màu sắc',
+        bgShape: 'Hình dáng nền biểu tượng',
+        accentColor: 'Màu sắc điểm nhấn',
       },
     },
   },

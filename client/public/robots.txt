@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Disallow private/admin routes
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /preview/
+Disallow: /login
+Disallow: /register
+
+# Allow public portfolio pages
+Allow: /p/
+Allow: /explore
+
+Sitemap: https://cms.hieurury.id.vn/sitemap.xml

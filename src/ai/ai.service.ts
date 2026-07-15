@@ -417,7 +417,7 @@ function cleanProps(type: string, rawProps: Record<string, unknown>): Record<str
 
 /** Builds a minimal, invisible spacer block used to pad out columns/rows that came back short. */
 function emptySpacer(): RawNode {
-  return { type: 'container', name: '', props: {}, children: [] };
+  return { id: genId(), type: 'container', name: '', props: {}, children: [] };
 }
 
 /**
@@ -449,6 +449,7 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
       // Don't silently drop content — wrap the extras into a single "rows" block.
       children = [
         {
+          id: genId(),
           type: 'rows',
           name: '',
           props: { rows: String(children.length), gap: 'md' },
@@ -480,7 +481,7 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
   // 'any' (flex) — no enforcement needed.
 
   return {
-    id: genId(),
+    id: (node.id && typeof node.id === 'string') ? node.id : genId(),
     type: node.type,
     name: node.name ?? '',
     props: cleanedProps,
@@ -646,8 +647,8 @@ ANTI-PATTERNS (things you must NEVER do in modification mode):
     }
 
     fullPrompt += `[USER REQUEST]\n${dto.prompt}\n\nAnalyze the user's request carefully. ${isModification
-        ? 'Apply the SURGICAL modification described above. Copy all unchanged sections exactly as they appear in CURRENT LAYOUT.'
-        : 'Be highly creative and avoid generic templates unless specifically requested. Generate a complete, unique, and content-rich portfolio page layout.'
+      ? 'Apply the SURGICAL modification described above. Copy all unchanged sections exactly as they appear in CURRENT LAYOUT.'
+      : 'Be highly creative and avoid generic templates unless specifically requested. Generate a complete, unique, and content-rich portfolio page layout.'
       } Output ONLY valid JSON: { "sections": [ ... ] }`;
 
     if (dto.currentLayout) {

@@ -9,11 +9,11 @@ import { t } from '../../../i18n';
 import clsx from 'clsx';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  navigation: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
-  layout: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
-  content: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-  form: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-  media: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
+  navigation: 'text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border-[var(--color-border)]',
+  layout:     'text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border-[var(--color-border)]',
+  content:    'text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border-[var(--color-border)]',
+  form:       'text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border-[var(--color-border)]',
+  media:      'text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border-[var(--color-border)]',
   block:
     'bg-[var(--color-accent)] text-[var(--color-bg)] font-semibold border-[var(--color-border)]',
 };
@@ -78,7 +78,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       <button
         {...attributes}
         {...listeners}
-        className="p-1 text-slate-700 hover:text-[var(--color-text-muted)] cursor-grab active:cursor-grabbing shrink-0 touch-none"
+        className="p-1 text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)] cursor-grab active:cursor-grabbing shrink-0 touch-none"
         onClick={(e) => e.stopPropagation()}
         title={tr.dragToReorder}
       >

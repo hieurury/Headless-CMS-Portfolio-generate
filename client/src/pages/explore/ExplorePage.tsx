@@ -26,8 +26,29 @@ export const ExplorePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // ── SEO meta for /explore ──────────────────────────────────────────
+  useEffect(() => {
+    document.title = 'Khám phá Portfolio — Ruryfo CMS';
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) {
+      desc.setAttribute('content', 'Khám phá các portfolio cá nhân được xây dựng trên Ruryfo CMS. Tìm kiếm và xem portfolio của mọi người trên nền tảng HieuRury.');
+    }
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = 'https://cms.hieurury.id.vn/explore';
+
+    return () => {
+      document.title = 'Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động bởi HieuRury';
+    };
+  }, []);
+
   const load = useCallback(async (q: string, pg: number) => {
     setIsLoading(true);
+
     try {
       // Exclude own portfolios if authenticated
       const res = await publicService.listAll(
@@ -202,7 +223,7 @@ export const ExplorePage: React.FC = () => {
                     >
                       <Folder size={20} className="text-[var(--color-text)]" />
                     </div>
-                    <span className="flex items-center gap-1 text-xs text-emerald-500 font-medium">
+                    <span className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] font-medium">
                       <Globe size={11} /> Live
                     </span>
                   </div>

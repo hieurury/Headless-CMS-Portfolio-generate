@@ -39,8 +39,8 @@ const RowCellDropZone: React.FC<{
         group relative select-none cursor-pointer
         flex items-center justify-center transition-all duration-150
         ${isOver
-                    ? 'bg-indigo-500/15 text-indigo-400 shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.7)]'
-                    : 'bg-white/2 text-slate-700 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-indigo-400 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.3)]'
+                    ? 'bg-[var(--color-surface-3)] text-[var(--color-text-muted)] shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.2)]'
+                    : 'bg-white/2 text-[var(--color-text-faint)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-white/4 hover:text-[var(--color-text-muted)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]'
                 }
       `}
         >
@@ -59,10 +59,10 @@ const RowCellDropZone: React.FC<{
                     className="
                         absolute top-1 right-1
                         w-5 h-5 rounded
-                        bg-[#1a1a2e] border border-violet-500/50
+                        bg-[var(--color-surface)] border border-[var(--color-border-hover)]
                         flex items-center justify-center
-                        text-violet-400 hover:text-white
-                        hover:bg-violet-600 hover:border-violet-400
+                        text-[var(--color-text-muted)] hover:text-[var(--color-text)]
+                        hover:bg-[var(--color-surface-2)] hover:border-[var(--color-border-strong)]
                         transition-all duration-150 opacity-0 group-hover:opacity-100
                       "
                 >
