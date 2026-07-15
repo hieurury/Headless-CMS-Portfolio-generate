@@ -69,7 +69,7 @@ const FieldInput: React.FC<FieldInputProps> = ({ field, index, value, onChange }
         </div>
       );
     case "image":
-      return <ImageField fieldId={`field-${index}`} value={value} onChange={onChange} ref={undefined} />;
+      return <ImageField fieldId={`field-${index}`} value={value} onChange={onChange} />;
     case "textarea":
       return <textarea id={`field-${index}`} value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={`Enter ${field.label}...`} rows={4} className={`${base} resize-none `} />;
     case "number":

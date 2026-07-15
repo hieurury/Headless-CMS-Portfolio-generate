@@ -1,5 +1,22 @@
 import { IsString, MinLength, MaxLength, IsOptional } from 'class-validator';
 
+export interface PageDesignMeta {
+  /** Page layout type: full-width or constrained-with-margin */
+  pageLayout?: {
+    type: 'normal' | 'fluid' | 'custom';
+    padding?: { top: string; right: string; bottom: string; left: string };
+  };
+  /** Color palettes for light and dark modes */
+  colors?: {
+    light?: { primary: string; secondary: string; accents: string[] };
+    dark?: { primary: string; secondary: string; accents: string[] };
+  };
+  /** Font family settings */
+  fonts?: {
+    main: string;
+  };
+}
+
 export class GenerateLayoutDto {
   @IsString()
   @MinLength(10, { message: 'Prompt must be at least 10 characters' })
@@ -15,4 +32,11 @@ export class GenerateLayoutDto {
 
   @IsOptional()
   currentLayout?: { sections: unknown[] };
+
+  /**
+   * Optional per-page design system context.
+   * When present, the AI will use these colors and fonts when generating/modifying layout.
+   */
+  @IsOptional()
+  pageMeta?: PageDesignMeta;
 }

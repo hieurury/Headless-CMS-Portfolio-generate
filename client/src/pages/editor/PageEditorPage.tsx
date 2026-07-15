@@ -16,6 +16,7 @@ import { AiGeneratePanel } from './components/AiGeneratePanel';
 import { SeoSettingsPanel } from './components/SeoSettingsPanel';
 import { EmptyCanvasPrompt } from './components/EmptyCanvasPrompt';
 import { BlockContextMenu } from './components/BlockContextMenu';
+import { PageSettingsModal } from './components/PageSettingsModal';
 import type { ContextMenuState } from './components/BlockContextMenu';
 import type { LayoutSection, PageLayout } from '../../core/types/layout.types';
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
@@ -31,6 +32,7 @@ import {
   Plus,
   X,
   Settings,
+  Settings2,
   Eye,
   PenLine,
   Globe,
@@ -139,6 +141,9 @@ export const PageEditorPage: React.FC = () => {
   // ── Context Menu state ──────────────────────────────────────────────
   const [contextMenuState, setContextMenuState] = useState<ContextMenuState | null>(null);
 
+  // ── Page Settings Modal state ───────────────────────────────────────
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   const { language, toggleLanguage } = useUIStore();
   const tr = t(language).editor;
 
@@ -169,8 +174,11 @@ export const PageEditorPage: React.FC = () => {
   const history = editorState.past;
   const future = editorState.future;
 
+  const initializedPageId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (page) {
+    if (page && initializedPageId.current !== page._id) {
+      initializedPageId.current = page._id;
       const layout = page.layout ?? { sections: [] };
       setEditorState({
         past: [],
@@ -1248,18 +1256,6 @@ export const PageEditorPage: React.FC = () => {
     setLeftTab('sections');
   };
 
-  const handleTogglePageVisibility = async () => {
-    if (!portfolioId || !pageId) return;
-    try {
-      const resp = await PageService.updatePage(portfolioId, pageId, {
-        isPublished: !page?.isPublished,
-      });
-      setPage(resp);
-    } catch (error) {
-      console.error('Failed to toggle page visibility:', error);
-    }
-  };
-
   // ── Selection from preview ─────────────────────────────────────────
   const handleSectionSelect = useCallback((id: string | null) => {
     setSelectedId(id);
@@ -1567,6 +1563,16 @@ export const PageEditorPage: React.FC = () => {
                         : tr.topbar.save}
                 </span>
               </button>
+
+              {/* Settings Button */}
+              <button
+                id="editor-page-settings-btn"
+                onClick={() => setShowSettingsModal(true)}
+                title={tr.topbar.pageSettings}
+                className="w-8 h-8 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0"
+              >
+                <Settings size={16} />
+              </button>
             </header>
 
             {/* ── Editor Body: Left + Canvas + Right ─────────────────── */}
@@ -1701,6 +1707,11 @@ export const PageEditorPage: React.FC = () => {
 
                 <div
                   className={`flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}
+                  style={{
+                    fontFamily: page?.meta?.fonts?.main ? `'${page.meta.fonts.main}', sans-serif` : "'Inter', sans-serif",
+                    '--color-primary': page?.meta?.colors?.light?.primary,
+                    '--color-secondary': page?.meta?.colors?.light?.secondary,
+                  } as React.CSSProperties}
                 >
                   {draftLayout.sections.length === 0 ? (
                     <EmptyCanvasPrompt
@@ -1712,7 +1723,20 @@ export const PageEditorPage: React.FC = () => {
                       pageId={pageId!}
                     />
                   ) : (
-                    <PageRenderer layout={draftLayout} />
+                    <div 
+                      className={clsx(
+                        'w-full min-h-full transition-all duration-300',
+                        page?.meta?.pageLayout?.type === 'fluid' && 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
+                      )}
+                      style={{
+                        paddingTop: page?.meta?.pageLayout?.type === 'custom' ? `${page.meta.pageLayout.padding?.top}px` : undefined,
+                        paddingBottom: page?.meta?.pageLayout?.type === 'custom' ? `${page.meta.pageLayout.padding?.bottom}px` : undefined,
+                        paddingLeft: page?.meta?.pageLayout?.type === 'custom' ? `${page.meta.pageLayout.padding?.left}px` : undefined,
+                        paddingRight: page?.meta?.pageLayout?.type === 'custom' ? `${page.meta.pageLayout.padding?.right}px` : undefined,
+                      }}
+                    >
+                      <PageRenderer layout={draftLayout} />
+                    </div>
                   )}
                 </div>
               </main>
@@ -1935,6 +1959,16 @@ export const PageEditorPage: React.FC = () => {
         </div>
 
       </div>{/* end outer grid */}
+
+      {/* Page Settings Modal */}
+      {portfolioId && (
+        <PageSettingsModal
+          portfolioId={portfolioId!}
+          pageId={pageId!}
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+        />
+      )}
     </>
   );
 };

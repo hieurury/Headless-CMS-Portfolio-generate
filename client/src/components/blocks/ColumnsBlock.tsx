@@ -12,6 +12,8 @@ export interface ColumnsBlockProps {
   children?: React.ReactNode;
   textColor?: string;
   backgroundColor?: string;
+  margin?: string;
+  padding?: string;
   sectionId?: string;
   [key: string]: unknown;
 }
@@ -48,6 +50,8 @@ export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
   alignY = 'stretch',
   textColor,
   backgroundColor,
+  margin,
+  padding,
   children,
   sectionId,
 }) => {
@@ -73,6 +77,8 @@ export const ColumnsBlock: React.FC<ColumnsBlockProps> = ({
         width: '100%',
         backgroundColor: backgroundColor,
         color: textColor,
+        margin: margin || undefined,
+        padding: padding || undefined,
       }}
     >
       {children}

@@ -21,6 +21,10 @@ export interface RowsBlockProps {
     gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
     alignX?: 'start' | 'center' | 'end' | 'stretch';
     alignY?: 'start' | 'center' | 'end' | 'stretch';
+    textColor?: string;
+    backgroundColor?: string;
+    margin?: string;
+    padding?: string;
     children?: React.ReactNode;
     sectionId?: string;
     [key: string]: unknown;
@@ -32,6 +36,10 @@ export const RowsBlock: React.FC<RowsBlockProps> = ({
     gap,
     alignX = 'stretch',
     alignY = 'stretch',
+    textColor,
+    backgroundColor,
+    margin,
+    padding,
     children,
     sectionId
 }: RowsBlockProps) => {
@@ -54,6 +62,10 @@ export const RowsBlock: React.FC<RowsBlockProps> = ({
                 justifyItems: ALIGN_MAP[alignX as string] ?? 'stretch',
                 alignItems: ALIGN_MAP[alignY as string] ?? 'stretch',
                 width: '100%',
+                backgroundColor: backgroundColor,
+                color: textColor,
+                margin: margin || undefined,
+                padding: padding || undefined,
             }}
         >
             {children}

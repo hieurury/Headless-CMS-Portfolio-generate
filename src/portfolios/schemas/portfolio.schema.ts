@@ -31,15 +31,83 @@ export class AioMeta {
   socialLinks?: string[];
 }
 
-export class PortfolioMeta {
-  @Prop({ default: 'default' })
-  theme: string;
+/**
+ * Color scheme for light or dark mode.
+ * primary & secondary are the 2 main colors.
+ * accents is an array of up to 5 accent colors.
+ */
+export class ColorScheme {
+  @Prop({ default: '#6366f1' })
+  primary: string;
 
+  @Prop({ default: '#8b5cf6' })
+  secondary: string;
+
+  @Prop({ type: [String], default: [] })
+  accents: string[];
+}
+
+/**
+ * Colors config — separate palettes for light and dark modes.
+ */
+export class PortfolioColors {
+  @Prop({ type: ColorScheme, default: () => ({ primary: '#6366f1', secondary: '#8b5cf6', accents: [] }) })
+  light: ColorScheme;
+
+  @Prop({ type: ColorScheme, default: () => ({ primary: '#818cf8', secondary: '#a78bfa', accents: [] }) })
+  dark: ColorScheme;
+}
+
+/**
+ * Font settings — a single main font for the system.
+ */
+export class PortfolioFonts {
+  @Prop({ default: 'Inter' })
+  main: string;
+}
+
+/**
+ * Custom padding settings for the page layout (px values as strings).
+ */
+export class PageLayoutPadding {
+  @Prop({ default: '0' })
+  top: string;
+
+  @Prop({ default: '24' })
+  right: string;
+
+  @Prop({ default: '0' })
+  bottom: string;
+
+  @Prop({ default: '24' })
+  left: string;
+}
+
+/**
+ * Page layout / margin settings.
+ * - normal: page takes full frame width (no horizontal margin)
+ * - fluid: page is constrained with side margins (similar to Bootstrap container-fluid)
+ * - custom: user-defined padding on all 4 sides
+ */
+export class PageLayoutSettings {
+  @Prop({ default: 'normal', enum: ['normal', 'fluid', 'custom'] })
+  type: 'normal' | 'fluid' | 'custom';
+
+  @Prop({ type: PageLayoutPadding, default: () => ({ top: '0', right: '24', bottom: '0', left: '24' }) })
+  padding: PageLayoutPadding;
+}
+
+export class PortfolioMeta {
+  /** @deprecated Use colors.light.primary instead. Kept for backward compatibility. */
   @Prop({ default: '#6366f1' })
   primaryColor: string;
 
+  /** @deprecated Use fonts.heading + fonts.body instead. Kept for backward compatibility. */
   @Prop({ default: 'Inter' })
   fontFamily: string;
+
+  @Prop({ default: 'default' })
+  theme: string;
 
   @Prop()
   icon?: string;
@@ -49,6 +117,30 @@ export class PortfolioMeta {
 
   @Prop({ type: AioMeta, default: () => ({}) })
   aio?: AioMeta;
+
+  /** Page layout / margin settings */
+  @Prop({
+    type: PageLayoutSettings,
+    default: () => ({ type: 'normal', padding: { top: '0', right: '24', bottom: '0', left: '24' } }),
+  })
+  pageLayout: PageLayoutSettings;
+
+  /** Color palettes for light and dark modes */
+  @Prop({
+    type: PortfolioColors,
+    default: () => ({
+      light: { primary: '#6366f1', secondary: '#8b5cf6', accents: [] },
+      dark: { primary: '#818cf8', secondary: '#a78bfa', accents: [] },
+    }),
+  })
+  colors: PortfolioColors;
+
+  /** Font family settings */
+  @Prop({
+    type: PortfolioFonts,
+    default: () => ({ main: 'Inter' }),
+  })
+  fonts: PortfolioFonts;
 }
 
 @Schema({ timestamps: true })

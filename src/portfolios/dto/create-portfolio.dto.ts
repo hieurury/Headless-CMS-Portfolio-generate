@@ -7,6 +7,8 @@ import {
   Matches,
   ValidateNested,
   IsHexColor,
+  IsIn,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -46,6 +48,68 @@ export class AioMetaDto {
   socialLinks?: string[];
 }
 
+export class ColorSchemeDto {
+  @IsOptional()
+  @IsString()
+  primary?: string;
+
+  @IsOptional()
+  @IsString()
+  secondary?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  accents?: string[];
+}
+
+export class PortfolioColorsDto {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ColorSchemeDto)
+  light?: ColorSchemeDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ColorSchemeDto)
+  dark?: ColorSchemeDto;
+}
+
+export class PortfolioFontsDto {
+  @IsOptional()
+  @IsString()
+  main?: string;
+}
+
+export class PageLayoutPaddingDto {
+  @IsOptional()
+  @IsString()
+  top?: string;
+
+  @IsOptional()
+  @IsString()
+  right?: string;
+
+  @IsOptional()
+  @IsString()
+  bottom?: string;
+
+  @IsOptional()
+  @IsString()
+  left?: string;
+}
+
+export class PageLayoutSettingsDto {
+  @IsOptional()
+  @IsIn(['normal', 'fluid', 'custom'])
+  type?: 'normal' | 'fluid' | 'custom';
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PageLayoutPaddingDto)
+  padding?: PageLayoutPaddingDto;
+}
+
 export class PortfolioMetaDto {
   @IsOptional()
   @IsString()
@@ -72,6 +136,24 @@ export class PortfolioMetaDto {
   @ValidateNested()
   @Type(() => AioMetaDto)
   aio?: AioMetaDto;
+
+  /** Page layout / margin settings */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PageLayoutSettingsDto)
+  pageLayout?: PageLayoutSettingsDto;
+
+  /** Color palettes for light and dark modes */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PortfolioColorsDto)
+  colors?: PortfolioColorsDto;
+
+  /** Font family settings */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PortfolioFontsDto)
+  fonts?: PortfolioFontsDto;
 }
 
 export class CreatePortfolioDto {

@@ -31,14 +31,93 @@ export interface AioMeta {
   socialLinks?: string[];
 }
 
+// ─── Design System Types ──────────────────────────────────────────────────────
+
+/** A color palette for light or dark mode */
+export interface ColorScheme {
+  primary: string;
+  secondary: string;
+  accents: string[];
+}
+
+/** Combined color palettes for both modes */
+export interface PortfolioColors {
+  light: ColorScheme;
+  dark: ColorScheme;
+}
+
+/** Font settings: a single font for the entire system */
+export interface PortfolioFonts {
+  main: string;
+}
+
+/** Page layout margin/padding settings */
+export interface PageLayoutPadding {
+  top: string;
+  right: string;
+  bottom: string;
+  left: string;
+}
+
+export interface PageLayoutSettings {
+  type: 'normal' | 'fluid' | 'custom';
+  padding: PageLayoutPadding;
+}
+
 export interface PortfolioMeta {
-  theme?: string;
+  /** @deprecated Use colors.light.primary */
   primaryColor?: string;
+  /** @deprecated Use fonts.heading or fonts.body */
   fontFamily?: string;
+  theme?: string;
   icon?: string;
   seo?: SeoMeta;
   aio?: AioMeta;
+  /** Page layout / margin settings */
+  pageLayout?: PageLayoutSettings;
+  /** Color palettes for light and dark modes */
+  colors?: PortfolioColors;
+  /** Font family settings */
+  fonts?: PortfolioFonts;
 }
+
+// ─── Design System Constants ──────────────────────────────────────────────────
+
+/** Available Google Fonts */
+export const AVAILABLE_FONTS = [
+  'Inter',
+  'Roboto',
+  'Poppins',
+  'Lato',
+  'Outfit',
+  'Nunito',
+  'Raleway',
+  'Open Sans',
+  'Source Sans Pro',
+  'DM Sans',
+  'Playfair Display',
+  'Merriweather',
+  'Lora',
+  'EB Garamond',
+  'Source Code Pro',
+] as const;
+
+export type AvailableFont = typeof AVAILABLE_FONTS[number];
+
+/** Default design settings for a new portfolio */
+export const DEFAULT_PORTFOLIO_SETTINGS: Required<Pick<PortfolioMeta, 'pageLayout' | 'colors' | 'fonts'>> = {
+  pageLayout: {
+    type: 'normal',
+    padding: { top: '0', right: '24', bottom: '0', left: '24' },
+  },
+  colors: {
+    light: { primary: '#6366f1', secondary: '#8b5cf6', accents: [] },
+    dark: { primary: '#818cf8', secondary: '#a78bfa', accents: [] },
+  },
+  fonts: {
+    main: 'Inter',
+  },
+};
 
 export interface Portfolio {
   _id: string;
@@ -53,6 +132,16 @@ export interface Portfolio {
   updatedAt: string;
 }
 
+export interface PageMeta {
+  icon?: string;
+  /** Page layout / margin settings */
+  pageLayout?: PageLayoutSettings;
+  /** Color palettes for light and dark modes */
+  colors?: PortfolioColors;
+  /** Font family settings */
+  fonts?: PortfolioFonts;
+}
+
 export interface Page {
   _id: string;
   portfolio: string;
@@ -60,7 +149,7 @@ export interface Page {
   slug: string;
   order: number;
   isPublished: boolean;
-  meta?: { icon?: string };
+  meta?: PageMeta;
   layout: PageLayout;
   createdAt: string;
   updatedAt: string;

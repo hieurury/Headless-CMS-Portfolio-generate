@@ -110,6 +110,8 @@ componentRegistry.register({
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
     columns: { type: 'number', label: 'Number of Columns', min: 1, max: 12 },
     gap: { type: 'select', label: 'Column Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
@@ -135,6 +137,10 @@ componentRegistry.register({
     alignY: 'stretch',
   },
   schema: {
+    textColor: { type: 'color', label: 'Text Color' },
+    backgroundColor: { type: 'color', label: 'Background Color' },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
     rows: { type: 'number', label: 'Number of Rows', min: 1, max: 12 },
     gap: { type: 'select', label: 'Row Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     alignX: { type: 'select', label: 'Horizontal Align (X)', options: ['start', 'center', 'end', 'stretch'] },
@@ -161,6 +167,8 @@ componentRegistry.register({
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
     backgroundColor: { type: 'color', label: 'Background Color' },
+    margin: { type: 'spacing', label: 'Margin', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
+    padding: { type: 'spacing', label: 'Padding', placeholder: '0', description: 'CSS shorthand — e.g. 8px 16px' },
     direction: { type: 'select', label: 'Direction', options: ['row', 'column', 'row-reverse', 'column-reverse'] },
     gap: { type: 'select', label: 'Gap', options: ['none', 'sm', 'md', 'lg', 'xl'] },
     justify: { type: 'select', label: 'Justify (main axis)', options: ['start', 'center', 'end', 'between', 'around', 'evenly'] },
