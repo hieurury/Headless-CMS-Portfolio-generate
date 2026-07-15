@@ -27,7 +27,7 @@ interface PostStore {
   reset: () => void;
 }
 
-export const usePostStore = create<PostStore>((set, get) => ({
+export const usePostStore = create<PostStore>((set) => ({
   posts: [],
   postTypes: [],
   currentPostType: null,
