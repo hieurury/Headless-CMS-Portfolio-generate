@@ -73,6 +73,8 @@ componentRegistry.register({
     background: 'dark',
     alignX: 'center',
     alignY: 'middle',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -106,6 +108,10 @@ componentRegistry.register({
     gap: 'md',
     alignX: 'stretch',
     alignY: 'stretch',
+    margin: '',
+    padding: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -135,6 +141,10 @@ componentRegistry.register({
     gap: 'md',
     alignX: 'stretch',
     alignY: 'stretch',
+    margin: '',
+    padding: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -163,6 +173,10 @@ componentRegistry.register({
     justify: 'start',
     align: 'center',
     wrap: 'wrap',
+    margin: '',
+    padding: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -202,6 +216,8 @@ componentRegistry.register({
     maxWidth: 'none',
     alignX: 'center',
     alignY: 'middle',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -251,6 +267,8 @@ componentRegistry.register({
     alignX: 'left',
     alignY: 'middle',
     gradient: false,
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -286,6 +304,8 @@ componentRegistry.register({
     external: false,
     margin: '',
     padding: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -323,6 +343,10 @@ componentRegistry.register({
     iconPosition: 'right',
     margin: '',
     padding: '',
+    fullWidth: false,
+    external: false,
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -359,6 +383,9 @@ componentRegistry.register({
     alignY: 'middle',
     margin: '',
     padding: '',
+    color: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -390,6 +417,8 @@ componentRegistry.register({
     borderRadius: 'md',
     alignX: 'center',
     alignY: 'middle',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -420,6 +449,8 @@ componentRegistry.register({
     alignY: 'middle',
     margin: '',
     padding: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -451,6 +482,8 @@ componentRegistry.register({
     alignY: 'middle',
     margin: '',
     padding: '',
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },
@@ -486,6 +519,8 @@ componentRegistry.register({
     alignY: 'middle',
     striped: true,
     bordered: true,
+    textColor: '',
+    backgroundColor: '',
   },
   schema: {
     textColor: { type: 'color', label: 'Text Color' },

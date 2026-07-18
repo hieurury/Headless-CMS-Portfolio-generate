@@ -815,7 +815,10 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
   // ── Preview / Production render (no editor chrome) ───────────────────────
   if (!effectiveEditorMode || effectivePreviewMode) {
     return (
-      <div id={section.name || section.id}>
+      <div
+        id={section.name || section.id}
+        style={{ width: '100%', height: '100%', minWidth: 0 }}
+      >
         <Component {...(section.props as Record<string, unknown>)} sectionId={section.name || section.id}>
           {renderedChildren}
         </Component>
