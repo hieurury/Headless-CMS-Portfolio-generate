@@ -14,6 +14,8 @@ interface AuthState {
 
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -30,14 +32,25 @@ export const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, accessToken } = await authService.login({ email, password });
+          const { user, accessToken } = await authService.login({
+            email,
+            password,
+          });
           localStorage.setItem('cms_token', accessToken);
-          set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
+          set({
+            user,
+            token: accessToken,
+            isAuthenticated: true,
+            isLoading: false,
+          });
         } catch (err: unknown) {
           const message =
-            (err as { response?: { data?: { message?: string } } })
-              ?.response?.data?.message ?? 'Login failed';
-          set({ error: Array.isArray(message) ? message[0] : message, isLoading: false });
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ?? 'Login failed';
+          set({
+            error: Array.isArray(message) ? message[0] : message,
+            isLoading: false,
+          });
           throw err;
         }
       },
@@ -45,14 +58,60 @@ export const useAuthStore = create<AuthState>()(
       register: async (email, password, name) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, accessToken } = await authService.register({ email, password, name });
+          const { user, accessToken } = await authService.register({
+            email,
+            password,
+            name,
+          });
           localStorage.setItem('cms_token', accessToken);
-          set({ user, token: accessToken, isAuthenticated: true, isLoading: false });
+          set({
+            user,
+            token: accessToken,
+            isAuthenticated: true,
+            isLoading: false,
+          });
         } catch (err: unknown) {
           const message =
-            (err as { response?: { data?: { message?: string } } })
-              ?.response?.data?.message ?? 'Registration failed';
-          set({ error: Array.isArray(message) ? message[0] : message, isLoading: false });
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ?? 'Registration failed';
+          set({
+            error: Array.isArray(message) ? message[0] : message,
+            isLoading: false,
+          });
+          throw err;
+        }
+      },
+
+      forgotPassword: async (email) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authService.forgotPassword({ email });
+          set({ isLoading: false });
+        } catch (err: unknown) {
+          const message =
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ?? 'Request failed';
+          set({
+            error: Array.isArray(message) ? message[0] : message,
+            isLoading: false,
+          });
+          throw err;
+        }
+      },
+
+      resetPassword: async (token, password) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authService.resetPassword({ token, password });
+          set({ isLoading: false });
+        } catch (err: unknown) {
+          const message =
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ?? 'Reset failed';
+          set({
+            error: Array.isArray(message) ? message[0] : message,
+            isLoading: false,
+          });
           throw err;
         }
       },

@@ -8,6 +8,9 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
+import { VerifyEmailPage } from '../pages/auth/VerifyEmailPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { PortfolioDetailPage } from '../pages/dashboard/PortfolioDetailPage';
 import { CreatePostPage } from '../pages/dashboard/CreatePostPage';
@@ -47,6 +50,9 @@ const router = createBrowserRouter([
     element: <PublicRoute />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+      { path: '/verify-email', element: <VerifyEmailPage /> },
       { path: '/register', element: <RegisterPage /> },
     ],
   },
@@ -70,7 +76,10 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/dashboard/portfolios/:portfolioId', element: <PortfolioDetailPage /> },
+      {
+        path: '/dashboard/portfolios/:portfolioId',
+        element: <PortfolioDetailPage />,
+      },
       {
         path: '/dashboard/portfolios/:portfolioId/pages/:pageId/edit',
         element: <PageEditorPage />,
@@ -83,8 +92,14 @@ const router = createBrowserRouter([
         path: '/dashboard/portfolios/:portfolioId/posts/:postId/edit',
         element: <EditPostPage />,
       },
-      { path: '/preview/:portfolioId/:pageId', element: <PortfolioPreviewPage /> },
-      { path: '/preview-post/:portfolioId/:postId', element: <PostPreviewPage /> },
+      {
+        path: '/preview/:portfolioId/:pageId',
+        element: <PortfolioPreviewPage />,
+      },
+      {
+        path: '/preview-post/:portfolioId/:postId',
+        element: <PostPreviewPage />,
+      },
     ],
   },
 

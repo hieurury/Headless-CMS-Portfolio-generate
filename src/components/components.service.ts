@@ -55,7 +55,7 @@ export class ComponentsService implements OnModuleInit {
         .findOneAndUpdate(
           { type: component.type },
           { $setOnInsert: component },
-          { upsert: true, new: false },
+          { upsert: true, returnDocument: 'before' },
         )
         .exec();
       if (!result) seeded++;
@@ -70,7 +70,6 @@ export class ComponentsService implements OnModuleInit {
     }
   }
 
-
   async findAll(): Promise<ComponentDocument[]> {
     return this.componentModel.find().sort({ category: 1, name: 1 }).exec();
   }
@@ -80,9 +79,7 @@ export class ComponentsService implements OnModuleInit {
       .findOne({ type: type.toLowerCase() })
       .exec();
     if (!component) {
-      throw new NotFoundException(
-        `Component type "${type}" is not registered`,
-      );
+      throw new NotFoundException(`Component type "${type}" is not registered`);
     }
     return component;
   }

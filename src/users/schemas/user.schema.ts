@@ -13,6 +13,21 @@ export class User {
 
   @Prop({ required: true, trim: true })
   name: string;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop()
+  verifyEmailTokenHash?: string;
+
+  @Prop()
+  verifyEmailExpires?: Date;
+
+  @Prop()
+  resetPasswordTokenHash?: string;
+
+  @Prop()
+  resetPasswordExpires?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -45,7 +45,7 @@ export class PostsService {
 
   async update(id: string, updatePostDto: UpdatePostDto): Promise<Post> {
     const post = await this.postModel
-      .findByIdAndUpdate(id, updatePostDto, { new: true })
+      .findByIdAndUpdate(id, updatePostDto, { returnDocument: 'after' })
       .exec();
     if (!post) throw new NotFoundException(`Post #${id} not found`);
     return post;
