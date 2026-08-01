@@ -8,10 +8,13 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { PortfolioDetailPage } from '../pages/dashboard/PortfolioDetailPage';
 import { CreatePostPage } from '../pages/dashboard/CreatePostPage';
 import { EditPostPage } from '../pages/dashboard/EditPostPage';
+import { MediaGalleryPage } from '../pages/dashboard/MediaGalleryPage';
 import { PortfolioPreviewPage } from '../pages/renderer/PortfolioPreviewPage';
 import { PostPreviewPage } from '../pages/renderer/PostPreviewPage';
 import { PageEditorPage } from '../pages/editor/PageEditorPage';
@@ -51,6 +54,10 @@ const router = createBrowserRouter([
     ],
   },
 
+  // ── Password reset (always public — no redirect) ─────────────────
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
+
   // ── Public routes (no auth required) ────────────────────────────
   {
     path: '/explore',
@@ -83,6 +90,7 @@ const router = createBrowserRouter([
         path: '/dashboard/portfolios/:portfolioId/posts/:postId/edit',
         element: <EditPostPage />,
       },
+      { path: '/dashboard/media', element: <MediaGalleryPage /> },
       { path: '/preview/:portfolioId/:pageId', element: <PortfolioPreviewPage /> },
       { path: '/preview-post/:portfolioId/:postId', element: <PostPreviewPage /> },
     ],

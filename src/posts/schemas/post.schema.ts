@@ -5,7 +5,8 @@ import { Document, Schema as MongooseSchema } from "mongoose";
 export enum POST_STATUS {
     DRAFT = 'draft',
     PUBLISHED = 'published',
-    ARCHIVED = 'archived'
+    ARCHIVED = 'archived',
+    SCHEDULED = 'scheduled'
 }
 
 @Schema({ timestamps: true })
@@ -50,6 +51,26 @@ export class Post extends Document {
         metaTitle: string;
         metaDescription: string;
     };
+
+    // Trích dẫn ngắn hiển thị trên Card bài viết / RSS Feed
+    @Prop({ maxlength: 500 })
+    excerpt: string;
+
+    // Thời gian xuất bản thực tế (dùng cho lên lịch bài viết)
+    @Prop()
+    publishedAt: Date;
+
+    // Đánh dấu bài viết nổi bật (ghim lên đầu trang)
+    @Prop({ default: false })
+    isFeatured: boolean;
+
+    // Số lượt xem
+    @Prop({ default: 0 })
+    viewCount: number;
+
+    // Thời gian đọc ước tính (tính bằng phút)
+    @Prop({ default: 0 })
+    readingTime: number;
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

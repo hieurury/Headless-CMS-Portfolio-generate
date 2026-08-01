@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { GenerateLayoutDto } from './dto/generate-layout.dto';
+import { ToolRegistry } from './tool-registry.service';
 
 /**
  * ════════════════════════════════════════════════════════════════════════
@@ -495,7 +496,7 @@ export class AiService {
   private readonly openai: OpenAI;
   private readonly modelName: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly configService: ConfigService, private readonly registry: ToolRegistry) {
     const token = this.configService.get<string>('githubModels.token');
     if (!token) {
       throw new Error(
@@ -505,6 +506,7 @@ export class AiService {
     this.openai = new OpenAI({
       baseURL: 'https://models.inference.ai.azure.com',
       apiKey: token,
+
     });
     this.modelName = this.configService.get<string>('githubModels.model') ?? 'gpt-4o-mini';
     this.logger.log(`AI layout engine initialized (model: ${this.modelName})`);
@@ -520,7 +522,7 @@ export class AiService {
     try {
       this.logger.log(`Generating layout for: "${dto.prompt}"`);
 
-      let validSections = await this.callAndNormalize(basePrompt, isModification);
+      let validSections = await this.callAndNormalize(basePrompt, isModification, dto);
 
       // ── Self-repair retry ──────────────────────────────────────────
       // If the first pass produced nothing usable (bad JSON, all-unknown
@@ -529,7 +531,7 @@ export class AiService {
       if (validSections.length === 0) {
         this.logger.warn('First generation pass produced no valid blocks — retrying once');
         const retryPrompt = `${basePrompt}\n\nYOUR PREVIOUS OUTPUT WAS REJECTED because it used invalid block types or malformed JSON. Re-read the BLOCK SYSTEM list above carefully. Use ONLY the 12 listed "type" values, follow the exact child-count rules, and output strictly valid JSON: { "sections": [ ... ] }`;
-        validSections = await this.callAndNormalize(retryPrompt, isModification, 0.2);
+        validSections = await this.callAndNormalize(retryPrompt, isModification, dto, 0.2);
       }
 
       if (validSections.length === 0) {
@@ -557,10 +559,21 @@ export class AiService {
     }
   }
 
-  /** Calls the model once and runs the parsed result through normalization. Returns [] on any failure (never throws). */
+  /**
+   * Calls the model once and runs the parsed result through normalization.
+   * Returns [] on any failure (never throws).
+   *
+   * Handles two possible response shapes:
+   *  1. Tool call response — AI called `generate-layout` with a modifications list.
+   *     → We inject `currentlayout` server-side (AI doesn't know the sections array),
+   *       execute the tool, and normalize the resulting sections array.
+   *  2. Raw JSON response — AI returned { "sections": [...] } directly.
+   *     → Parse and normalize as before.
+   */
   private async callAndNormalize(
     prompt: string,
     isModification: boolean,
+    dto: GenerateLayoutDto,
     forcedTemperature?: number,
   ): Promise<unknown[]> {
     const temperature = forcedTemperature ?? (isModification ? 0.3 : 0.9);
@@ -571,14 +584,90 @@ export class AiService {
       temperature,
       max_tokens: 8192,
       response_format: { type: 'json_object' },
+      tools: this.registry.toOpenAiTools(),
     });
-    const text = result.choices[0]?.message?.content || '{}';
+
+    const message = result.choices[0]?.message;
+    const finishReason = result.choices[0]?.finish_reason;
+    this.logger.log(`Model finish_reason: ${finishReason}`);
+
+    // ── Branch 1: AI decided to call a tool ─────────────────────────────────
+    if (message?.tool_calls && message.tool_calls.length > 0) {
+      this.logger.log(
+        `Model invoked ${message.tool_calls.length} tool call(s): ` +
+        message.tool_calls
+          .map((tc) => (tc.type === 'function' ? tc.function.name : tc.type))
+          .join(', '),
+      );
+
+      // Process all tool calls sequentially. The `generate-layout` tool is
+      // idempotent per invocation, so we apply the last non-empty result.
+      let latestSections: unknown[] = [];
+
+      for (const toolCall of message.tool_calls) {
+        if (toolCall.type !== 'function') continue;
+
+        const toolName = toolCall.function.name;
+        this.logger.log(`  → Executing tool: "${toolName}"`);
+
+        let toolArgs: Record<string, unknown>;
+        try {
+          toolArgs = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
+        } catch {
+          this.logger.warn(`  → Failed to parse arguments for tool "${toolName}" — skipping`);
+          continue;
+        }
+
+        const tool = this.registry.get(toolName);
+        if (!tool) {
+          this.logger.warn(`  → Tool "${toolName}" is not registered — skipping`);
+          continue;
+        }
+
+        // Inject the real currentlayout server-side so the AI doesn't need
+        // to reproduce the entire layout JSON in its arguments.
+        if (toolName === 'generate-layout') {
+          toolArgs.currentlayout = dto.currentLayout?.sections ?? [];
+          this.logger.log(
+            `  → Injected currentlayout (${(dto.currentLayout?.sections ?? []).length} top-level sections)`,
+          );
+        }
+
+        try {
+          const toolResultString = await tool.execute(toolArgs);
+          this.logger.log(`  → Tool "${toolName}" executed successfully`);
+          const parsedResult = JSON.parse(toolResultString);
+
+          if (Array.isArray(parsedResult) && parsedResult.length > 0) {
+            latestSections = parsedResult;
+          } else {
+            this.logger.warn(`  → Tool "${toolName}" returned an empty or non-array result`);
+          }
+        } catch (error) {
+          this.logger.error(
+            `  → Tool "${toolName}" execution failed: ${(error as Error).message}`,
+          );
+        }
+      }
+
+      if (latestSections.length > 0) {
+        return latestSections
+          .map((s) => normalizeNode(s, this.logger))
+          .filter((s): s is RawNode => s !== null);
+      }
+
+      // If all tool calls failed or returned empty, fall through to raw content.
+      this.logger.warn('All tool calls produced no valid sections — falling back to raw content');
+    }
+
+    // ── Branch 2: AI returned raw JSON { "sections": [...] } ────────────────
+    const text = message?.content || '{}';
 
     let parsed: { sections: unknown[] };
     try {
       parsed = JSON.parse(text) as { sections: unknown[] };
     } catch {
-      this.logger.warn('Model returned invalid JSON');
+      this.logger.warn('Model returned invalid JSON in content field');
       return [];
     }
 
@@ -659,6 +748,33 @@ export class AiService {
     return lines.join('\n') + '\n';
   }
 
+  /**
+   * Builds a compact, token-efficient representation of the layout tree
+   * containing ONLY id, type, and name (no props, no rendered content).
+   *
+   * Purpose: Give the AI just enough context to identify which node to target
+   * by id — without blowing the token budget on props / image URLs / long text.
+   * The full layout is injected server-side when the tool executes.
+   */
+  private buildCompactLayoutMap(
+    nodes: unknown[],
+    indent = 0,
+  ): string {
+    const pad = '  '.repeat(indent);
+    return nodes
+      .map((raw) => {
+        const n = raw as { id?: string; type?: string; name?: string; props?: Record<string, unknown>; children?: unknown[] };
+        const label = n.props?.text ?? n.props?.label ?? n.name ?? '';
+        const preview = label ? ` "${String(label).slice(0, 40)}"` : '';
+        const line = `${pad}- [${n.type ?? '?'}] id="${n.id ?? '?'}"${preview}`;
+        if (n.children && n.children.length > 0) {
+          return line + '\n' + this.buildCompactLayoutMap(n.children, indent + 1);
+        }
+        return line;
+      })
+      .join('\n');
+  }
+
   /** Builds the full prompt (system context + optional modification block + user request). */
   private buildPrompt(dto: GenerateLayoutDto, isModification: boolean): string {
     let fullPrompt = `${COMPONENT_CONTEXT}\n\n`;
@@ -675,39 +791,56 @@ export class AiService {
 MODIFICATION MODE — READ ALL RULES BEFORE ACTING
 ═══════════════════════════════════════════════════
 
-CURRENT LAYOUT (the exact JSON tree currently rendered on screen):
-${JSON.stringify(dto.currentLayout, null, 2)}
+CURRENT LAYOUT NODE MAP (id + type only — use the "id" value to target nodes):
+${this.buildCompactLayoutMap(((dto.currentLayout as { sections?: unknown[] })?.sections) ?? [])}
+
+NOTE: The server holds the full layout data. You only need the node "id" when using the tool.
 
 YOUR TASK:
-The user wants a SURGICAL modification. Think of this like a code diff:
-- Identify WHICH block(s) need to change based on the user's request
-- Change ONLY those block(s) — keep everything else IDENTICAL (same props, same children, same order)
+The user wants a SURGICAL modification. You have TWO options to respond:
+
+OPTION A — Use the "generate-layout" TOOL (preferred for precise, targeted changes):
+  Call the tool with a "modifications" array. Each modification targets one node by its "id" field.
+  Available modification types:
+  - "ADD_CHILD"  → append newNode inside the target node's children list
+  - "ADD_BEFORE" → insert newNode immediately before the target node (same level)
+  - "ADD_AFTER"  → insert newNode immediately after the target node (same level)
+  - "UPDATE"     → replace the entire target node with newNode
+  - "DELETE"     → remove the target node from the tree
+  You do NOT need to reproduce the full layout — the server injects currentlayout automatically.
+  Use this option when: adding/removing/updating specific blocks, especially when the layout is large.
+
+OPTION B — Return the full updated layout as raw JSON { "sections": [...] }:
+  Copy the CURRENT LAYOUT exactly, then apply your changes inline.
+  Use this option when: the change is so widespread (e.g. complete redesign of a section) that
+  targeted patching would require more than 5 individual modifications.
+
+REGARDLESS OF WHICH OPTION YOU CHOOSE:
+- Change ONLY what the user asked — keep everything else IDENTICAL (same props, same children, same order)
 - Do NOT add new sections unless the user explicitly says "add a new section for..."
 - Do NOT remove sections unless the user explicitly says "remove..."
 - Do NOT rename, reorder, or restyle anything the user did not mention
 - Still obey every rule in BLOCK SYSTEM above (valid types, exact child counts, no children on atoms)
 
-MODIFICATION WORKFLOW (follow in order):
-Step 1 — LOCATE: Find the exact block(s) in CURRENT LAYOUT that match the user's request.
-Step 2 — PLAN: Decide in one sentence what you will change and what you will keep.
-Step 3 — BUILD: Output the full updated "sections" array. Unchanged sections must be COPIED EXACTLY (same props, same children, same structure).
+EXAMPLES FOR OPTION A (tool call):
 
-MODIFICATION EXAMPLES:
+Example A1 — "Delete the hero section" (id: "block-ai-1234")
+Tool call modifications: [
+  { "type": "DELETE", "targetId": "block-ai-1234" }
+]
 
-Example A — "Add a logo icon to the left of the navbar brand name"
-Before (left column of navbar):
-  { "type": "heading", "props": { "text": "MyPortfolio" } }
-After (left column of navbar):
-  { "type": "flex", "props": { "direction": "row", "gap": "sm", "align": "center" }, "children": [
-    { "type": "icon", "props": { "name": "Code2", "size": "md", "accent": "violet" } },
-    { "type": "heading", "props": { "text": "MyPortfolio", "size": "xl" } }
-  ]}
-→ ONLY the left column inner structure changes. Nav links, all other sections = unchanged.
+Example A2 — "Add a badge saying 'React' after the heading in block-ai-5678"
+Tool call modifications: [
+  { "type": "ADD_AFTER", "targetId": "block-ai-5678",
+    "newNode": { "type": "badge", "props": { "text": "React", "variant": "subtle", "color": "sky" } } }
+]
 
-Example B — "Change the hero heading text to 'I Build Digital Experiences'"
-Before: { "type": "heading", "props": { "text": "Hello World", "level": "h1" } }
-After:  { "type": "heading", "props": { "text": "I Build Digital Experiences", "level": "h1" } }
-→ ONLY that one heading's text changes. Props like size, gradient, alignX stay identical.
+Example A3 — "Rename heading to 'Hello World' AND delete the footer"
+Tool call modifications: [
+  { "type": "UPDATE", "targetId": "block-ai-heading-id",
+    "newNode": { "type": "heading", "props": { "text": "Hello World", "level": "h1", "size": "5xl" } } },
+  { "type": "DELETE", "targetId": "block-ai-footer-id" }
+]
 
 ANTI-PATTERNS (things you must NEVER do in modification mode):
 ❌ Inventing new nav links that weren't in the original

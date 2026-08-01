@@ -41,4 +41,10 @@ export class PostsController {
   remove(@Param('id') id: string) {
     return this.postsService.remove(id);
   }
+
+  /** Tăng viewCount khi người dùng mở bài viết */
+  @Post(':id/view')
+  incrementView(@Param('id') id: string) {
+    return this.postsService.incrementViewCount(id);
+  }
 }

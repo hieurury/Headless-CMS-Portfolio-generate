@@ -1,9 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Media, MEDIA_TYPE, MediaDocument } from './schema/media.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 @Injectable()
 export class UploadService {
@@ -11,16 +16,25 @@ export class UploadService {
     private readonly config: ConfigService,
     @InjectModel(Media.name) private readonly mediaModel: Model<MediaDocument>,
   ) {
-    const c = cloudinary.config({
+    cloudinary.config({
       cloud_name: this.config.get<string>('CLOUDINARY_CLOUD_NAME'),
       api_key: this.config.get<string>('CLOUDINARY_API_KEY'),
       api_secret: this.config.get<string>('CLOUDINARY_API_SECRET'),
     });
   }
-  async uploadImage(file: Express.Multer.File): Promise<Media> {
-    const uploaded = await this.uploadImageToCloudinary(file.buffer);
+
+  // ─── Upload ───────────────────────────────────────────────────────────────
+
+  async uploadImage(
+    file: Express.Multer.File,
+    userId: string,
+    folder = 'Uncategorized',
+  ): Promise<MediaDocument> {
+    const uploaded = await this.uploadToCloudinary(file.buffer, folder);
 
     return this.mediaModel.create({
+      userId: new Types.ObjectId(userId),
+      folder,
       url: uploaded.url,
       publicId: uploaded.publicId,
       filename: file.originalname,
@@ -29,21 +43,51 @@ export class UploadService {
       type: MEDIA_TYPE.IMAGE,
     });
   }
-  /**
-   * Upload an image buffer to Cloudinary.
-   * @param buffer  Raw file buffer from multer
-   * @param folder  Cloudinary folder (default: 'cms-portfolio')
-   */
-  async uploadImageToCloudinary(
+
+  // ─── List ─────────────────────────────────────────────────────────────────
+
+  async getMediaByUser(
+    userId: string,
+    folder?: string,
+  ): Promise<MediaDocument[]> {
+    const filter: Record<string, unknown> = { userId: new Types.ObjectId(userId) };
+    if (folder) filter.folder = folder;
+    return this.mediaModel.find(filter).sort({ createdAt: -1 }).exec();
+  }
+
+  /** Return unique folder names owned by the user */
+  async getFoldersByUser(userId: string): Promise<string[]> {
+    return this.mediaModel
+      .distinct('folder', { userId: new Types.ObjectId(userId) })
+      .exec();
+  }
+
+  // ─── Delete ───────────────────────────────────────────────────────────────
+
+  async deleteMedia(mediaId: string, userId: string): Promise<void> {
+    const media = await this.mediaModel.findById(mediaId).exec();
+    if (!media) throw new NotFoundException('Media not found');
+    if (media.userId.toString() !== userId) {
+      throw new ForbiddenException('You do not own this media');
+    }
+
+    // Remove from Cloudinary first; ignore "not found" errors gracefully
+    await cloudinary.uploader.destroy(media.publicId).catch(() => null);
+
+    await this.mediaModel.findByIdAndDelete(mediaId).exec();
+  }
+
+  // ─── Internal helpers ─────────────────────────────────────────────────────
+
+  async uploadToCloudinary(
     buffer: Buffer,
     folder = 'cms-portfolio',
   ): Promise<{ url: string; publicId: string }> {
     return new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          // folder,
+          folder,
           resource_type: 'image',
-          // Auto-detect format, strip metadata, compress automatically
           quality: 'auto',
           fetch_format: 'auto',
         },
@@ -58,4 +102,13 @@ export class UploadService {
       stream.end(buffer);
     });
   }
+
+  /** @deprecated Use uploadToCloudinary instead */
+  async uploadImageToCloudinary(
+    buffer: Buffer,
+    folder = 'cms-portfolio',
+  ): Promise<{ url: string; publicId: string }> {
+    return this.uploadToCloudinary(buffer, folder);
+  }
 }
+

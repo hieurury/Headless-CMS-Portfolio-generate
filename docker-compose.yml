@@ -37,6 +37,21 @@ services:
         max-size: '10m'
         max-file: '3'
 
+  # ─── React Client ──────────────────────────────────────────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: production
+    container_name: headless-cms-client
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    networks:
+      - cms-network
+    depends_on:
+      - api
+
 networks:
   cms-network:
     driver: bridge

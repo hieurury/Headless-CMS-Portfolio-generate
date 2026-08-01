@@ -3,11 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { usePostStore } from "../../store/postStore";
 import type { PostType } from "../../services/post.service";
 import { uploadService } from "../../services/post.service";
-import MDEditor from "@uiw/react-md-editor";
+import MyEditor from "../editor/components/BlockNote";
 import {
   ArrowLeft, Loader2, Save, ChevronRight, Tag,
   AlignLeft, Hash, Type, Link as LinkIcon, Calendar,
-  List, FileImage, Upload, X, Eye
+  List, FileImage, Upload, X, Eye, Star, Clock, AlignLeft as ExcerptIcon
 } from "lucide-react";
 const FIELD_ICONS: Record<string, React.ReactNode> = {
   text: <Type size={14} />,
@@ -65,7 +65,7 @@ const FieldInput: React.FC<FieldInputProps> = ({ field, index, value, onChange }
     case "markdown":
       return (
         <div data-color-mode="auto" className="rounded-lg overflow-hidden border border-[var(--color-border)]">
-          <MDEditor id={`field-${index}`} value={value ?? ""} onChange={(v) => onChange(v ?? "")} height={300} preview="live" />
+          <MyEditor></MyEditor>
         </div>
       );
     case "image":
@@ -117,8 +117,11 @@ export const EditPostPage: React.FC = () => {
   const { updatePost, fetchPostById, fetchPostTypeById, currentPost, currentPostType, isLoading } = usePostStore();
   const [title, setTitle] = useState("");
   const [coverImage, setCoverImage] = useState("");
-  const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
+  const [status, setStatus] = useState<"draft" | "published" | "archived" | "scheduled">("draft");
   const [tags, setTags] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [publishedAt, setPublishedAt] = useState("");
   const [customFieldsData, setCustomFieldsData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,8 +140,14 @@ export const EditPostPage: React.FC = () => {
     if (currentPost && isLoaded) {
       setTitle(currentPost.title || "");
       setCoverImage(currentPost.coverImage || "");
-      setStatus(currentPost.status || "draft");
+      setStatus((currentPost.status || "draft") as any);
       setTags(currentPost.tags?.join(", ") || "");
+      setExcerpt(currentPost.excerpt || "");
+      setIsFeatured(currentPost.isFeatured ?? false);
+      // Format ISO date to datetime-local string
+      if (currentPost.publishedAt) {
+        setPublishedAt(new Date(currentPost.publishedAt).toISOString().slice(0, 16));
+      }
       setCustomFieldsData(currentPost.customFieldsData || {});
       if (currentPost.postTypeId) {
         fetchPostTypeById(currentPost.postTypeId);
@@ -160,7 +169,17 @@ export const EditPostPage: React.FC = () => {
     if (!title.trim() || !postId) return;
     setSaving(true); setError(null);
     try {
-      await updatePost(postId, { title: title.trim(), coverImage: coverImage || undefined, customFieldsData, status, tags: tags.split(",").map((t) => t.trim()).filter(Boolean) });
+      const payload: any = {
+        title: title.trim(),
+        coverImage: coverImage || undefined,
+        customFieldsData,
+        status,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        excerpt: excerpt.trim() || undefined,
+        isFeatured,
+        publishedAt: status === "scheduled" && publishedAt ? publishedAt : undefined,
+      };
+      await updatePost(postId, payload);
       navigate(`/dashboard/portfolios/${portfolioId}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || "Failed to update post";
@@ -190,10 +209,11 @@ export const EditPostPage: React.FC = () => {
             <span className="text-[var(--color-text)] font-medium">Edit Post</span>
           </div>
           <div className="flex items-center gap-2">
-            <select value={status} onChange={(e) => setStatus(e.target.value as "draft" | "published" | "archived")} className="h-9 px-3 text-xs rounded-lg border border-[var(--color-border)] bg-transparent text-[var(--color-text)] focus:outline-none focus:border-[var(--color-text)] transition-all cursor-pointer">
+            <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="h-9 px-3 text-xs rounded-lg border border-[var(--color-border)] bg-transparent text-[var(--color-text)] focus:outline-none focus:border-[var(--color-text)] transition-all cursor-pointer">
               <option value="draft">Draft</option>
-              <option value="published">Published</option>
+              <option value="published">Publish Now</option>
               <option value="archived">Archived</option>
+              <option value="scheduled">Schedule</option>
             </select>
             <button form="create-post-form" type="submit" disabled={saving || !title.trim()} className="flex items-center gap-2 h-9 px-5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm transition-all disabled:opacity-50 hover:opacity-85">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
@@ -212,10 +232,55 @@ export const EditPostPage: React.FC = () => {
       <div className="container-max mx-auto px-6 py-8">
         <form id="create-post-form" onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 bg-[var(--color-surface)] border border-[var(--color-border)] p-8 rounded-sm shadow-sm">
           {error && <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
+
+          {/* Title */}
           <div>
             <label className="flex items-center gap-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-2"><Tag size={12} /> Title</label>
             <input id="post-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Post title..." required
               className="w-full px-3 py-2.5 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-sm" />
+          </div>
+
+          {/* Excerpt */}
+          <div>
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">
+              <ExcerptIcon size={12} /> Excerpt
+              <span className="ml-auto font-normal normal-case text-[var(--color-text-faint)] text-[10px]">{excerpt.length}/500</span>
+            </label>
+            <textarea id="post-excerpt" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Short summary shown on post cards and RSS feeds..." maxLength={500} rows={2}
+              className="w-full px-3 py-2.5 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-sm resize-none" />
+          </div>
+
+          {/* Featured & Schedule */}
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+              <div
+                onClick={() => setIsFeatured(v => !v)}
+                className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+                  isFeatured ? 'bg-amber-400' : 'bg-[var(--color-border)]'
+                }`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${
+                  isFeatured ? 'left-5' : 'left-0.5'
+                }`} />
+              </div>
+              <span className="text-sm text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors flex items-center gap-1.5">
+                <Star size={13} className={isFeatured ? 'text-amber-400 fill-amber-400' : ''} /> Featured post
+              </span>
+            </label>
+
+            {status === "scheduled" && (
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <Clock size={13} className="text-[var(--color-text-muted)] shrink-0" />
+                <input
+                  id="post-publish-at"
+                  type="datetime-local"
+                  value={publishedAt}
+                  onChange={(e) => setPublishedAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="flex-1 px-3 py-2 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-text)] transition-all text-sm"
+                />
+              </div>
+            )}
           </div>
 
           {orderedFields.map((field, index) => (
