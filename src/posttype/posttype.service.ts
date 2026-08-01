@@ -7,9 +7,10 @@ import { Model } from 'mongoose';
 
 @Injectable()
 export class PosttypeService {
-  constructor(@InjectModel(Posttype.name) private readonly posttypeModel: Model<Posttype>) { }
+  constructor(
+    @InjectModel(Posttype.name) private readonly posttypeModel: Model<Posttype>,
+  ) {}
   create(createPosttypeDto: CreatePosttypeDto, authorId: string) {
-
     const slug = this.createSlug(createPosttypeDto.name);
     return this.posttypeModel.create({ ...createPosttypeDto, slug, authorId });
   }
@@ -30,7 +31,11 @@ export class PosttypeService {
   }
 
   update(id: string, updatePosttypeDto: UpdatePosttypeDto, authorId: string) {
-    return this.posttypeModel.findOneAndUpdate({ _id: id, authorId }, updatePosttypeDto, { new: true }).exec();
+    return this.posttypeModel
+      .findOneAndUpdate({ _id: id, authorId }, updatePosttypeDto, {
+        returnDocument: 'after',
+      })
+      .exec();
   }
 
   remove(id: string, authorId: string) {

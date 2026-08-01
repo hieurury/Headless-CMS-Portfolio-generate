@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   UseGuards,
+  Query,
   HttpCode,
   HttpStatus,
   UnauthorizedException,
@@ -14,8 +15,6 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.type';
@@ -28,10 +27,6 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
-  /**
-   * POST /api/v1/auth/register
-   * Register a new user account
-   */
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   register(@Body() dto: RegisterDto) {
@@ -87,23 +82,21 @@ export class AuthController {
     return { user };
   }
 
-  /**
-   * POST /api/v1/auth/forgot-password
-   * Send a password reset email
-   */
-  @Post('forgot-password')
+  @Get('verify-email')
   @HttpCode(HttpStatus.OK)
-  forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(dto);
+  verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
   }
 
-  /**
-   * POST /api/v1/auth/reset-password
-   * Verify the reset token and set a new password
-   */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+  resetPassword(@Body() body: { token: string; password: string }) {
+    return this.authService.resetPassword(body.token, body.password);
   }
 }

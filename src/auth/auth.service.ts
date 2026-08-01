@@ -13,10 +13,9 @@ import { UsersService } from '../users/users.service';
 import { MailService } from './mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtPayload } from '../common/types/jwt-payload.type';
 import { UserDocument } from '../users/schemas/user.schema';
+import { mailService } from '../common/services/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +25,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
   ) {}
+
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -70,6 +70,13 @@ export class AuthService {
 
   // ─── Public Methods ─────────────────────────────────────────────────────────
 
+  private genToken() {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  private hashToken(token: string) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
   async register(dto: RegisterDto) {
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
@@ -84,6 +91,24 @@ export class AuthService {
     });
 
     const { accessToken, refreshToken } = await this.issueTokens(user);
+
+    // send verification email (async, don't block registration)
+    try {
+      const token = this.genToken();
+      const tokenHash = this.hashToken(token);
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+      await this.usersService.setVerificationToken(
+        (user._id as unknown as string).toString(),
+        tokenHash,
+        expires,
+      );
+      const url = `${process.env.APP_URL}/verify-email?token=${token}`;
+      const html = `<p>Hi ${user.name},</p><p>Please verify your email by clicking <a href="${url}">this link</a>.</p>`;
+      await mailService.sendMail(user.email, 'Verify your email', html);
+    } catch (err) {
+      // log error but don't fail registration
+    }
+
     return { user, accessToken, refreshToken };
   }
 
@@ -129,72 +154,51 @@ export class AuthService {
     await this.usersService.updateRefreshToken(userId, null);
   }
 
-  /**
-   * Generate a secure reset token, store its hash in the DB,
-   * and email the reset link to the user.
-   *
-   * NOTE: Always returns a generic success message to prevent
-   * email-enumeration attacks.
-   */
-  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
-    const user = await this.usersService.findByEmail(dto.email);
 
-    if (user) {
-      // Generate a cryptographically secure random token
-      const rawToken = crypto.randomBytes(32).toString('hex');
-      const hashedToken = await bcrypt.hash(rawToken, 10);
-      const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-      await this.usersService.setResetToken(
-        (user._id as unknown as string).toString(),
-        hashedToken,
-        expires,
-      );
-
-      const clientUrl = this.configService.get<string>('clientUrl') ?? '';
-      const resetLink = `${clientUrl}/reset-password?token=${rawToken}`;
-      await this.mailService.sendPasswordResetEmail(user.email, resetLink);
+  async verifyEmail(token: string) {
+    const tokenHash = this.hashToken(token);
+    const user = await this.usersService.findByVerifyTokenHash(tokenHash);
+    if (!user) {
+      throw new BadRequestException('Invalid or expired token');
     }
-
-    // Generic message to avoid revealing whether the email exists
-    return {
-      message:
-        'If an account with that email exists, a reset link has been sent.',
-    };
+    user.isEmailVerified = true;
+    user.verifyEmailTokenHash = undefined;
+    user.verifyEmailExpires = undefined;
+    await user.save();
+    return { success: true };
   }
 
-  /** Verify the reset token and update the user's password */
-  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
-    // Find user whose stored (hashed) token matches AND has not expired
-    const allUsersWithToken = await this.usersService.findByResetToken(
-      dto.token,
-    );
-
-    if (!allUsersWithToken) {
-      throw new BadRequestException('Invalid or expired reset token');
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      // do not reveal existence
+      return;
     }
-
-    const user = allUsersWithToken;
-
-    // Validate incoming token against stored hash
-    const isValid = await bcrypt.compare(
-      dto.token,
-      user.resetPasswordToken ?? '',
+    const token = this.genToken();
+    const tokenHash = this.hashToken(token);
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await this.usersService.setResetPasswordToken(
+      (user._id as unknown as string).toString(),
+      tokenHash,
+      expires,
     );
-    if (!isValid) {
-      throw new BadRequestException('Invalid or expired reset token');
+    const url = `${process.env.APP_URL}/reset-password?token=${token}`;
+    const html = `<p>Hi ${user.name},</p><p>Reset your password: <a href="${url}">Click here</a></p>`;
+    await mailService.sendMail(user.email, 'Reset your password', html);
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const tokenHash = this.hashToken(token);
+    const user = await this.usersService.findByResetTokenHash(tokenHash);
+    if (!user) {
+      throw new BadRequestException('Invalid or expired token');
     }
+    const hashed = await bcrypt.hash(newPassword, 12);
+    user.password = hashed;
+    user.resetPasswordTokenHash = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    return { success: true };
 
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
-    const userId = (user._id as unknown as string).toString();
-
-    // Update password, clear reset token, and invalidate refresh tokens
-    await Promise.all([
-      this.usersService.updatePassword(userId, hashedPassword),
-      this.usersService.clearResetToken(userId),
-      this.usersService.updateRefreshToken(userId, null),
-    ]);
-
-    return { message: 'Password has been reset successfully.' };
   }
 }

@@ -18,13 +18,20 @@ export class User {
   @Prop({ type: String, default: null })
   refreshToken: string | null;
 
-  /** Secure random token for the password-reset flow */
-  @Prop({ type: String, default: null })
-  resetPasswordToken: string | null;
+  @Prop({ default: false })
+  isEmailVerified: boolean;
 
-  /** Expiry timestamp for the reset token (1-hour window) */
-  @Prop({ type: Date, default: null })
-  resetPasswordExpires: Date | null;
+  @Prop()
+  verifyEmailTokenHash?: string;
+
+  @Prop()
+  verifyEmailExpires?: Date;
+
+  @Prop()
+  resetPasswordTokenHash?: string;
+
+  @Prop()
+  resetPasswordExpires?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -35,8 +42,10 @@ UserSchema.set('toJSON', {
   transform: (_doc: any, ret: any) => {
     delete ret.password;
     delete ret.refreshToken;
-    delete ret.resetPasswordToken;
+    delete ret.resetPasswordTokenHash;
     delete ret.resetPasswordExpires;
+    delete ret.verifyEmailTokenHash;
+    delete ret.verifyEmailExpires;
     return ret;
   },
 });

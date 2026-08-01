@@ -24,27 +24,18 @@ export const authService = {
     return res.data;
   },
 
-  refresh: async (refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> => {
-    const res = await api.post<{ accessToken: string; refreshToken: string }>(
-      '/auth/refresh',
-      { refreshToken },
-    );
+  forgotPassword: async (data: { email: string }) => {
+    const res = await api.post('/auth/forgot-password', data);
     return res.data;
   },
 
-  forgotPassword: async (email: string): Promise<{ message: string }> => {
-    const res = await api.post<{ message: string }>('/auth/forgot-password', { email });
+  resetPassword: async (data: { token: string; password: string }) => {
+    const res = await api.post('/auth/reset-password', data);
     return res.data;
   },
 
-  resetPassword: async (
-    token: string,
-    newPassword: string,
-  ): Promise<{ message: string }> => {
-    const res = await api.post<{ message: string }>('/auth/reset-password', {
-      token,
-      newPassword,
-    });
+  verifyEmail: async (token: string) => {
+    const res = await api.get('/auth/verify-email', { params: { token } });
     return res.data;
   },
 };
