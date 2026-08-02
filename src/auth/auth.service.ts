@@ -5,11 +5,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
+import { MailService } from './mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtPayload } from '../common/types/jwt-payload.type';
+import { UserDocument } from '../users/schemas/user.schema';
 import { mailService } from '../common/services/mail.service';
 
 @Injectable()
@@ -17,7 +21,54 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+
+  private buildPayload(user: UserDocument): JwtPayload {
+    return {
+      sub: (user._id as unknown as string).toString(),
+      email: user.email,
+      name: user.name,
+    };
+  }
+
+  private signAccessToken(payload: JwtPayload): string {
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('jwt.accessSecret'),
+      expiresIn: (this.configService.get<string>('jwt.accessExpiresIn') ??
+        '15m') as any,
+    });
+  }
+
+  private signRefreshToken(payload: JwtPayload): string {
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('jwt.refreshSecret'),
+      expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ??
+        '7d') as any,
+    });
+  }
+
+  /** Generate tokens, hash + persist the refresh token, return both tokens */
+  private async issueTokens(
+    user: UserDocument,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = this.buildPayload(user);
+    const accessToken = this.signAccessToken(payload);
+    const refreshToken = this.signRefreshToken(payload);
+
+    const hashed = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.updateRefreshToken(
+      (user._id as unknown as string).toString(),
+      hashed,
+    );
+
+    return { accessToken, refreshToken };
+  }
+
+  // ─── Public Methods ─────────────────────────────────────────────────────────
 
   private genToken() {
     return crypto.randomBytes(32).toString('hex');
@@ -26,7 +77,6 @@ export class AuthService {
   private hashToken(token: string) {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
-
   async register(dto: RegisterDto) {
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
@@ -40,33 +90,26 @@ export class AuthService {
       name: dto.name,
     });
 
+    const { accessToken, refreshToken } = await this.issueTokens(user);
+
     // send verification email (async, don't block registration)
     try {
       const token = this.genToken();
       const tokenHash = this.hashToken(token);
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
       await this.usersService.setVerificationToken(
-        user._id as any,
+        (user._id as unknown as string).toString(),
         tokenHash,
         expires,
       );
       const url = `${process.env.APP_URL}/verify-email?token=${token}`;
       const html = `<p>Hi ${user.name},</p><p>Please verify your email by clicking <a href="${url}">this link</a>.</p>`;
       await mailService.sendMail(user.email, 'Verify your email', html);
-    } catch (err) {
+    } catch {
       // log error but don't fail registration
     }
 
-    const payload = {
-      sub: (user._id as unknown as string).toString(),
-      email: user.email,
-      name: user.name,
-    };
-
-    return {
-      user,
-      accessToken: this.jwtService.sign(payload),
-    };
+    return { user, accessToken, refreshToken };
   }
 
   async login(dto: LoginDto) {
@@ -80,16 +123,35 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = {
-      sub: (user._id as unknown as string).toString(),
-      email: user.email,
-      name: user.name,
-    };
+    const { accessToken, refreshToken } = await this.issueTokens(user);
+    return { user, accessToken, refreshToken };
+  }
 
-    return {
-      user,
-      accessToken: this.jwtService.sign(payload),
-    };
+  /**
+   * Validate the provided refresh token, then issue a fresh token pair.
+   * The old refresh token is invalidated (rotated).
+   */
+  async refreshTokens(userId: string, incomingRefreshToken: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('Access denied');
+    }
+
+    const isTokenValid = await bcrypt.compare(
+      incomingRefreshToken,
+      user.refreshToken,
+    );
+    if (!isTokenValid) {
+      throw new UnauthorizedException('Access denied');
+    }
+
+    const { accessToken, refreshToken } = await this.issueTokens(user);
+    return { accessToken, refreshToken };
+  }
+
+  /** Invalidate the user's refresh token (logout) */
+  async logout(userId: string): Promise<void> {
+    await this.usersService.updateRefreshToken(userId, null);
   }
 
   async verifyEmail(token: string) {
@@ -115,7 +177,7 @@ export class AuthService {
     const tokenHash = this.hashToken(token);
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await this.usersService.setResetPasswordToken(
-      user._id as any,
+      (user._id as unknown as string).toString(),
       tokenHash,
       expires,
     );

@@ -24,6 +24,16 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  /** Store a hashed refresh token for the user (null to invalidate) */
+  async updateRefreshToken(
+    userId: string,
+    hashedToken: string | null,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { refreshToken: hashedToken })
+      .exec();
+  }
+
   async setVerificationToken(id: string, tokenHash: string, expires: Date) {
     return this.userModel
       .findByIdAndUpdate(

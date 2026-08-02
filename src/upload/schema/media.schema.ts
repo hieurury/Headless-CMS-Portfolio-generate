@@ -1,51 +1,50 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 export enum MEDIA_TYPE {
-    IMAGE = 'image',
-    VIDEO = 'video',
-    DOCUMENTS = 'documents',
+  IMAGE = 'image',
+  VIDEO = 'video',
+  DOCUMENTS = 'documents',
 }
 
-@Schema({
-    timestamps: true,
-})
+@Schema({ timestamps: true })
 export class Media {
+  /** Owner of this media file */
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  userId: Types.ObjectId;
 
-    @Prop({ required: true })
-    filename: string
+  /** Virtual folder name for grouping (e.g. "Hero Images", "Avatars") */
+  @Prop({ type: String, default: 'Uncategorized' })
+  folder: string;
 
-    @Prop({ required: true })
-    publicId: string
+  @Prop({ required: true })
+  filename: string;
 
-    @Prop({ required: true })
-    url: string
+  /** Cloudinary public_id — used for deletion */
+  @Prop({ required: true })
+  publicId: string;
 
-    @Prop({ required: true })
-    mimeType: string
+  @Prop({ required: true })
+  url: string;
 
-    @Prop({ required: true, enum: MEDIA_TYPE })
-    type: MEDIA_TYPE
+  @Prop({ required: true })
+  mimeType: string;
 
-    @Prop({ required: true })
-    size: number
+  @Prop({ required: true, enum: MEDIA_TYPE })
+  type: MEDIA_TYPE;
 
-    @Prop()
-    width?: number;
+  @Prop({ required: true })
+  size: number;
 
-    @Prop()
-    height?: number;
+  @Prop()
+  width?: number;
 
-    @Prop()
-    duration?: number;
+  @Prop()
+  height?: number;
 
-    @Prop({
-        default: false,
-    })
-    deleted: boolean
-
-
+  @Prop()
+  duration?: number;
 }
 
-export type MediaDocument = Media & Document
-
+export type MediaDocument = Media & Document;
 export const MediaSchema = SchemaFactory.createForClass(Media);

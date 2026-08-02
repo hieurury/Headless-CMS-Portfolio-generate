@@ -467,6 +467,16 @@ export const PortfolioDetailPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Preview / View Public */}
+                        <a
+                          href={`/p/${portfolio?.slug}/post/${post.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                          title="View public post"
+                        >
+                          <Eye size={16} />
+                        </a>
                         <button
                           onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/${post._id}/edit`)}
                           className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"

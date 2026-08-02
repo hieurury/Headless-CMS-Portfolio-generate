@@ -6,7 +6,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Page, PageDocument } from './schemas/page.schema';
-import { Portfolio, PortfolioDocument } from '../portfolios/schemas/portfolio.schema';
+import {
+  Portfolio,
+  PortfolioDocument,
+} from '../portfolios/schemas/portfolio.schema';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 
@@ -16,7 +19,7 @@ export class PagesService {
     @InjectModel(Page.name) private readonly pageModel: Model<PageDocument>,
     @InjectModel(Portfolio.name)
     private readonly portfolioModel: Model<PortfolioDocument>,
-  ) { }
+  ) {}
 
   /**
    * Verify the portfolio exists and belongs to the owner.
@@ -47,7 +50,7 @@ export class PagesService {
     dto: CreatePageDto,
   ): Promise<PageDocument> {
     const portfolio = await this.getPortfolio(portfolioId, ownerId);
-    console.log("portfolio", portfolio);
+    console.log('portfolio', portfolio);
     const portfolioOid = new Types.ObjectId(portfolioId);
 
     const existing = await this.pageModel
@@ -66,16 +69,13 @@ export class PagesService {
     }).save();
 
     // Register page reference in portfolio
-    portfolio.pages.push(page._id as Types.ObjectId);
+    portfolio.pages.push(page._id);
     await portfolio.save();
 
     return page;
   }
 
-  async findAll(
-    portfolioId: string,
-    ownerId: string,
-  ): Promise<PageDocument[]> {
+  async findAll(portfolioId: string, ownerId: string): Promise<PageDocument[]> {
     await this.getPortfolio(portfolioId, ownerId);
     return this.pageModel
       .find({ portfolio: new Types.ObjectId(portfolioId) })

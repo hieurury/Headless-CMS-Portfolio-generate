@@ -716,11 +716,14 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
   // ── Refs ─────────────────────────────────────────────────────────────────
   const wrapperRef = useRef<HTMLDivElement>(null);
   const propsRef = useRef(section.props);
-  propsRef.current = section.props;
   const sectionIdRef = useRef(section.id);
-  sectionIdRef.current = section.id;
   const onPropsChangeRef = useRef(onPropsChange);
-  onPropsChangeRef.current = onPropsChange;
+
+  useEffect(() => {
+    propsRef.current = section.props;
+    sectionIdRef.current = section.id;
+    onPropsChangeRef.current = onPropsChange;
+  });
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [pendingEditField, setPendingEditField] = useState<string | null>(null);

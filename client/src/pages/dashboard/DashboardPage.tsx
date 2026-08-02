@@ -126,6 +126,10 @@ export const DashboardPage: React.FC = () => {
               <Link to="/explore" className="home-navbar__link">
                 {lang.community}
               </Link>
+              <Link to="/dashboard/media" className="home-navbar__link flex items-center gap-1.5">
+                <ImageIcon size={14} />
+                Media
+              </Link>
             </div>
 
             <div className="home-navbar__controls">
