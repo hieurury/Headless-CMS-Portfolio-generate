@@ -21,6 +21,7 @@ import { PostPreviewPage } from '../pages/renderer/PostPreviewPage';
 import { PageEditorPage } from '../pages/editor/PageEditorPage';
 import { PublicPortfolioPage } from '../pages/public/PublicPortfolioPage';
 import { PublicPortfolioHubPage } from '../pages/public/PublicPortfolioHubPage';
+import { PublicPostPage } from '../pages/public/PublicPostPage';
 import { ExplorePage } from '../pages/explore/ExplorePage';
 import { HomePage } from '../pages/home/HomePage';
 
@@ -70,6 +71,10 @@ const router = createBrowserRouter([
   {
     path: '/p/:portfolioSlug',
     element: <PublicPortfolioHubPage />,
+  },
+  {
+    path: '/p/:portfolioSlug/post/:postSlug',
+    element: <PublicPostPage />,
   },
   {
     path: '/p/:portfolioSlug/:pageSlug',

@@ -29,9 +29,10 @@ export interface GenerateLayoutToolInput {
 }
 
 @Injectable()
-export class GenerateLayoutTool
-  implements ITool<GenerateLayoutToolInput, string>
-{
+export class GenerateLayoutTool implements ITool<
+  GenerateLayoutToolInput,
+  string
+> {
   readonly name = 'generate-layout';
   readonly description =
     'Apply a list of ADD/UPDATE/DELETE modifications to the current page layout. ' +

@@ -38,14 +38,14 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 // Exclude sensitive fields from JSON responses by default
 UserSchema.set('toJSON', {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transform: (_doc: any, ret: any) => {
-    delete ret.password;
-    delete ret.refreshToken;
-    delete ret.resetPasswordTokenHash;
-    delete ret.resetPasswordExpires;
-    delete ret.verifyEmailTokenHash;
-    delete ret.verifyEmailExpires;
-    return ret;
+  transform: (_doc, ret) => {
+    const res = ret as unknown as Record<string, unknown>;
+    delete res.password;
+    delete res.refreshToken;
+    delete res.resetPasswordTokenHash;
+    delete res.resetPasswordExpires;
+    delete res.verifyEmailTokenHash;
+    delete res.verifyEmailExpires;
+    return res;
   },
 });

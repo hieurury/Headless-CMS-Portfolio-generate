@@ -6,7 +6,7 @@ import { Media, MediaSchema } from './schema/media.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Media.name, schema: MediaSchema }])
+    MongooseModule.forFeature([{ name: Media.name, schema: MediaSchema }]),
   ],
   controllers: [UploadController],
   providers: [UploadService],

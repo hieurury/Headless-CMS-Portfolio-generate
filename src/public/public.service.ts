@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Portfolio, PortfolioDocument } from '../portfolios/schemas/portfolio.schema';
+import {
+  Portfolio,
+  PortfolioDocument,
+} from '../portfolios/schemas/portfolio.schema';
 import { Page, PageDocument } from '../pages/schemas/page.schema';
+import { Post, POST_STATUS } from '../posts/schemas/post.schema';
+import { Posttype } from '../posttype/schema/posttype.schema';
 
 export interface PublicPortfolioCard {
   _id: string;
@@ -40,6 +45,10 @@ export class PublicService {
     private readonly portfolioModel: Model<PortfolioDocument>,
     @InjectModel(Page.name)
     private readonly pageModel: Model<PageDocument>,
+    @InjectModel(Post.name)
+    private readonly postModel: Model<Post>,
+    @InjectModel(Posttype.name)
+    private readonly posttypeModel: Model<Posttype>,
   ) {}
 
   /**
@@ -142,7 +151,9 @@ export class PublicService {
     // ── Count total before pagination ──────────────────────────────
     const countPipeline = [...pipeline, { $count: 'total' }];
     const countResult = await this.portfolioModel
-      .aggregate(countPipeline as Parameters<typeof this.portfolioModel.aggregate>[0])
+      .aggregate(
+        countPipeline as Parameters<typeof this.portfolioModel.aggregate>[0],
+      )
       .exec();
     const total: number = (countResult[0]?.total as number | undefined) ?? 0;
 
@@ -150,7 +161,9 @@ export class PublicService {
     pipeline.push({ $skip: skip }, { $limit: limit });
 
     const results = await this.portfolioModel
-      .aggregate(pipeline as Parameters<typeof this.portfolioModel.aggregate>[0])
+      .aggregate(
+        pipeline as Parameters<typeof this.portfolioModel.aggregate>[0],
+      )
       .exec();
 
     return {
@@ -200,7 +213,8 @@ export class PublicService {
       title: portfolio.title,
       slug: portfolio.slug,
       description: portfolio.description,
-      ownerName: (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
+      ownerName:
+        (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
       meta: portfolio.meta,
       // Return normalized slugs so the frontend can build correct URLs
       pages: pages.map((p) => ({ ...p, urlSlug: normalizeSlug(p.slug) })),
@@ -247,17 +261,15 @@ export class PublicService {
     }
 
     // Fetch full layout for the current page
-    const fullPage = await this.pageModel
-      .findById(page._id)
-      .lean()
-      .exec();
+    const fullPage = await this.pageModel.findById(page._id).lean().exec();
 
     return {
       portfolio: {
         title: portfolio.title,
         slug: portfolio.slug,
         description: portfolio.description,
-        ownerName: (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
+        ownerName:
+          (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
         meta: portfolio.meta,
       },
       page: {
@@ -274,11 +286,82 @@ export class PublicService {
       })),
     };
   }
+
+  /**
+   * Find a published post by slug — no auth required.
+   * Used by the public-facing renderer at /p/:portfolioSlug/post/:postSlug
+   */
+  async findPublicPost(portfolioSlug: string, postSlug: string) {
+    const portfolio = await this.portfolioModel
+      .findOne({ slug: portfolioSlug, isPublished: true })
+      .select('_id title slug description meta isPublished owner')
+      .populate('owner', 'name')
+      .lean()
+      .exec();
+
+    if (!portfolio) {
+      throw new NotFoundException(
+        `Portfolio "${portfolioSlug}" not found or is not published`,
+      );
+    }
+
+    const ownerId = (portfolio.owner as any)._id
+      ? (portfolio.owner as any)._id.toString()
+      : portfolio.owner.toString();
+
+    // Lookup Post by postSlug, matching the portfolio's owner
+    const post = await this.postModel
+      .findOne({
+        slug: postSlug,
+        authorId: ownerId,
+        status: POST_STATUS.PUBLISHED,
+      })
+      .populate('postTypeId')
+      .exec();
+
+    if (!post) {
+      throw new NotFoundException(
+        `Post "${postSlug}" not found or is not published`,
+      );
+    }
+
+    // Tăng lượt xem lên 1
+    post.viewCount = (post.viewCount || 0) + 1;
+    await post.save();
+
+    // Fetch all published pages for in-page navigation (Header)
+    const allPages = await this.pageModel
+      .find({ portfolio: portfolio._id, isPublished: true })
+      .select('_id title slug order')
+      .sort({ order: 1, createdAt: 1 })
+      .lean()
+      .exec();
+
+    return {
+      portfolio: {
+        title: portfolio.title,
+        slug: portfolio.slug,
+        description: portfolio.description,
+        ownerName:
+          (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
+        meta: portfolio.meta,
+      },
+      post: post.toObject(),
+      // Navigation: normalized slugs for correct URL building
+      allPages: allPages.map((p) => ({
+        title: p.title,
+        slug: p.slug,
+        urlSlug: normalizeSlug(p.slug),
+      })),
+    };
+  }
   /**
    * Fetch all published portfolios and their published pages for sitemap generation.
    * Returns an array of paths and their last modified dates.
    */
-  async getSitemapData(): Promise<{ urlPath: string; lastmod: Date; isPage: boolean }[]> {
+  async getSitemapData(): Promise<
+    { urlPath: string; lastmod: Date; isPage: boolean }[]
+  > {
     const portfolios = await this.portfolioModel
       .find({ isPublished: true })
       .select('_id slug updatedAt')
@@ -291,7 +374,7 @@ export class PublicService {
       // Portfolio Hub page — priority 0.8
       result.push({
         urlPath: `/p/${p.slug}`,
-        lastmod: (p as any).updatedAt as Date || new Date(),
+        lastmod: ((p as any).updatedAt as Date) || new Date(),
         isPage: false,
       });
 
@@ -305,7 +388,7 @@ export class PublicService {
       for (const page of pages) {
         result.push({
           urlPath: `/p/${p.slug}/${normalizeSlug(page.slug)}`,
-          lastmod: (page as any).updatedAt as Date || new Date(),
+          lastmod: ((page as any).updatedAt as Date) || new Date(),
           isPage: true,
         });
       }

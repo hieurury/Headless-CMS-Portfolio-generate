@@ -1,10 +1,13 @@
 export default () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
-  mongodbUri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/headless-cms-portfolio',
+  mongodbUri:
+    process.env.MONGODB_URI ??
+    'mongodb://localhost:27017/headless-cms-portfolio',
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET ?? 'change-this-access-secret',
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
-    refreshSecret: process.env.JWT_REFRESH_SECRET ?? 'change-this-refresh-secret',
+    refreshSecret:
+      process.env.JWT_REFRESH_SECRET ?? 'change-this-refresh-secret',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   },
   email: {

@@ -50,7 +50,9 @@ export class UploadService {
     userId: string,
     folder?: string,
   ): Promise<MediaDocument[]> {
-    const filter: Record<string, unknown> = { userId: new Types.ObjectId(userId) };
+    const filter: Record<string, unknown> = {
+      userId: new Types.ObjectId(userId),
+    };
     if (folder) filter.folder = folder;
     return this.mediaModel.find(filter).sort({ createdAt: -1 }).exec();
   }
@@ -93,7 +95,11 @@ export class UploadService {
         },
         (error, result: UploadApiResponse | undefined) => {
           if (error || !result) {
-            reject(new BadRequestException(error?.message ?? 'Cloudinary upload failed'));
+            reject(
+              new BadRequestException(
+                error?.message ?? 'Cloudinary upload failed',
+              ),
+            );
             return;
           }
           resolve({ url: result.secure_url, publicId: result.public_id });
@@ -111,4 +117,3 @@ export class UploadService {
     return this.uploadToCloudinary(buffer, folder);
   }
 }
-

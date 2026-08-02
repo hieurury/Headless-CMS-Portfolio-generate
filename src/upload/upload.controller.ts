@@ -13,7 +13,6 @@ import {
   Req,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { UploadService } from './upload.service';
 import { ImageUploadInterceptor } from './controller.interceptor';
@@ -70,4 +69,3 @@ export class UploadController {
     return { message: 'Media deleted successfully' };
   }
 }
-

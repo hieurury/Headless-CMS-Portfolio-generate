@@ -16,7 +16,6 @@ import {
     getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
 import "@blocknote/react/style.css";
-import { useEffect, useState } from "react";
 import { BlockNoteSchema, defaultProps, filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { Menu } from "@mantine/core";

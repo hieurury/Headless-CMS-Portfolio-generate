@@ -1,15 +1,15 @@
 export class MediaDto {
-    id: string;
+  id: string;
 
-    url: string;
+  url: string;
 
-    filename: string;
+  filename: string;
 
-    mimeType: string;
+  mimeType: string;
 
-    size: number;
+  size: number;
 
-    type: string;
+  type: string;
 
-    createdAt: Date;
+  createdAt: Date;
 }

@@ -2,7 +2,6 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
-  NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -26,7 +25,6 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   private buildPayload(user: UserDocument): JwtPayload {
@@ -40,14 +38,16 @@ export class AuthService {
   private signAccessToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('jwt.accessSecret'),
-      expiresIn: (this.configService.get<string>('jwt.accessExpiresIn') ?? '15m') as any,
+      expiresIn: (this.configService.get<string>('jwt.accessExpiresIn') ??
+        '15m') as any,
     });
   }
 
   private signRefreshToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('jwt.refreshSecret'),
-      expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as any,
+      expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ??
+        '7d') as any,
     });
   }
 
@@ -105,7 +105,7 @@ export class AuthService {
       const url = `${process.env.APP_URL}/verify-email?token=${token}`;
       const html = `<p>Hi ${user.name},</p><p>Please verify your email by clicking <a href="${url}">this link</a>.</p>`;
       await mailService.sendMail(user.email, 'Verify your email', html);
-    } catch (err) {
+    } catch {
       // log error but don't fail registration
     }
 
@@ -154,7 +154,6 @@ export class AuthService {
     await this.usersService.updateRefreshToken(userId, null);
   }
 
-
   async verifyEmail(token: string) {
     const tokenHash = this.hashToken(token);
     const user = await this.usersService.findByVerifyTokenHash(tokenHash);
@@ -199,6 +198,5 @@ export class AuthService {
     user.resetPasswordExpires = undefined;
     await user.save();
     return { success: true };
-
   }
 }

@@ -12,14 +12,12 @@ import { TOOL_LIST, ToolRegistry } from './tool-registry.service';
     {
       provide: TOOL_LIST,
       useFactory: (generateLayout: GenerateLayoutTool) => {
-        return [
-          generateLayout
-        ]
+        return [generateLayout];
       },
-      inject: [GenerateLayoutTool]
+      inject: [GenerateLayoutTool],
     },
-    ToolRegistry
+    ToolRegistry,
   ],
   exports: [AiService],
 })
-export class AiModule { }
+export class AiModule {}

@@ -74,7 +74,7 @@ export class PostsService {
     const updates: Record<string, any> = { ...updatePostDto };
     if (updatePostDto.status !== undefined) {
       const publishedAt = this.resolvePublishedAt(
-        updatePostDto.status as POST_STATUS,
+        updatePostDto.status,
         updatePostDto.publishedAt,
       );
       // Chỉ ghi đè publishedAt nếu hàm trả về giá trị (tránh xóa ngày đã tồn tại)

@@ -1,6 +1,14 @@
 import {
-  Controller, Get, Post, Body, Patch, Param, Delete,
-  UseGuards, Request, Query,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Query,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -18,7 +26,10 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  create(@Body() createPostDto: CreatePostDto, @Request() req: RequestWithUser) {
+  create(
+    @Body() createPostDto: CreatePostDto,
+    @Request() req: RequestWithUser,
+  ) {
     return this.postsService.create(createPostDto, req.user.sub);
   }
 

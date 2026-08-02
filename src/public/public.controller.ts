@@ -38,31 +38,51 @@ export class PublicController {
   @Header('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400')
   async getSitemap() {
     const data = await this.publicService.getSitemapData();
-    const frontendUrl = (process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn').replace(/\/$/, '');
+    const frontendUrl = (
+      process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn'
+    ).replace(/\/$/, '');
     const now = new Date().toISOString();
 
     // Static pages with appropriate priorities
     const staticUrls = [
-      { loc: `${frontendUrl}/`, changefreq: 'weekly', priority: '1.0', lastmod: now },
-      { loc: `${frontendUrl}/explore`, changefreq: 'daily', priority: '0.9', lastmod: now },
+      {
+        loc: `${frontendUrl}/`,
+        changefreq: 'weekly',
+        priority: '1.0',
+        lastmod: now,
+      },
+      {
+        loc: `${frontendUrl}/explore`,
+        changefreq: 'daily',
+        priority: '0.9',
+        lastmod: now,
+      },
     ];
 
-    const staticXml = staticUrls.map(item => `
+    const staticXml = staticUrls
+      .map(
+        (item) => `
   <url>
     <loc>${item.loc}</loc>
     <lastmod>${item.lastmod}</lastmod>
     <changefreq>${item.changefreq}</changefreq>
     <priority>${item.priority}</priority>
-  </url>`).join('');
+  </url>`,
+      )
+      .join('');
 
     // Dynamic portfolio/page URLs
-    const dynamicXml = data.map(item => `
+    const dynamicXml = data
+      .map(
+        (item) => `
   <url>
     <loc>${frontendUrl}${item.urlPath}</loc>
     <lastmod>${item.lastmod.toISOString()}</lastmod>
     <changefreq>${item.isPage ? 'weekly' : 'daily'}</changefreq>
     <priority>${item.isPage ? '0.7' : '0.8'}</priority>
-  </url>`).join('');
+  </url>`,
+      )
+      .join('');
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -80,7 +100,9 @@ export class PublicController {
   @Header('Content-Type', 'text/plain')
   @Header('Cache-Control', 's-maxage=86400, stale-while-revalidate')
   getRobotsTxt() {
-    const frontendUrl = (process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn').replace(/\/$/, '');
+    const frontendUrl = (
+      process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn'
+    ).replace(/\/$/, '');
     return `User-agent: *
 Allow: /
 
@@ -118,5 +140,17 @@ Sitemap: ${frontendUrl}/sitemap.xml
     @Param('pageSlug') pageSlug: string,
   ) {
     return this.publicService.findPublicPage(portfolioSlug, pageSlug);
+  }
+
+  /**
+   * GET /api/v1/public/:portfolioSlug/posts/:postSlug
+   * Returns public post data + portfolio meta.
+   */
+  @Get(':portfolioSlug/posts/:postSlug')
+  findPost(
+    @Param('portfolioSlug') portfolioSlug: string,
+    @Param('postSlug') postSlug: string,
+  ) {
+    return this.publicService.findPublicPost(portfolioSlug, postSlug);
   }
 }

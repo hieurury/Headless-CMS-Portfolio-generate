@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Page, PageSchema } from './schemas/page.schema';
-import { Portfolio, PortfolioSchema } from '../portfolios/schemas/portfolio.schema';
+import {
+  Portfolio,
+  PortfolioSchema,
+} from '../portfolios/schemas/portfolio.schema';
 import { PagesService } from './pages.service';
 import { PagesController } from './pages.controller';
 

@@ -26,10 +26,14 @@ const mockJwtService = {
 const mockConfigService = {
   get: jest.fn((key: string) => {
     switch (key) {
-      case 'JWT_ACCESS_EXPIRES_IN': return '15m';
-      case 'JWT_REFRESH_EXPIRES_IN': return '7d';
-      case 'CLIENT_URL': return 'http://localhost:5173';
-      default: return null;
+      case 'JWT_ACCESS_EXPIRES_IN':
+        return '15m';
+      case 'JWT_REFRESH_EXPIRES_IN':
+        return '7d';
+      case 'CLIENT_URL':
+        return 'http://localhost:5173';
+      default:
+        return null;
     }
   }),
 };
@@ -82,7 +86,10 @@ describe('AuthService (Unit Tests)', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        authService.login({ email: 'test@test.com', password: 'wrongPassword' }),
+        authService.login({
+          email: 'test@test.com',
+          password: 'wrongPassword',
+        }),
       ).rejects.toThrow(UnauthorizedException);
     });
 

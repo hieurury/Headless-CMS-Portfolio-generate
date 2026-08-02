@@ -19,7 +19,8 @@ import { UsersModule } from '../users/users.module';
         // Default to access token secret; individual sign calls may override this
         secret: configService.get<string>('jwt.accessSecret'),
         signOptions: {
-          expiresIn: (configService.get<string>('jwt.accessExpiresIn') ?? '15m') as any,
+          expiresIn: (configService.get<string>('jwt.accessExpiresIn') ??
+            '15m') as any,
         },
       }),
     }),

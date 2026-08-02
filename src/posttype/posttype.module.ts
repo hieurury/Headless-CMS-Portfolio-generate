@@ -6,7 +6,9 @@ import { Posttype, PosttypeSchema } from './schema/posttype.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Posttype.name, schema: PosttypeSchema }])
+    MongooseModule.forFeature([
+      { name: Posttype.name, schema: PosttypeSchema },
+    ]),
   ],
   controllers: [PosttypeController],
   providers: [PosttypeService],

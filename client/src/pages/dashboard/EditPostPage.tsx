@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePostStore } from "../../store/postStore";
+import { usePortfolioStore } from "../../store/portfolioStore";
 import type { PostType } from "../../services/post.service";
 import { uploadService } from "../../services/post.service";
 import MyEditor from "../editor/components/BlockNote";
 import {
   ArrowLeft, Loader2, Save, ChevronRight, Tag,
   AlignLeft, Hash, Type, Link as LinkIcon, Calendar,
-  List, FileImage, Upload, X, Eye, Star, Clock, AlignLeft as ExcerptIcon
+  List, FileImage, Upload, X, Eye, Star, Clock, AlignLeft as ExcerptIcon,
+  Globe
 } from "lucide-react";
 const FIELD_ICONS: Record<string, React.ReactNode> = {
   text: <Type size={14} />,
@@ -115,6 +117,7 @@ export const EditPostPage: React.FC = () => {
   const { portfolioId, postId } = useParams<{ portfolioId: string; postId: string }>();
   const navigate = useNavigate();
   const { updatePost, fetchPostById, fetchPostTypeById, currentPost, currentPostType, isLoading } = usePostStore();
+  const { current: portfolio } = usePortfolioStore();
   const [title, setTitle] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [status, setStatus] = useState<"draft" | "published" | "archived" | "scheduled">("draft");
@@ -222,9 +225,21 @@ export const EditPostPage: React.FC = () => {
               type="button"
               onClick={() => window.open(`/preview-post/${portfolioId}/${postId}`, '_blank')}
               className="flex items-center gap-2 h-9 px-4 rounded-lg bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-border)] transition-colors text-sm font-medium"
+              title="Preview internal"
             >
               <Eye size={14} /> Preview
             </button>
+            {portfolio?.slug && currentPost?.slug && (
+              <a
+                href={`/p/${portfolio.slug}/post/${currentPost.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 h-9 px-4 rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors text-sm font-medium"
+                title="View public URL"
+              >
+                <Globe size={14} /> View Public
+              </a>
+            )}
           </div>
         </div>
       </header>
@@ -255,13 +270,11 @@ export const EditPostPage: React.FC = () => {
             <label className="flex items-center gap-2.5 cursor-pointer select-none group">
               <div
                 onClick={() => setIsFeatured(v => !v)}
-                className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
-                  isFeatured ? 'bg-amber-400' : 'bg-[var(--color-border)]'
-                }`}
+                className={`relative w-10 h-5 rounded-full transition-all duration-200 ${isFeatured ? 'bg-amber-400' : 'bg-[var(--color-border)]'
+                  }`}
               >
-                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${
-                  isFeatured ? 'left-5' : 'left-0.5'
-                }`} />
+                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${isFeatured ? 'left-5' : 'left-0.5'
+                  }`} />
               </div>
               <span className="text-sm text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors flex items-center gap-1.5">
                 <Star size={13} className={isFeatured ? 'text-amber-400 fill-amber-400' : ''} /> Featured post

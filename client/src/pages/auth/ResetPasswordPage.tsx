@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
-import { useUIStore } from '../../store/uiStore';
 import { AuthNavbar } from './AuthNavbar';
 
 export const ResetPasswordPage: React.FC = () => {
-  const { language } = useUIStore();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
   const [password, setPassword] = useState('');
