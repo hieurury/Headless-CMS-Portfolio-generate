@@ -30,7 +30,7 @@ export const MarqueeSelection: React.FC<MarqueeSelectionProps> = ({
       setCurrentPoint({ x: e.clientX, y: e.clientY });
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
+    const handleMouseUp = () => {
       if (!isSelecting) return;
       setIsSelecting(false);
 
@@ -42,13 +42,6 @@ export const MarqueeSelection: React.FC<MarqueeSelectionProps> = ({
         bottom: Math.max(startPoint.y, currentPoint.y),
       };
 
-      // Check if it was just a click (no drag area)
-      const width = rect.right - rect.left;
-      const height = rect.bottom - rect.top;
-      
-      // If drag area is tiny, we might just treat it as a normal click on a block, but since we capture events,
-      // it's better to just do intersection anyway. A tiny rect will just intersect whatever is under it.
-      
       // Find all elements with class 'cms-block' inside the preview area
       const blocks = Array.from(document.querySelectorAll('.cms-block'));
       const selectedIds: string[] = [];

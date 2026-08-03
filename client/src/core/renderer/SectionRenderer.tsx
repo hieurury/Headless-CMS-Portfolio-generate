@@ -662,7 +662,6 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
     isEditorMode,
     previewMode,
     pointerMode,
-    selectedSectionId,
     selectedSectionIds,
     onSectionSelect,
     onFieldSelect,
