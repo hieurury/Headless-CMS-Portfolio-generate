@@ -81,8 +81,8 @@ const validChildren = (
 // ─── Shared interface for child-related props ─────────────────────────────────
 
 interface ChildNodeSharedProps {
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedIds: string[];
+  onSelect: (id: string, multi?: boolean) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
   onReorderChildren: (
@@ -107,7 +107,7 @@ const SortableChildrenList: React.FC<
   children,
   depth,
   indent,
-  selectedId,
+  selectedIds,
   onSelect,
   onDelete,
   onAddChild,
@@ -132,7 +132,7 @@ const SortableChildrenList: React.FC<
               key={child.id}
               section={child}
               depth={depth + 1}
-              selectedId={selectedId}
+              selectedIds={selectedIds}
               onSelect={onSelect}
               onDelete={onDelete}
               onAddChild={onAddChild}
@@ -151,8 +151,8 @@ const SortableChildrenList: React.FC<
 interface LayerNodeProps {
   section: LayoutSection;
   depth: number;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedIds: string[];
+  onSelect: (id: string, multi?: boolean) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
   onReorderChildren: (
@@ -167,7 +167,7 @@ interface LayerNodeProps {
 const LayerNode: React.FC<LayerNodeProps> = ({
   section,
   depth,
-  selectedId,
+  selectedIds,
   onSelect,
   onDelete,
   onAddChild,
@@ -181,7 +181,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   const isContainer = entry?.isContainer ?? false;
   const visibleChildren = validChildren(section.children);
   const hasChildren = visibleChildren.length > 0;
-  const isSelected = selectedId === section.id;
+  const isSelected = selectedIds.includes(section.id);
   const [expanded, setExpanded] = useState(true);
   const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -230,7 +230,17 @@ const LayerNode: React.FC<LayerNodeProps> = ({
           isDragging && 'shadow-md shadow-black/40',
         )}
         style={{ paddingLeft: `${Math.max(6, indent)}px` }}
-        onClick={() => onSelect(section.id)}
+        onClick={(e) => onSelect(section.id, e.shiftKey || e.ctrlKey || e.metaKey)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!selectedIds.includes(section.id)) {
+            onSelect(section.id, false);
+          }
+          window.dispatchEvent(new CustomEvent('cms:openContextMenu', {
+            detail: { sectionId: section.id, x: e.clientX, y: e.clientY }
+          }));
+        }}
       >
         {/* Drag handle */}
         {isSortable && (
@@ -347,7 +357,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
           children={visibleChildren}
           depth={depth}
           indent={indent}
-          selectedId={selectedId}
+          selectedIds={selectedIds}
           onSelect={onSelect}
           onDelete={onDelete}
           onAddChild={onAddChild}
@@ -360,10 +370,10 @@ const LayerNode: React.FC<LayerNodeProps> = ({
 
 // ─── LayersPanel ──────────────────────────────────────────────────────────────
 
-interface LayersPanelProps {
+export const LayersPanel: React.FC<{
   sections: LayoutSection[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedIds: string[];
+  onSelect: (id: string, multi?: boolean) => void;
   onDelete: (id: string) => void;
   onAddClick: () => void;
   onAddChild: (parentId: string) => void;
@@ -375,15 +385,13 @@ interface LayersPanelProps {
   ) => void;
   onMoveToContainer: (
     sectionId: string,
-    containerId: string | null,
-    index?: number,
+    toContainerId: string | null,
+    toIndex?: number,
   ) => void;
   onReplaceEmptySlot: (sectionId: string, slotId: string) => void;
-}
-
-export const LayersPanel: React.FC<LayersPanelProps> = ({
+}> = ({
   sections,
-  selectedId,
+  selectedIds,
   onSelect,
   onDelete,
   onAddClick,
@@ -495,7 +503,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                 key={section.id}
                 section={section}
                 depth={0}
-                selectedId={selectedId}
+                selectedIds={selectedIds}
                 onSelect={onSelect}
                 onDelete={onDelete}
                 onAddChild={onAddChild}

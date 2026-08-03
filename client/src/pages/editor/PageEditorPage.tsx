@@ -8,6 +8,7 @@ import { EditorProvider } from '../../core/context/EditorContext';
 import type { PendingUpload } from '../../core/context/EditorContext';
 import api from '../../services/api';
 import { FloatingControlPanel } from '../../components/editor/FloatingControlPanel';
+import { MarqueeSelection } from './components/MarqueeSelection';
 import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { LayersPanel } from './components/LayersPanel';
 import { AddSectionPanel } from './components/AddSectionPanel';
@@ -37,6 +38,8 @@ import {
   Globe,
   Undo2,
   Redo2,
+  MousePointer2,
+  BoxSelect,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -106,7 +109,16 @@ export const PageEditorPage: React.FC = () => {
 
   // ── Draft ──────────────────────────────────────────────────────────
   // Selected section id (works at any depth)
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const selectedId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const setSelectedId = useCallback((val: string | null | ((prev: string | null) => string | null)) => {
+    setSelectedIds(prev => {
+      const prevId = prev.length === 1 ? prev[0] : null;
+      const nextId = typeof val === 'function' ? val(prevId) : val;
+      return nextId ? [nextId] : [];
+    });
+  }, []);
+  const [pointerMode, setPointerMode] = useState<'normal' | 'select'>('normal');
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1043,6 +1055,13 @@ export const PageEditorPage: React.FC = () => {
     [updateLayout],
   );
 
+  const handleRemoveSections = useCallback(
+    (sectionIds: string[]) => {
+      sectionIds.forEach(id => handleRemoveSection(id));
+    },
+    [handleRemoveSection]
+  );
+
   // ── Paste a section ───────────────────────────────────────────────────
   const handlePasteSection = useCallback(
     (targetId: string, sectionToPaste: LayoutSection) => {
@@ -1256,14 +1275,18 @@ export const PageEditorPage: React.FC = () => {
   };
 
   // ── Selection from preview ─────────────────────────────────────────
-  const handleSectionSelect = useCallback((id: string | null) => {
-    setSelectedId(id);
+  const handleSectionSelect = useCallback((id: string | null, multi?: boolean) => {
+    if (multi && id) {
+      setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    } else {
+      setSelectedId(id);
+    }
     setSelectedFieldKey(null);
     setTimeout(
       () => rightScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
       80,
     );
-  }, []);
+  }, [setSelectedId]);
 
   const handleFieldSelect = useCallback(
     (sectionId: string, fieldKey: string) => {
@@ -1408,11 +1431,14 @@ export const PageEditorPage: React.FC = () => {
           value={{
             isEditorMode: true,
             previewMode,
+            pointerMode,
             selectedSectionId: selectedId,
+            selectedSectionIds: selectedIds,
             selectedFieldKey,
             sections: draftLayout.sections,
             onSectionSelect: handleSectionSelect,
             onFieldSelect: handleFieldSelect,
+            onPointerModeChange: setPointerMode,
             onTogglePreviewMode: () => setPreviewMode((p) => !p),
             onSectionReorder: handleTopLevelReorder,
             onAddChild: (parentId, childType) => {
@@ -1420,6 +1446,7 @@ export const PageEditorPage: React.FC = () => {
               setShowAddPanel(true);
               void childType;
             },
+            onRemoveSections: handleRemoveSections,
             onRemoveSection: handleRemoveSection,
             onMoveToContainer: handleMoveToContainer,
             onReorderChildren: handleReorderChildren,
@@ -1635,11 +1662,8 @@ export const PageEditorPage: React.FC = () => {
                     {leftTab === 'sections' && (
                       <LayersPanel
                         sections={draftLayout.sections}
-                        selectedId={selectedId}
-                        onSelect={(id) => {
-                          setSelectedId(id);
-                          setSelectedFieldKey(null);
-                        }}
+                        selectedIds={selectedIds}
+                        onSelect={handleSectionSelect}
                         onDelete={handleRemoveSection}
                         onAddClick={() => {
                           setAddChildParentId(null);
@@ -1702,16 +1726,55 @@ export const PageEditorPage: React.FC = () => {
                   <span className="text-xs text-slate-700 font-mono">
                     {page?.slug}
                   </span>
+                  
+                  <div className="flex-1" />
+                  
+                  <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
+                    <button
+                      onClick={() => setPointerMode('normal')}
+                      title="Chế độ thường (Kéo thả)"
+                      className={clsx(
+                        'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
+                        pointerMode === 'normal'
+                          ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
+                          : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                      )}
+                    >
+                      <MousePointer2 size={13} />
+                      <span className="hidden sm:inline">Thường</span>
+                    </button>
+                    <button
+                      onClick={() => setPointerMode('select')}
+                      title="Chế độ chọn (Khoanh vùng)"
+                      className={clsx(
+                        'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all',
+                        pointerMode === 'select'
+                          ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]'
+                          : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                      )}
+                    >
+                      <BoxSelect size={13} />
+                      <span className="hidden sm:inline">Chọn</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div
-                  className={`flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}
+                  className={`relative flex-1 overflow-y-auto overscroll-contain editor-preview-container${draftLayout.sections.length > 0 ? ' editor-canvas-top-pad' : ''}`}
                   style={{
                     fontFamily: page?.meta?.fonts?.main ? `'${page.meta.fonts.main}', sans-serif` : "'Inter', sans-serif",
                     '--color-primary': page?.meta?.colors?.light?.primary,
                     '--color-secondary': page?.meta?.colors?.light?.secondary,
                   } as React.CSSProperties}
                 >
+                  <MarqueeSelection 
+                    disabled={pointerMode !== 'select' || previewMode} 
+                    onSelectionComplete={(ids) => {
+                      if (ids.length > 0) {
+                        setSelectedIds(ids);
+                      }
+                    }} 
+                  />
                   {draftLayout.sections.length === 0 ? (
                     <EmptyCanvasPrompt
                       onLayoutGenerated={(layout) => {

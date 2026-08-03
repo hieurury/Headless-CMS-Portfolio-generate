@@ -661,7 +661,9 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
   const {
     isEditorMode,
     previewMode,
+    pointerMode,
     selectedSectionId,
+    selectedSectionIds,
     onSectionSelect,
     onFieldSelect,
     onPropsChange,
@@ -708,7 +710,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
 
   const Component = componentRegistry.resolve(section.type);
   const entry = componentRegistry.getEntry(section.type);
-  const isSelected = effectiveEditorMode && !effectivePreviewMode && selectedSectionId === section.id;
+  const isSelected = effectiveEditorMode && !effectivePreviewMode && selectedSectionIds.includes(section.id);
   const isContainer = entry?.isContainer ?? false;
   const passChildrenDirect = entry?.passChildrenDirect ?? false;
 
@@ -729,7 +731,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
   // ── Sortable ──────────────────────────────────────────────────────────────
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
-    disabled: !effectiveEditorMode || effectivePreviewMode,
+    disabled: !effectiveEditorMode || effectivePreviewMode || pointerMode === 'select',
   });
 
 
@@ -861,26 +863,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       }
       el = el.parentElement;
     }
-    onSectionSelect(section.id);
+    // If holding shift/ctrl, maybe multi select? We will just pass multi flag based on pointerMode
+    onSectionSelect(section.id, pointerMode === 'select' || e.shiftKey || e.ctrlKey || e.metaKey);
     setFieldPicker(null);
   };
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    if (!isEditorMode || previewMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('[SectionRenderer] onContextMenu fired for section:', section.id);
-    onSectionSelect(section.id);
-    window.dispatchEvent(
-      new CustomEvent('cms:openContextMenu', {
-        detail: {
-          sectionId: section.id,
-          x: e.clientX,
-          y: e.clientY,
-        },
-      })
-    );
-  };
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
@@ -905,7 +892,6 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       className={`relative cms-block select-none touch-none${isContainer ? ' cms-container-block' : ''}${isDragging ? ' shadow-2xl shadow-black/20' : ''}${isSelected ? ' z-10' : ''}`}
       onClickCapture={handleCapture}
       onClick={handleClick}
-      onContextMenu={handleContextMenu}
     >
       {/* ── Selection ring ────────────────────────────────────────────── */}
       <div
@@ -960,15 +946,16 @@ const ColumnsEditorWrapper: React.FC<{
   const {
     isEditorMode,
     previewMode,
-    selectedSectionId,
+    pointerMode,
+    selectedSectionIds,
     onSectionSelect,
   } = useEditorContext();
 
-  const isSelected = isEditorMode && !previewMode && selectedSectionId === section.id;
+  const isSelected = isEditorMode && !previewMode && selectedSectionIds.includes(section.id);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
-    disabled: !isEditorMode || previewMode,
+    disabled: !isEditorMode || previewMode || pointerMode === 'select',
   });
 
   const dragStyle = {
@@ -986,19 +973,10 @@ const ColumnsEditorWrapper: React.FC<{
       ref={setNodeRef}
       id={section.name || section.id}
       style={dragStyle}
-      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
+      {...(isEditorMode && !previewMode && pointerMode !== 'select' ? { ...attributes, ...listeners } : {})}
       className={`relative cms-block select-none touch-none${isDragging ? ' shadow-2xl shadow-black/20' : ''
         }${isSelected ? ' z-10' : ''}`}
-      onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
-      onContextMenu={(e) => {
-        if (!isEditorMode || previewMode) return;
-        e.preventDefault();
-        e.stopPropagation();
-        onSectionSelect(section.id);
-        window.dispatchEvent(new CustomEvent('cms:openContextMenu', {
-          detail: { sectionId: section.id, x: e.clientX, y: e.clientY }
-        }));
-      }}
+      onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id, pointerMode === 'select' || e.shiftKey || e.ctrlKey || e.metaKey); }}
     >
       {/* Selection ring */}
       <div

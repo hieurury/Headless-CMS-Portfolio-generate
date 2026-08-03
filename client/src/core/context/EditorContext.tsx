@@ -12,13 +12,16 @@ export interface EditorContextValue {
   isEditorMode: boolean;
   /** true = Preview mode (links work, no editing). false = Edit mode (inline editing active). */
   previewMode: boolean;
+  pointerMode: 'normal' | 'select';
   selectedSectionId: string | null;
+  selectedSectionIds: string[];
   selectedFieldKey: string | null;
   sections: LayoutSection[];
 
   // Selection
-  onSectionSelect: (id: string) => void;
+  onSectionSelect: (id: string, multi?: boolean) => void;
   onFieldSelect: (sectionId: string, fieldKey: string) => void;
+  onPointerModeChange: (mode: 'normal' | 'select') => void;
 
   // Preview mode toggle
   onTogglePreviewMode: () => void;
@@ -28,6 +31,7 @@ export interface EditorContextValue {
 
   // Child management (for container blocks)
   onAddChild: (parentId: string, childType?: string) => void;
+  onRemoveSections: (sectionIds: string[]) => void;
   onRemoveSection: (sectionId: string) => void;
   onMoveToContainer: (sectionId: string, toContainerId: string | null, toIndex?: number) => void;
   onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
@@ -49,14 +53,18 @@ const noop = () => {};
 const EditorContext = createContext<EditorContextValue>({
   isEditorMode: false,
   previewMode: false,
+  pointerMode: 'normal',
   selectedSectionId: null,
+  selectedSectionIds: [],
   selectedFieldKey: null,
   sections: [],
   onSectionSelect: noop,
   onFieldSelect: noop,
+  onPointerModeChange: noop,
   onTogglePreviewMode: noop,
   onSectionReorder: noop,
   onAddChild: noop,
+  onRemoveSections: noop,
   onRemoveSection: noop,
   onMoveToContainer: noop,
   onReorderChildren: noop,

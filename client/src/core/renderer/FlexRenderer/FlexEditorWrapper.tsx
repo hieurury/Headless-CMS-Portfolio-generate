@@ -12,15 +12,16 @@ const FlexEditorWrapper: React.FC<{
   const {
     isEditorMode,
     previewMode,
-    selectedSectionId,
+    pointerMode,
+    selectedSectionIds,
     onSectionSelect,
   } = useEditorContext();
 
-  const isSelected = isEditorMode && !previewMode && selectedSectionId === section.id;
+  const isSelected = isEditorMode && !previewMode && selectedSectionIds.includes(section.id);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
-    disabled: !isEditorMode || previewMode,
+    disabled: !isEditorMode || previewMode || pointerMode === 'select',
   });
 
   const dragStyle = {
@@ -37,20 +38,11 @@ const FlexEditorWrapper: React.FC<{
       ref={setNodeRef}
       style={dragStyle}
       id={section.name || section.id}
-      {...(isEditorMode && !previewMode ? { ...attributes, ...listeners } : {})}
+      {...(isEditorMode && !previewMode && pointerMode !== 'select' ? { ...attributes, ...listeners } : {})}
       className={`relative cms-block cms-container-block select-none touch-none${
         isDragging ? ' shadow-2xl shadow-black/30' : ''
       }${isSelected ? ' z-10' : ''}`}
-      onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id); }}
-      onContextMenu={(e) => {
-        if (!isEditorMode || previewMode) return;
-        e.preventDefault();
-        e.stopPropagation();
-        onSectionSelect(section.id);
-        window.dispatchEvent(new CustomEvent('cms:openContextMenu', {
-          detail: { sectionId: section.id, x: e.clientX, y: e.clientY }
-        }));
-      }}
+      onClick={(e) => { e.stopPropagation(); onSectionSelect(section.id, pointerMode === 'select' || e.shiftKey || e.ctrlKey || e.metaKey); }}
     >
       {/* Selection ring */}
       <div
