@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import "@blocknote/core/fonts/inter.css";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -20,7 +21,6 @@ import { BlockNoteSchema, defaultProps, filterSuggestionItems, insertOrUpdateBlo
 import { createReactBlockSpec } from "@blocknote/react";
 import { Menu } from "@mantine/core";
 import { MdCancel, MdCheckCircle, MdError, MdInfo } from "react-icons/md";
-
 import clsx from "clsx";
 
 // The types of alerts that users can choose from.
@@ -72,11 +72,11 @@ export const createAlert = createReactBlockSpec(
         render: (props) => {
             const alertType = alertTypes.find(
                 (a) => a.value === props.block.props.type,
-            )!;
+            ) || alertTypes[0];
             const Icon = alertType.icon;
             return (
                 <div className={clsx("flex justify-center items-center grow rounded min-h-[48px] p-1 my-2", alertType.bgClass)}>
-                    {/*Icon which opens a menu to choose the Alert type*/}
+                    {/* Icon which opens a menu to choose the Alert type */}
                     <Menu withinPortal={false}>
                         <Menu.Target>
                             <div className="rounded-[16px] flex justify-center items-center mx-3 h-5 w-5 select-none cursor-pointer" contentEditable={false}>
@@ -86,7 +86,7 @@ export const createAlert = createReactBlockSpec(
                                 />
                             </div>
                         </Menu.Target>
-                        {/*Dropdown to change the Alert type*/}
+                        {/* Dropdown to change the Alert type */}
                         <Menu.Dropdown>
                             <Menu.Label>Alert Type</Menu.Label>
                             <Menu.Divider />
@@ -114,7 +114,7 @@ export const createAlert = createReactBlockSpec(
                             })}
                         </Menu.Dropdown>
                     </Menu>
-                    {/*Rich text field for user to type in*/}
+                    {/* Rich text field for user to type in */}
                     <div className="grow" ref={props.contentRef} />
                 </div>
             );
@@ -122,7 +122,7 @@ export const createAlert = createReactBlockSpec(
     },
 );
 
-const schema = BlockNoteSchema.create().extend({
+export const schema = BlockNoteSchema.create().extend({
     blockSpecs: {
         // Creates an instance of the Alert block and adds it to the schema.
         alert: createAlert(),
@@ -132,7 +132,6 @@ const schema = BlockNoteSchema.create().extend({
 const CustomFormattingToolbar = () => (
     <div className="flex flex-wrap items-center gap-1 p-2 bg-[var(--color-surface)] border-b border-[var(--color-border)] w-full sticky top-0 z-50 order-first">
         <BlockTypeSelect key={"blockTypeSelect"} />
-        {/* Extra button to toggle blue text & background */}
         <FileCaptionButton key={"fileCaptionButton"} />
         <FileReplaceButton key={"replaceFileButton"} />
         <BasicTextStyleButton basicTextStyle={"bold"} key={"boldStyleButton"} />
@@ -142,7 +141,6 @@ const CustomFormattingToolbar = () => (
             key={"underlineStyleButton"}
         />
         <BasicTextStyleButton basicTextStyle={"strike"} key={"strikeStyleButton"} />
-        {/* Extra button to toggle code styles */}
         <BasicTextStyleButton key={"codeStyleButton"} basicTextStyle={"code"} />
         <TextAlignButton textAlignment={"left"} key={"textAlignLeftButton"} />
         <TextAlignButton textAlignment={"center"} key={"textAlignCenterButton"} />
@@ -159,8 +157,7 @@ const insertAlert = (editor: typeof schema.BlockNoteEditor) => ({
     onItemClick: () => {
         insertOrUpdateBlockForSlashMenu(editor, {
             type: "alert",
-            content: [{ type: "text", text: "Hello World", styles: { bold: true } }],
-
+            content: [{ type: "text", text: "Important notice...", styles: { bold: true } }],
         });
     },
     aliases: ["alert", "notification", "warning", "error", "info", "success"],
@@ -168,23 +165,60 @@ const insertAlert = (editor: typeof schema.BlockNoteEditor) => ({
     icon: <MdInfo size={18} />,
 });
 
-export default function MyEditor() {
+export interface MyEditorProps {
+    value?: any;
+    onChange?: (value: any) => void;
+    editable?: boolean;
+}
+
+export default function MyEditor({ value, onChange, editable = true }: MyEditorProps) {
+    const initialContent = useMemo(() => {
+        if (!value) return undefined;
+        if (Array.isArray(value) && value.length > 0) return value;
+        if (typeof value === "string") {
+            try {
+                const parsed = JSON.parse(value);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            } catch {
+                return undefined;
+            }
+        }
+        return undefined;
+    }, []);
+
     // Create a new editor instance
-    const editor = useCreateBlockNote({ schema });
-    // Render the editor
+    const editor = useCreateBlockNote({
+        schema,
+        initialContent,
+    });
+
     return (
-        <div className="border border-[var(--color-border)] rounded-lg flex flex-col h-[500px] overflow-y-auto relative bg-[var(--color-bg)]">
-            <BlockNoteView editor={editor} formattingToolbar={false} slashMenu={false}>
-                <SuggestionMenuController
-                    triggerCharacter={"/"}
-                    getItems={async (query) =>
-                        filterSuggestionItems(
-                            [...getDefaultReactSlashMenuItems(editor), insertAlert(editor)],
-                            query
-                        )
+        <div className="border border-[var(--color-border)] rounded-lg flex flex-col min-h-[350px] max-h-[600px] overflow-y-auto relative bg-[var(--color-bg)]">
+            <BlockNoteView
+                editor={editor}
+                formattingToolbar={false}
+                slashMenu={false}
+                editable={editable}
+                onChange={() => {
+                    if (onChange) {
+                        onChange(editor.document);
                     }
-                />
-                <CustomFormattingToolbar />
+                }}
+            >
+                {editable && (
+                    <>
+                        <SuggestionMenuController
+                            triggerCharacter={"/"}
+                            getItems={async (query) =>
+                                filterSuggestionItems(
+                                    [...getDefaultReactSlashMenuItems(editor), insertAlert(editor)],
+                                    query
+                                )
+                            }
+                        />
+                        <CustomFormattingToolbar />
+                    </>
+                )}
             </BlockNoteView>
         </div>
     );

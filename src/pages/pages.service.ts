@@ -50,7 +50,6 @@ export class PagesService {
     dto: CreatePageDto,
   ): Promise<PageDocument> {
     const portfolio = await this.getPortfolio(portfolioId, ownerId);
-    console.log('portfolio', portfolio);
     const portfolioOid = new Types.ObjectId(portfolioId);
 
     const existing = await this.pageModel

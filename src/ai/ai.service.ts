@@ -621,8 +621,8 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
   // Normalize children recursively first.
   let children: RawNode[] = Array.isArray(node.children)
     ? node.children
-        .map((c) => normalizeNode(c, logger))
-        .filter((c): c is RawNode => c !== null)
+      .map((c) => normalizeNode(c, logger))
+      .filter((c): c is RawNode => c !== null)
     : [];
 
   // Enforce child-count rules per block type so the rendered grid never breaks.
@@ -698,6 +698,7 @@ export class AiService {
     private readonly registry: ToolRegistry,
   ) {
     const token = this.configService.get<string>('githubModels.token');
+    this.logger.log(`AI layout engine initialized (token: ${token})`);
     if (!token) {
       throw new Error('AI_TOKEN is not configured. Add it to your .env file.');
     }
@@ -755,18 +756,27 @@ export class AiService {
         layout: { sections: validSections },
         sectionsGenerated: validSections.length,
       };
-    } catch (error) {
+    } catch (error: any) {
       if (
         error instanceof BadRequestException ||
         error instanceof ServiceUnavailableException
       ) {
         throw error;
       }
-      const message = (error as Error).message ?? 'Unknown AI error';
-      this.logger.error(`AI generation failed: ${message}`);
+
+      // ── LOG CHI TIẾT LỖI TỪ AI SERVER ──────────────────────────
+      this.logger.error('=== [AI ERROR DETAILS] ===');
+      this.logger.error(`Status: ${error?.status || error?.statusCode}`);
+      this.logger.error(`Message: ${error?.message}`);
+      this.logger.error(`Response Data: ${JSON.stringify(error?.error || error?.response?.data || error?.response || {}, null, 2)}`);
+      this.logger.error(`Stack: ${error?.stack}`);
+      this.logger.error('==========================');
+
+      const message = error?.message ?? 'Unknown AI error';
       throw new BadRequestException(`AI generation failed: ${message}`);
     }
   }
+
 
   /**
    * Calls the model once and runs the parsed result through normalization.
@@ -804,9 +814,9 @@ export class AiService {
     if (message?.tool_calls && message.tool_calls.length > 0) {
       this.logger.log(
         `Model invoked ${message.tool_calls.length} tool call(s): ` +
-          message.tool_calls
-            .map((tc) => (tc.type === 'function' ? tc.function.name : tc.type))
-            .join(', '),
+        message.tool_calls
+          .map((tc) => (tc.type === 'function' ? tc.function.name : tc.type))
+          .join(', '),
       );
 
       // Process all tool calls sequentially. The `generate-layout` tool is
@@ -1084,11 +1094,10 @@ ANTI-PATTERNS (things you must NEVER do in modification mode):
 `;
     }
 
-    fullPrompt += `[USER REQUEST]\n${dto.prompt}\n\nAnalyze the user's request carefully. ${
-      isModification
-        ? 'Apply the SURGICAL modification described above. Copy all unchanged sections exactly as they appear in CURRENT LAYOUT.'
-        : 'Be highly creative and avoid generic templates unless specifically requested. Generate a complete, unique, and content-rich portfolio page layout.'
-    } Output ONLY valid JSON: { "sections": [ ... ] }`;
+    fullPrompt += `[USER REQUEST]\n${dto.prompt}\n\nAnalyze the user's request carefully. ${isModification
+      ? 'Apply the SURGICAL modification described above. Copy all unchanged sections exactly as they appear in CURRENT LAYOUT.'
+      : 'Be highly creative and avoid generic templates unless specifically requested. Generate a complete, unique, and content-rich portfolio page layout.'
+      } Output ONLY valid JSON: { "sections": [ ... ] }`;
 
     if (dto.currentLayout) {
       fullPrompt += `
