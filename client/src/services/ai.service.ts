@@ -25,7 +25,7 @@ export const aiService = {
       portfolioId,
       pageId,
       currentLayout,
-      portfolioMeta,
+      pageMeta: portfolioMeta,  // backend DTO dùng "pageMeta", không phải "portfolioMeta"
     });
     return res.data;
   },

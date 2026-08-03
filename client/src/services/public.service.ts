@@ -52,6 +52,13 @@ export interface PublicPageResponse {
   allPages: PublicPageNavEntry[];
 }
 
+export interface PublicPostResponse {
+  portfolio: { title: string; slug: string; description?: string; ownerName?: string; meta: Record<string, any> };
+  post: { title: string; slug: string; customFieldsData: Record<string, any>; coverImage?: string; tags?: string[]; createdAt?: string; readingTime?: number; viewCount?: number };
+  postType: { customFieldsSchema: any[] };
+  allPages: PublicPageNavEntry[];
+}
+
 /** Mirror the backend normalizeSlug utility on the frontend */
 export function normalizeSlug(slug: string): string {
   const stripped = slug.replace(/^\/+/, '');
@@ -93,6 +100,17 @@ export const publicService = {
   ): Promise<PublicPageResponse> => {
     const res = await api.get<PublicPageResponse>(
       `/public/${portfolioSlug}/${pageUrlSlug}`,
+    );
+    return res.data;
+  },
+
+  /** Get a public post */
+  getPost: async (
+    portfolioSlug: string,
+    postSlug: string,
+  ): Promise<PublicPostResponse> => {
+    const res = await api.get<PublicPostResponse>(
+      `/public/${portfolioSlug}/posts/${postSlug}`,
     );
     return res.data;
   },

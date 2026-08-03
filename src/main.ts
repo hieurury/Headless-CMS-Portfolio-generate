@@ -12,7 +12,11 @@ async function bootstrap() {
 
   // ─── CORS ────────────────────────────────────────────────────────
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://cms.hieurury.id.vn'],
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://cms.hieurury.id.vn',
+    ],
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -21,9 +25,9 @@ async function bootstrap() {
   // ─── Global Validation Pipe ──────────────────────────────────────
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           // Strip unknown properties
+      whitelist: true, // Strip unknown properties
       forbidNonWhitelisted: true, // Throw on unknown properties
-      transform: true,           // Auto-transform payloads to DTO instances
+      transform: true, // Auto-transform payloads to DTO instances
       transformOptions: {
         enableImplicitConversion: true,
       },
@@ -41,4 +45,4 @@ async function bootstrap() {
   logger.log(`📦 Environment: ${process.env.NODE_ENV ?? 'development'}`);
 }
 
-bootstrap();
+void bootstrap();

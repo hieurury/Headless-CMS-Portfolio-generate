@@ -62,4 +62,5 @@ export class ComponentDefinition {
   version: string;
 }
 
-export const ComponentSchema = SchemaFactory.createForClass(ComponentDefinition);
+export const ComponentSchema =
+  SchemaFactory.createForClass(ComponentDefinition);

@@ -17,6 +17,8 @@ export interface PostType {
   createdAt?: string;
 }
 
+export type PostStatus = 'draft' | 'published' | 'archived' | 'scheduled';
+
 export interface Post {
   _id: string;
   title: string;
@@ -24,9 +26,16 @@ export interface Post {
   postTypeId: string;
   authorId: string;
   coverImage?: string;
-  status: 'draft' | 'published' | 'archived';
+  status: PostStatus;
   customFieldsData?: Record<string, any>;
   tags?: string[];
+  // --- Advanced Fields ---
+  excerpt?: string;
+  publishedAt?: string;
+  isFeatured?: boolean;
+  viewCount?: number;
+  readingTime?: number;
+  // -----------------------
   createdAt?: string;
   updatedAt?: string;
 }
@@ -37,7 +46,12 @@ export interface CreatePostPayload {
   coverImage?: string;
   customFieldsData?: Record<string, any>;
   tags?: string[];
-  status?: 'draft' | 'published' | 'archived';
+  status?: PostStatus;
+  // --- Advanced Fields ---
+  excerpt?: string;
+  publishedAt?: string;
+  isFeatured?: boolean;
+  readingTime?: number;
 }
 
 // ─── Upload API ───────────────────────────────────────────────────────────────
@@ -80,7 +94,46 @@ export const postService = {
   remove: async (id: string): Promise<void> => {
     await api.delete(`/posts/${id}`);
   },
+
+  /** Tăng viewCount khi người dùng mở bài viết */
+  incrementView: async (id: string): Promise<void> => {
+    await api.post(`/posts/${id}/view`);
+  },
 };
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+/**
+ * Tính toán thời gian đọc (phút) từ nội dung BlockNote JSON.
+ * Sử dụng tốc độ đọc trung bình: 200 từ/phút.
+ */
+export function calculateReadingTime(blockNoteContent: any): number {
+  if (!blockNoteContent) return 0;
+
+  const extractText = (blocks: any[]): string => {
+    if (!Array.isArray(blocks)) return '';
+    return blocks
+      .map((block) => {
+        const inlineText = Array.isArray(block.content)
+          ? block.content.map((c: any) => c.text ?? '').join('')
+          : '';
+        const childText = block.children ? extractText(block.children) : '';
+        return `${inlineText} ${childText}`;
+      })
+      .join(' ');
+  };
+
+  // BlockNote lưu dạng mảng block ở root hoặc trong layout.sections
+  const blocks =
+    Array.isArray(blockNoteContent)
+      ? blockNoteContent
+      : blockNoteContent?.sections ?? [];
+
+  const fullText = extractText(blocks).trim();
+  const wordCount = fullText.split(/\s+/).filter(Boolean).length;
+  const minutes = Math.ceil(wordCount / 200);
+  return minutes > 0 ? minutes : 1;
+}
 
 export interface CreatePostTypePayload {
   name: string;

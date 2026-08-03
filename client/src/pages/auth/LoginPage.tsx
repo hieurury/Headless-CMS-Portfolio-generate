@@ -39,7 +39,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
       <AuthNavbar />
-
+      
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[var(--color-surface-2)] blur-[120px]" />
@@ -58,19 +58,16 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md animate-slide-up mt-12">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">
-            {lang.loginTitle}
-          </h1>
+          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">{lang.loginTitle}</h1>
           <p className="text-[var(--color-text-muted)]">{lang.loginSubtitle}</p>
         </div>
 
         {/* Form */}
         <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl shadow-xl rounded-xl p-8 space-y-5">
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">
-                {lang.emailLabel}
-              </label>
+              <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">{lang.emailLabel}</label>
               <input
                 id="login-email"
                 type="email"
@@ -83,9 +80,15 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">
-                {lang.passwordLabel}
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-[var(--color-text-muted)]">{lang.passwordLabel}</label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <input
                   id="login-password"
@@ -106,39 +109,20 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-2">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-[var(--color-text-muted)] hover:opacity-80"
-              >
-                {lang.forgotPassword || 'Quên mật khẩu?'}
-              </Link>
-            </div>
-
             <button
               id="login-submit"
               type="submit"
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-lg shadow-md bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />{' '}
-                  {lang.signingInBtn}
-                </>
-              ) : (
-                lang.signInBtn
-              )}
+              {isLoading ? <><Loader2 size={18} className="animate-spin" /> {lang.signingInBtn}</> : lang.signInBtn}
             </button>
           </form>
 
           <div className="text-center pt-2">
             <p className="text-[var(--color-text-muted)] text-sm">
               {lang.noAccount}{' '}
-              <Link
-                to="/register"
-                className="text-[var(--color-text)] hover:opacity-80 font-medium transition-colors underline"
-              >
+              <Link to="/register" className="text-[var(--color-text)] hover:opacity-80 font-medium transition-colors underline">
                 {lang.createOne}
               </Link>
             </p>

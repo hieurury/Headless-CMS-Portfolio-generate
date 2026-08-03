@@ -15,11 +15,13 @@ import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { PortfolioDetailPage } from '../pages/dashboard/PortfolioDetailPage';
 import { CreatePostPage } from '../pages/dashboard/CreatePostPage';
 import { EditPostPage } from '../pages/dashboard/EditPostPage';
+import { MediaGalleryPage } from '../pages/dashboard/MediaGalleryPage';
 import { PortfolioPreviewPage } from '../pages/renderer/PortfolioPreviewPage';
 import { PostPreviewPage } from '../pages/renderer/PostPreviewPage';
 import { PageEditorPage } from '../pages/editor/PageEditorPage';
 import { PublicPortfolioPage } from '../pages/public/PublicPortfolioPage';
 import { PublicPortfolioHubPage } from '../pages/public/PublicPortfolioHubPage';
+import { PublicPostPage } from '../pages/public/PublicPostPage';
 import { ExplorePage } from '../pages/explore/ExplorePage';
 import { HomePage } from '../pages/home/HomePage';
 
@@ -57,6 +59,10 @@ const router = createBrowserRouter([
     ],
   },
 
+  // ── Password reset (always public — no redirect) ─────────────────
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
+
   // ── Public routes (no auth required) ────────────────────────────
   {
     path: '/explore',
@@ -65,6 +71,10 @@ const router = createBrowserRouter([
   {
     path: '/p/:portfolioSlug',
     element: <PublicPortfolioHubPage />,
+  },
+  {
+    path: '/p/:portfolioSlug/post/:postSlug',
+    element: <PublicPostPage />,
   },
   {
     path: '/p/:portfolioSlug/:pageSlug',
@@ -92,14 +102,9 @@ const router = createBrowserRouter([
         path: '/dashboard/portfolios/:portfolioId/posts/:postId/edit',
         element: <EditPostPage />,
       },
-      {
-        path: '/preview/:portfolioId/:pageId',
-        element: <PortfolioPreviewPage />,
-      },
-      {
-        path: '/preview-post/:portfolioId/:postId',
-        element: <PostPreviewPage />,
-      },
+      { path: '/dashboard/media', element: <MediaGalleryPage /> },
+      { path: '/preview/:portfolioId/:pageId', element: <PortfolioPreviewPage /> },
+      { path: '/preview-post/:portfolioId/:postId', element: <PostPreviewPage /> },
     ],
   },
 

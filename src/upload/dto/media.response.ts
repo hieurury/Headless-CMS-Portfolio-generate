@@ -1,16 +1,15 @@
 export class UploadMediaResponseDto {
-    id: string;
+  id: string;
 
-    url: string;
+  url: string;
 
-    publicId: string;
+  publicId: string;
 
-    filename: string;
+  filename: string;
 
-    mimeType: string;
+  mimeType: string;
 
-    size: number;
+  size: number;
 
-    type: string;
-
+  type: string;
 }

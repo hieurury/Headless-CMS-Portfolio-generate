@@ -27,7 +27,10 @@ export const BUILT_IN_COMPONENTS = [
       properties: {
         sticky: { type: 'boolean' },
         transparent: { type: 'boolean' },
-        background: { type: 'string', enum: ['dark', 'glass', 'light', 'none'] },
+        background: {
+          type: 'string',
+          enum: ['dark', 'glass', 'light', 'none'],
+        },
         padding: { type: 'string', enum: ['sm', 'md', 'lg', 'xl'] },
         maxWidth: { type: 'string', enum: ['lg', 'xl', '2xl', 'full'] },
       },
@@ -44,7 +47,8 @@ export const BUILT_IN_COMPONENTS = [
   {
     type: 'columns',
     name: 'Columns',
-    description: 'Side-by-side equal-width column grid. Children map directly to cells by index.',
+    description:
+      'Side-by-side equal-width column grid. Children map directly to cells by index.',
     category: ComponentCategory.LAYOUT,
     version: '2.0.0',
     isBuiltIn: true,
@@ -90,15 +94,27 @@ export const BUILT_IN_COMPONENTS = [
         align: {
           type: 'string',
           enum: [
-            'top-left', 'top-center', 'top-right',
-            'middle-left', 'center', 'middle-right',
-            'bottom-left', 'bottom-center', 'bottom-right',
+            'top-left',
+            'top-center',
+            'top-right',
+            'middle-left',
+            'center',
+            'middle-right',
+            'bottom-left',
+            'bottom-center',
+            'bottom-right',
           ],
         },
         minHeight: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl'] },
-        style: { type: 'string', enum: ['none', 'card', 'glass', 'outlined', 'filled'] },
+        style: {
+          type: 'string',
+          enum: ['none', 'card', 'glass', 'outlined', 'filled'],
+        },
         padding: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl'] },
-        borderRadius: { type: 'string', enum: ['none', 'sm', 'md', 'lg', 'xl', '2xl'] },
+        borderRadius: {
+          type: 'string',
+          enum: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        },
       },
     },
     defaultProps: {
@@ -115,7 +131,8 @@ export const BUILT_IN_COMPONENTS = [
   {
     type: 'heading',
     name: 'Heading',
-    description: 'Title or heading text with level, size, alignment, and optional gradient.',
+    description:
+      'Title or heading text with level, size, alignment, and optional gradient.',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
@@ -124,7 +141,10 @@ export const BUILT_IN_COMPONENTS = [
       properties: {
         text: { type: 'string' },
         level: { type: 'string', enum: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
-        size: { type: 'string', enum: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'] },
+        size: {
+          type: 'string',
+          enum: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'],
+        },
         align: { type: 'string', enum: ['left', 'center', 'right'] },
         color: { type: 'string' },
         gradient: { type: 'boolean' },
@@ -143,7 +163,8 @@ export const BUILT_IN_COMPONENTS = [
   {
     type: 'link',
     name: 'Link',
-    description: 'Inline navigation link with optional icon and style variants.',
+    description:
+      'Inline navigation link with optional icon and style variants.',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
@@ -152,7 +173,10 @@ export const BUILT_IN_COMPONENTS = [
       properties: {
         label: { type: 'string' },
         href: { type: 'string' },
-        variant: { type: 'string', enum: ['default', 'muted', 'underline', 'highlight', 'ghost'] },
+        variant: {
+          type: 'string',
+          enum: ['default', 'muted', 'underline', 'highlight', 'ghost'],
+        },
         size: { type: 'string', enum: ['sm', 'base', 'lg'] },
         align: { type: 'string', enum: ['left', 'center', 'right'] },
         external: { type: 'boolean' },
@@ -174,7 +198,8 @@ export const BUILT_IN_COMPONENTS = [
   {
     type: 'button',
     name: 'Button',
-    description: 'Call-to-action button with style, size, shape, and icon options.',
+    description:
+      'Call-to-action button with style, size, shape, and icon options.',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
@@ -183,9 +208,23 @@ export const BUILT_IN_COMPONENTS = [
       properties: {
         label: { type: 'string' },
         href: { type: 'string' },
-        variant: { type: 'string', enum: ['primary', 'secondary', 'ghost', 'danger', 'success', 'warning', 'outline'] },
+        variant: {
+          type: 'string',
+          enum: [
+            'primary',
+            'secondary',
+            'ghost',
+            'danger',
+            'success',
+            'warning',
+            'outline',
+          ],
+        },
         size: { type: 'string', enum: ['xs', 'sm', 'md', 'lg', 'xl'] },
-        shape: { type: 'string', enum: ['default', 'pill', 'square', 'icon-only'] },
+        shape: {
+          type: 'string',
+          enum: ['default', 'pill', 'square', 'icon-only'],
+        },
         align: { type: 'string', enum: ['left', 'center', 'right'] },
         icon: { type: 'string' },
         iconPosition: { type: 'string', enum: ['left', 'right'] },
@@ -209,7 +248,8 @@ export const BUILT_IN_COMPONENTS = [
   {
     type: 'icon',
     name: 'Icon',
-    description: 'Emoji or symbol icon with size, color, and alignment controls.',
+    description:
+      'Emoji or symbol icon with size, color, and alignment controls.',
     category: ComponentCategory.CONTENT,
     version: '1.0.0',
     isBuiltIn: true,
@@ -217,10 +257,16 @@ export const BUILT_IN_COMPONENTS = [
       type: 'object',
       properties: {
         name: { type: 'string' },
-        size: { type: 'string', enum: ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'] },
+        size: {
+          type: 'string',
+          enum: ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'],
+        },
         color: { type: 'string' },
         align: { type: 'string', enum: ['left', 'center', 'right'] },
-        variant: { type: 'string', enum: ['default', 'circle', 'square', 'glow'] },
+        variant: {
+          type: 'string',
+          enum: ['default', 'circle', 'square', 'glow'],
+        },
         bgColor: { type: 'string' },
       },
     },

@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
 import { useUIStore } from '../../store/uiStore';
-import { t } from '../../i18n';
 import { AuthNavbar } from './AuthNavbar';
 
 export const ForgotPasswordPage: React.FC = () => {
-  const { language } = useUIStore();
-  const lang = t(language).auth;
+  useUIStore();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const navigate = useNavigate();

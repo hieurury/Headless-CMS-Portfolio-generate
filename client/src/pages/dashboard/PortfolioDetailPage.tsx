@@ -11,6 +11,7 @@ import {
   Folder, Briefcase, Code, Palette, Laptop, Camera, Book, Video, Image as ImageIcon, Sun, Moon,
   Layers, Tag, AlignLeft, Settings, X, GripVertical,
 } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 
 const ICONS = [
   { name: 'FileText', component: FileText },
@@ -46,7 +47,8 @@ export const PortfolioDetailPage: React.FC = () => {
   const [ptError, setPtError] = useState<string | null>(null);
 
   const lang = t(language).dashboard;
-
+  const { user } = useAuthStore();
+  const userId = user?._id;
   useEffect(() => {
     if (portfolioId) {
       fetchOne(portfolioId);
@@ -58,6 +60,7 @@ export const PortfolioDetailPage: React.FC = () => {
     if (activeTab === 'posts') {
       void fetchPostTypes();
       void fetchPosts(selectedPostTypeId || undefined);
+
     }
   }, [activeTab, fetchPostTypes, fetchPosts, selectedPostTypeId]);
 
@@ -467,22 +470,39 @@ export const PortfolioDetailPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/${post._id}/edit`)}
+                        {/* Preview / View Public */}
+                        <a
+                          href={`/p/${portfolio?.slug}/post/${post.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
                           className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
-                          title="Edit post"
+                          title="View public post"
                         >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm('Delete this post?')) void removePost(post._id);
-                          }}
-                          className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                          title="Delete post"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                          <Eye size={16} />
+                        </a>
+                        {
+                          userId == post.authorId && (
+                            <>
+                              <button
+                                onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/${post._id}/edit`)}
+                                className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                                title="Edit post"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm('Delete this post?')) void removePost(post._id);
+                                }}
+                                className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                title="Delete post"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )
+                        }
+
                       </div>
                     </div>
                   );
