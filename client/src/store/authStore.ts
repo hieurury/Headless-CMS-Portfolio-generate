@@ -32,11 +32,12 @@ export const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, accessToken } = await authService.login({
+          const { user, accessToken, refreshToken } = await authService.login({
             email,
             password,
           });
           localStorage.setItem('cms_token', accessToken);
+          localStorage.setItem('cms_refresh_token', refreshToken);
           set({
             user,
             token: accessToken,

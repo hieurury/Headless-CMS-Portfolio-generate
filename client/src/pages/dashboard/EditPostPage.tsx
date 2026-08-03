@@ -5,6 +5,7 @@ import { usePortfolioStore } from "../../store/portfolioStore";
 import type { PostType } from "../../services/post.service";
 import { uploadService } from "../../services/post.service";
 import MyEditor from "../editor/components/BlockNote";
+import { PostStatusDropdown, type PostStatusOption } from "../../components/common/PostStatusDropdown";
 import {
   ArrowLeft, Loader2, Save, ChevronRight, Tag,
   AlignLeft, Hash, Type, Link as LinkIcon, Calendar,
@@ -66,8 +67,8 @@ const FieldInput: React.FC<FieldInputProps> = ({ field, index, value, onChange }
   switch (field.type) {
     case "markdown":
       return (
-        <div data-color-mode="auto" className="rounded-lg overflow-hidden border border-[var(--color-border)]">
-          <MyEditor></MyEditor>
+        <div className="rounded-lg overflow-hidden border border-[var(--color-border)]">
+          <MyEditor value={value} onChange={onChange} />
         </div>
       );
     case "image":
@@ -82,7 +83,7 @@ const FieldInput: React.FC<FieldInputProps> = ({ field, index, value, onChange }
       return <input id={`field-${field.name}`} type="date" value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={base} />;
     case "select":
       return (
-        <select id={`field-${field.name}`} value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={`${base} cursor-pointer`}>
+        <select id={`field-${field.name}`} value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={`${base} cursor-pointer bg-[var(--color-surface)] [&>option]:bg-[#18181b] [&>option]:text-white`}>
           <option value="">Select {field.label}...</option>
           {(field.options ?? []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
         </select>
@@ -120,7 +121,7 @@ export const EditPostPage: React.FC = () => {
   const { current: portfolio } = usePortfolioStore();
   const [title, setTitle] = useState("");
   const [coverImage, setCoverImage] = useState("");
-  const [status, setStatus] = useState<"draft" | "published" | "archived" | "scheduled">("draft");
+  const [status, setStatus] = useState<PostStatusOption>("draft");
   const [tags, setTags] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
@@ -211,13 +212,12 @@ export const EditPostPage: React.FC = () => {
             <ChevronRight size={13} className="text-[var(--color-border)]" />
             <span className="text-[var(--color-text)] font-medium">Edit Post</span>
           </div>
-          <div className="flex items-center gap-2">
-            <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="h-9 px-3 text-xs rounded-lg border border-[var(--color-border)] bg-transparent text-[var(--color-text)] focus:outline-none focus:border-[var(--color-text)] transition-all cursor-pointer">
-              <option value="draft">Draft</option>
-              <option value="published">Publish Now</option>
-              <option value="archived">Archived</option>
-              <option value="scheduled">Schedule</option>
-            </select>
+          <div className="flex items-center gap-3">
+            <PostStatusDropdown
+              value={status}
+              onChange={(newStatus) => setStatus(newStatus)}
+              options={["draft", "published", "scheduled", "archived"]}
+            />
             <button form="create-post-form" type="submit" disabled={saving || !title.trim()} className="flex items-center gap-2 h-9 px-5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm transition-all disabled:opacity-50 hover:opacity-85">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
             </button>
