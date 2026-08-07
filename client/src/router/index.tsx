@@ -4,14 +4,14 @@ import {
   RouterProvider,
   Navigate,
   Outlet,
+  useLocation,
 } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
-import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
-import { VerifyEmailPage } from '../pages/auth/VerifyEmailPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { ProfilePage } from '../pages/dashboard/ProfilePage';
 import { PortfolioDetailPage } from '../pages/dashboard/PortfolioDetailPage';
 import { CreatePostPage } from '../pages/dashboard/CreatePostPage';
 import { EditPostPage } from '../pages/dashboard/EditPostPage';
@@ -35,7 +35,11 @@ const ProtectedRoute: React.FC = () => {
 
 const PublicRoute: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  const location = useLocation();
+  // Allow accessing /register if user is in the registration flow completing Step 3
+  if (isAuthenticated && location.pathname !== '/register') {
+    return <Navigate to="/dashboard" replace />;
+  }
   return <Outlet />;
 };
 
@@ -52,16 +56,10 @@ const router = createBrowserRouter([
     element: <PublicRoute />,
     children: [
       { path: '/login', element: <LoginPage /> },
-      { path: '/forgot-password', element: <ForgotPasswordPage /> },
-      { path: '/reset-password', element: <ResetPasswordPage /> },
-      { path: '/verify-email', element: <VerifyEmailPage /> },
       { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
     ],
   },
-
-  // ── Password reset (always public — no redirect) ─────────────────
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password', element: <ResetPasswordPage /> },
 
   // ── Public routes (no auth required) ────────────────────────────
   {
@@ -86,6 +84,8 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/dashboard/profile', element: <ProfilePage /> },
+      { path: '/profile', element: <Navigate to="/dashboard/profile" replace /> },
       {
         path: '/dashboard/portfolios/:portfolioId',
         element: <PortfolioDetailPage />,

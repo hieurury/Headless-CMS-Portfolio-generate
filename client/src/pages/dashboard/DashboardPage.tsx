@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { UserNavMenu } from '../../components/common/UserNavMenu';
 import { t } from '../../i18n';
 import {
   Plus,
@@ -11,7 +11,6 @@ import {
   Trash2,
   Loader2,
   LayoutGrid,
-  LogOut,
   Globe,
   Lock,
   Copy,
@@ -45,7 +44,6 @@ const ICONS = [
 export const DashboardPage: React.FC = () => {
   const { portfolios, fetchAll, create, remove, isLoading, error } =
     usePortfolioStore();
-  const { logout } = useAuthStore();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
@@ -158,18 +156,11 @@ export const DashboardPage: React.FC = () => {
               >
                 {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
               </button>
-
-              <button
-                onClick={() => {
-                  logout();
-                  navigate('/login');
-                }}
-                className="home-navbar__icon-btn"
-                title={lang.signOut}
-              >
-                <LogOut size={16} />
-              </button>
             </div>
+
+            {/* Separator and User Dropdown Menu */}
+            <div style={{ width: 1, height: 22, background: 'var(--color-border)', margin: '0 4px' }} />
+            <UserNavMenu />
           </div>
         </div>
       </nav>

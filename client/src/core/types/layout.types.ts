@@ -161,6 +161,14 @@ export interface User {
   _id: string;
   email: string;
   name: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  avatar?: string;
+  background?: string;
+  age?: number;
+  slogan?: string;
+  occupation?: string;
+  interests?: string[];
   createdAt: string;
 }
 
@@ -168,4 +176,16 @@ export interface AuthResponse {
   user: User;
   accessToken: string;
   refreshToken: string;
+}
+
+/** Returned by register endpoint before email verification */
+export interface RegisterResponse {
+  userId: string;
+  message: string;
+}
+
+/** Returned by login when account is unverified */
+export interface UnverifiedLoginResponse {
+  requiresVerification: true;
+  userId: string;
 }

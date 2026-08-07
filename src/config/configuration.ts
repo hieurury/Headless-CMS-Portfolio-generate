@@ -11,9 +11,11 @@ export default () => ({
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   },
   email: {
-    gmailUser: process.env.GMAIL_USER ?? '',
-    gmailPassword: process.env.GMAIL_PASSWORD ?? '',
+    user: process.env.GMAIL_USER ?? '',
+    appPassword: process.env.GMAIL_APP_PASSWORD ?? '',
+    fromName: process.env.MAIL_FROM_NAME ?? 'Ruryfo CMS',
   },
+  appUrl: process.env.APP_URL ?? 'https://cms.hieurury.id.vn',
   clientUrl: process.env.CLIENT_URL ?? 'http://localhost:5173',
   githubModels: {
     token: process.env.AI_TOKEN ?? '',
