@@ -5,9 +5,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
 import { GenerateLayoutDto } from './dto/generate-layout.dto';
 import { ToolRegistry } from './tool-registry.service';
+import { administratorAgent } from './agents/administrator/administrator.agent';
 
 /**
  * ════════════════════════════════════════════════════════════════════════
@@ -46,9 +46,11 @@ interface BlockDef {
   props: Record<string, PropDef>;
 }
 
-const COMMON_COLOR_PROPS: Record<string, PropDef> = {
+const COMMON_STYLE_PROPS: Record<string, PropDef> = {
   textColor: { kind: 'color' },
   backgroundColor: { kind: 'color' },
+  margin: { kind: 'string' },
+  padding: { kind: 'string' },
 };
 
 const ALIGN_X_LCR: PropDef = {
@@ -65,7 +67,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: false,
     childRule: 'single',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       sticky: { kind: 'boolean', default: true },
       transparent: { kind: 'boolean', default: false },
       background: {
@@ -75,7 +77,6 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       },
       padding: {
         kind: 'string',
-        options: ['sm', 'md', 'lg', 'xl'],
         default: 'lg',
       },
       maxWidth: {
@@ -91,7 +92,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: false,
     childRule: 'columns',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       columns: { kind: 'string', options: ['2', '3', '4'], default: '2' },
       gap: {
         kind: 'string',
@@ -117,7 +118,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: false,
     childRule: 'rows',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       rows: { kind: 'string', options: ['2', '3', '4'], default: '2' },
       gap: {
         kind: 'string',
@@ -141,7 +142,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: false,
     childRule: 'any',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       direction: {
         kind: 'string',
         options: ['row', 'column', 'row-reverse', 'column-reverse'],
@@ -173,20 +174,20 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: false,
     childRule: 'single',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       style: {
         kind: 'string',
         options: ['none', 'card', 'glass', 'outlined', 'filled'],
         default: 'none',
       },
-      padding: {
-        kind: 'string',
-        options: ['none', 'sm', 'md', 'lg', 'xl'],
-        default: 'none',
-      },
       borderRadius: {
         kind: 'string',
         options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'none',
+      },
+      maxWidth: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'],
         default: 'none',
       },
       alignX: ALIGN_X_LCR,
@@ -197,7 +198,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       text: { kind: 'string', default: 'Heading' },
       level: {
         kind: 'string',
@@ -243,7 +244,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       text: { kind: 'text', default: 'Description text.' },
       size: {
         kind: 'string',
@@ -263,7 +264,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       label: { kind: 'string', default: 'Link' },
       href: { kind: 'string', default: '#' },
       variant: {
@@ -282,7 +283,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       label: { kind: 'string', default: 'Click Me' },
       href: { kind: 'string', default: '#' },
       variant: {
@@ -324,7 +325,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       name: { kind: 'string', default: 'Sparkles' },
       size: {
         kind: 'string',
@@ -358,7 +359,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       url: {
         kind: 'string',
         default:
@@ -388,7 +389,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     isAtom: true,
     childRule: 'none',
     props: {
-      ...COMMON_COLOR_PROPS,
+      ...COMMON_STYLE_PROPS,
       text: { kind: 'string', default: 'New' },
       variant: {
         kind: 'string',
@@ -425,8 +426,8 @@ const VALID_TYPES = Object.keys(BLOCK_DEFS);
  */
 const COMPONENT_CONTEXT = `
 <system_role>
-You are a world-class portfolio website layout designer, creative director, and UI architect. Your job is to generate EXTREMELY DIVERSE, NOVEL, and CREATIVE portfolio layouts using ONLY the 12 provided building blocks below.
-Think like a human designer composing unique, dynamic UI structures. Vary your use of columns, rows, cards, glassmorphism, background colors, alignments, and sizes drastically based on the user's prompt. Avoid generic, repetitive "hero + 3 cards" templates unless that genuinely fits the request.
+You are a world-class portfolio website layout designer, creative director, and UI architect. Your job is to generate EXTREMELY DIVERSE, NOVEL, AESTHETIC, and SPACIOUS portfolio layouts using ONLY the 12 provided building blocks below.
+Think like a human designer composing unique, modern, breathable UI structures. Master the use of spacing (padding, margin, gap), columns, rows, cards, glassmorphism, background colors, alignments, and typography hierarchy based on the user's prompt.
 </system_role>
 
 <critical_output_format>
@@ -440,65 +441,75 @@ Think like a human designer composing unique, dynamic UI structures. Vary your u
 </critical_output_format>
 
 ═══════════════════════════════════════════════════
-BLOCK SYSTEM — ONLY these 12 blocks exist. DO NOT invent new types or new prop names.
+BLOCK SYSTEM — ONLY these 12 blocks exist. DO NOT invent new types.
 ═══════════════════════════════════════════════════
 
+── UNIVERSAL PROPS (Accepted on EVERY block below) ───────────────────────────
+• padding: CSS shorthand string for internal breathing space (e.g. "5rem 2rem", "2rem", "1.5rem", "16px 24px", "0")
+• margin: CSS shorthand string for external spacing (e.g. "4rem 0", "0 0 1.5rem 0", "0 0 0.75rem 0", "1rem 0")
+• textColor: CSS color/hex string (e.g. "#ffffff", "#94a3b8", "#38bdf8")
+• backgroundColor: CSS color/hex/rgba/gradient (e.g. "#0a0a0f", "#111827", "rgba(255,255,255,0.03)")
+
 ── NAVIGATION ─────────────────────────────────────────────────────────────
-[nav-bar-wrapper] — Sticky navigation bar. Always the FIRST top-level block on any page. Exactly ONE child (usually a "columns" with columns="2": left cell = logo/heading, right cell = nested columns/flex with links + a button).
-Props: sticky(bool), transparent(bool), background(dark|glass|light|none), padding(sm|md|lg|xl), maxWidth(lg|xl|2xl|full), alignX(left|center|right), alignY(top|middle|bottom), textColor(css color), backgroundColor(css color)
+[nav-bar-wrapper] — Sticky navigation bar. Always the FIRST top-level block on any page. Exactly ONE child (usually a "columns" with columns="2": left cell = logo/heading, right cell = nested flex/columns with links + button).
+Props: sticky(bool), transparent(bool), background(dark|glass|light|none), padding(sm|md|lg|xl), maxWidth(lg|xl|2xl|full), alignX(left|center|right), alignY(top|middle|bottom), textColor, backgroundColor, margin
 { "type": "nav-bar-wrapper", "props": { "sticky": true, "background": "glass", "padding": "lg", "maxWidth": "xl" }, "children": [ /* exactly 1 child */ ] }
 
-── LAYOUT CONTAINERS (use these to structure every section) ───────────────
-[container] — Box wrapper that positions exactly ONE child inside itself (great for hero sections, card backgrounds, centering content). isContainer.
-Props: style(none|card|glass|outlined|filled), padding(none|sm|md|lg|xl), borderRadius(none|sm|md|lg|xl|2xl), alignX(left|center|right), alignY(top|middle|bottom), textColor, backgroundColor
-{ "type": "container", "props": { "style": "glass", "padding": "xl", "borderRadius": "2xl", "alignX": "center", "alignY": "middle", "backgroundColor": "#0a0a0f" }, "children": [ /* exactly 1 child, usually rows or columns */ ] }
+── LAYOUT CONTAINERS (use these to structure every section & card) ────────
+[container] — Box wrapper that positions exactly ONE child inside itself (hero section container, card background, centered content wrapper). isContainer.
+Props: style(none|card|glass|outlined|filled), padding(CSS shorthand like "5rem 2rem", "2rem", or preset sm|md|lg|xl), margin(CSS shorthand like "3rem 0", "0"), borderRadius(none|sm|md|lg|xl|2xl), maxWidth(none|sm|md|lg|xl|2xl|full), alignX(left|center|right), alignY(top|middle|bottom), textColor, backgroundColor
+{ "type": "container", "props": { "style": "glass", "padding": "4rem 2rem", "borderRadius": "2xl", "alignX": "center", "alignY": "middle", "backgroundColor": "#0a0a0f" }, "children": [ /* exactly 1 child, usually rows, columns, or flex */ ] }
 
-[columns] — Splits content into N EQUAL-WIDTH side-by-side cells (CSS grid). The number of children MUST exactly equal "columns". Each child is itself one block (often a container/rows wrapping more content).
-Props: columns("2"|"3"|"4"), colSpans(optional number array, e.g. [1,2] = second cell twice as wide — length must equal columns or it's ignored), gap(none|sm|md|lg|xl), alignX(start|center|end|stretch), alignY(start|center|end|stretch)
+[columns] — Splits content into N EQUAL-WIDTH side-by-side cells (CSS grid). The number of children MUST exactly equal "columns". Each child is itself one block (often a container/rows/card wrapping content).
+Props: columns("2"|"3"|"4"), colSpans(optional number array, e.g. [1,2] = second cell twice as wide), gap(none|sm|md|lg|xl), alignX(start|center|end|stretch), alignY(start|center|end|stretch), padding, margin, textColor, backgroundColor
 { "type": "columns", "props": { "columns": "3", "gap": "lg", "alignX": "stretch", "alignY": "stretch" }, "children": [ block1, block2, block3 ] }
 
-[rows] — Splits content into N stacked rows. Each row sizes to its own content (not equal height). Children count MUST exactly equal "rows".
-Props: rows("2"|"3"|"4"), rowSpans(optional), gap(none|sm|md|lg|xl), alignX(start|center|end|stretch), alignY(start|center|end|stretch)
-{ "type": "rows", "props": { "rows": "3", "gap": "sm" }, "children": [ block1, block2, block3 ] }
+[rows] — Splits content into N stacked rows. Each row sizes to its own content. Children count MUST exactly equal "rows".
+Props: rows("2"|"3"|"4"), rowSpans(optional), gap(none|sm|md|lg|xl), alignX(start|center|end|stretch), alignY(start|center|end|stretch), padding, margin, textColor, backgroundColor
+{ "type": "rows", "props": { "rows": "3", "gap": "md" }, "children": [ block1, block2, block3 ] }
 
-[flex] — Children flow naturally and auto-size to their own content (NOT forced into equal cells). Use for button groups, tag/badge rows, icon rows, inline link groups. Accepts ANY number of children (no exact-count rule).
-Props: direction(row|column|row-reverse|column-reverse), gap(none|sm|md|lg|xl), justify(start|center|end|between|around|evenly), align(start|center|end|stretch|baseline), wrap(nowrap|wrap|wrap-reverse)
+[flex] — Children flow naturally and auto-size to their own content. Use for button groups, tag/badge rows, icon rows, inline link groups. Accepts ANY number of children.
+Props: direction(row|column|row-reverse|column-reverse), gap(none|sm|md|lg|xl), justify(start|center|end|between|around|evenly), align(start|center|end|stretch|baseline), wrap(nowrap|wrap|wrap-reverse), padding, margin, textColor, backgroundColor
 { "type": "flex", "props": { "direction": "row", "gap": "sm", "justify": "start", "align": "center", "wrap": "wrap" }, "children": [ badge1, badge2, badge3 ] }
 
 ── ATOMIC BLOCKS (terminal nodes — NEVER give these a "children" key) ─────
-[heading] — text, level(h1-h6), size(sm|base|lg|xl|2xl|3xl|4xl|5xl), textAlign(left|center|right), gradient(bool), marginTop/marginBottom/paddingTop/paddingBottom(none|sm|md|lg|xl|2xl)
-{ "type": "heading", "props": { "text": "I Build Digital Experiences", "level": "h1", "size": "5xl", "textAlign": "left", "gradient": true, "marginBottom": "md" } }
+[heading] — text, level(h1-h6), size(sm|base|lg|xl|2xl|3xl|4xl|5xl), textAlign(left|center|right), gradient(bool), margin(CSS shorthand e.g. "0 0 1rem 0"), padding, alignX, alignY, textColor, backgroundColor
+{ "type": "heading", "props": { "text": "Crafting Scalable Digital Products", "level": "h1", "size": "5xl", "textAlign": "left", "gradient": true, "margin": "0 0 1.25rem 0" } }
 
-[description] — text, size(xs|sm|base|lg|xl), textAlign(left|center|right)
-{ "type": "description", "props": { "text": "Full-stack developer crafting fast, accessible web apps.", "size": "lg", "textAlign": "left" } }
+[description] — text, size(xs|sm|base|lg|xl), textAlign(left|center|right), margin(CSS shorthand e.g. "0 0 1.5rem 0"), padding, alignX, alignY, textColor, backgroundColor
+{ "type": "description", "props": { "text": "Senior full-stack engineer specializing in TypeScript, React, and high-performance cloud architectures.", "size": "lg", "textAlign": "left", "margin": "0 0 2rem 0" } }
 
-[link] — label, href, variant(inline|nav|underline|pill), size(sm|base|lg), showIcon(bool), external(bool)
-{ "type": "link", "props": { "label": "About", "href": "#about", "variant": "nav" } }
+[link] — label, href, variant(inline|nav|underline|pill), size(sm|base|lg), showIcon(bool), external(bool), margin, padding, textColor, backgroundColor
+{ "type": "link", "props": { "label": "Projects", "href": "#projects", "variant": "nav" } }
 
-[button] — label, href, variant(primary|secondary|ghost|danger|success|warning|outline), size(xs|sm|md|lg|xl), shape(default|pill|square|icon-only), icon(emoji string), iconPosition(left|right), fullWidth(bool), external(bool)
-{ "type": "button", "props": { "label": "Hire Me", "href": "#contact", "variant": "primary", "size": "md", "shape": "pill" } }
+[button] — label, href, variant(primary|secondary|ghost|danger|success|warning|outline), size(xs|sm|md|lg|xl), shape(default|pill|square|icon-only), icon(emoji string), iconPosition(left|right), fullWidth(bool), external(bool), margin, padding, textColor, backgroundColor
+{ "type": "button", "props": { "label": "Get in Touch", "href": "#contact", "variant": "primary", "size": "md", "shape": "pill" } }
 
-[icon] — name(Lucide icon name, e.g. Code2, Rocket, Star, Mail, Github, Linkedin, Palette, Zap, Sparkles, Layers), size(xs|sm|md|lg|xl|2xl), shape(none|circle|square|rounded), accent(indigo|violet|emerald|amber|rose|sky|slate)
+[icon] — name(Lucide icon name, e.g. Code2, Rocket, Star, Mail, Github, Linkedin, Palette, Zap, Sparkles, Layers, Cpu, Globe), size(xs|sm|md|lg|xl|2xl), shape(none|circle|square|rounded), accent(indigo|violet|emerald|amber|rose|sky|slate), margin, padding, textColor, backgroundColor
 { "type": "icon", "props": { "name": "Rocket", "size": "lg", "shape": "rounded", "accent": "violet" } }
 
-[image] — url(real working Unsplash URL, e.g. https://images.unsplash.com/photo-XXXX?q=80&w=800&auto=format&fit=crop), alt, aspectRatio(auto|16/9|4/3|1/1|3/4), objectFit(cover|contain|fill), borderRadius(none|sm|md|lg|xl|2xl|full)
-{ "type": "image", "props": { "url": "https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=800&auto=format&fit=crop", "alt": "Portrait photo", "aspectRatio": "1/1", "objectFit": "cover", "borderRadius": "full" } }
+[image] — url(real working Unsplash photo URL), alt, aspectRatio(auto|16/9|4/3|1/1|3/4), objectFit(cover|contain|fill), borderRadius(none|sm|md|lg|xl|2xl|full), margin, padding
+{ "type": "image", "props": { "url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop", "alt": "Portrait", "aspectRatio": "1/1", "objectFit": "cover", "borderRadius": "2xl" } }
 
-[badge] — text, variant(solid|outline|subtle), color(indigo|rose|emerald|amber|sky|slate|violet), size(sm|md|lg), shape(rounded|pill)
-{ "type": "badge", "props": { "text": "React", "variant": "subtle", "color": "sky", "size": "sm", "shape": "pill" } }
+[badge] — text, variant(solid|outline|subtle), color(indigo|rose|emerald|amber|sky|slate|violet), size(sm|md|lg), shape(rounded|pill), margin, padding
+{ "type": "badge", "props": { "text": "Next.js", "variant": "subtle", "color": "sky", "size": "sm", "shape": "pill" } }
 
-Both "textColor" and "backgroundColor" (CSS color/hex/gradient string) are accepted on EVERY block above for fine custom styling.
+═══════════════════════════════════════════════════
+SPACING & DESIGN GUIDELINES
+═══════════════════════════════════════════════════
+1. Generous Section Padding: Every main section container SHOULD have generous vertical padding (e.g. padding: "5rem 2rem" or "6rem 2rem") for a premium, spacious feel.
+2. Clean Typography Margins: Always add bottom margin to headings (e.g. margin: "0 0 1rem 0") and descriptions (e.g. margin: "0 0 1.5rem 0") so text never crowds buttons or cards.
+3. Card Inner Padding: Cards inside grids/columns SHOULD have style: "card" or "glass", borderRadius: "xl" or "2xl", and internal padding: "2rem".
 
 ═══════════════════════════════════════════════════
 STRUCTURAL RULES (verify ALL before outputting)
 ═══════════════════════════════════════════════════
 1. The FIRST top-level section is always exactly one "nav-bar-wrapper".
-2. Every "container" and "nav-bar-wrapper" has EXACTLY ONE child. If you need multiple things inside, wrap them in a "rows", "columns", or "flex" first.
+2. Every "container" and "nav-bar-wrapper" has EXACTLY ONE child. If you need multiple elements, wrap them in "rows", "columns", or "flex".
 3. Every "columns" block's children array length MUST exactly equal its "columns" prop. Every "rows" block's children array length MUST exactly equal its "rows" prop. Count before finalizing.
-4. Atomic blocks (heading, description, link, button, icon, image, badge) are terminal — NEVER give them a "children" property, not even an empty array.
-5. Use real, working Unsplash photo URLs for every "image" block (different photos per image — do not reuse the same URL twice in one layout).
-6. Build deep, realistic content — section headings, multiple paragraphs/cards/projects with believable copy relevant to the user's prompt, not single-word placeholders.
-7. Vary structure between sections: don't repeat the exact same columns/rows pattern for every section — mix container+rows, columns+container, flex groups, asymmetric colSpans, etc.
+4. Atomic blocks (heading, description, link, button, icon, image, badge) are terminal — NEVER give them a "children" property.
+5. Use real, working Unsplash photo URLs for every "image" block (distinct URLs for each image).
+6. Build rich, realistic content relevant to the user's prompt.
 
 ═══════════════════════════════════════════════════
 WORKED EXAMPLE — a complete, well-structured "Hero" section
@@ -506,7 +517,7 @@ WORKED EXAMPLE — a complete, well-structured "Hero" section
 {
   "type": "container",
   "name": "hero",
-  "props": { "style": "none", "padding": "xl", "alignX": "center", "alignY": "middle", "backgroundColor": "#0a0a0f" },
+  "props": { "style": "none", "padding": "5rem 2rem", "margin": "0", "alignX": "center", "alignY": "middle", "backgroundColor": "#0a0a0f" },
   "children": [
     {
       "type": "columns",
@@ -516,21 +527,20 @@ WORKED EXAMPLE — a complete, well-structured "Hero" section
           "type": "rows",
           "props": { "rows": "4", "gap": "md" },
           "children": [
-            { "type": "badge", "props": { "text": "Available for work", "variant": "subtle", "color": "emerald", "size": "sm" } },
-            { "type": "heading", "props": { "text": "Hi, I'm John — React Developer", "level": "h1", "size": "5xl", "gradient": true } },
-            { "type": "description", "props": { "text": "I build performant, accessible web applications with React and Node.js.", "size": "lg" } },
-            { "type": "flex", "props": { "direction": "row", "gap": "sm", "justify": "start", "align": "center" }, "children": [
-              { "type": "button", "props": { "label": "View Projects", "href": "#projects", "variant": "primary" } },
-              { "type": "button", "props": { "label": "Contact Me", "href": "#contact", "variant": "outline" } }
+            { "type": "badge", "props": { "text": "Available for new projects", "variant": "subtle", "color": "emerald", "size": "sm", "margin": "0 0 0.5rem 0" } },
+            { "type": "heading", "props": { "text": "Building High-Impact Web Applications", "level": "h1", "size": "5xl", "gradient": true, "margin": "0 0 1rem 0" } },
+            { "type": "description", "props": { "text": "Senior Full-Stack Engineer crafting fast, resilient, and beautifully designed web experiences with React, Node.js, and Cloud architectures.", "size": "lg", "margin": "0 0 1.5rem 0" } },
+            { "type": "flex", "props": { "direction": "row", "gap": "md", "justify": "start", "align": "center" }, "children": [
+              { "type": "button", "props": { "label": "Explore Work", "href": "#projects", "variant": "primary", "size": "md", "shape": "pill" } },
+              { "type": "button", "props": { "label": "Contact Me", "href": "#contact", "variant": "outline", "size": "md", "shape": "pill" } }
             ] }
           ]
         },
-        { "type": "image", "props": { "url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop", "alt": "John's portrait", "aspectRatio": "1/1", "objectFit": "cover", "borderRadius": "2xl" } }
+        { "type": "image", "props": { "url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop", "alt": "Developer portrait", "aspectRatio": "1/1", "objectFit": "cover", "borderRadius": "2xl" } }
       ]
     }
   ]
 }
-→ Notice: container has exactly 1 child (columns). columns="2" has exactly 2 children. rows="4" has exactly 4 children. All atomic blocks have no "children" key.
 `;
 
 /**
@@ -690,25 +700,15 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly openai: OpenAI;
-  private readonly modelName: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly registry: ToolRegistry,
   ) {
-    const token = this.configService.get<string>('githubModels.token');
-    this.logger.log(`AI layout engine initialized (token: ${token})`);
-    if (!token) {
-      throw new Error('AI_TOKEN is not configured. Add it to your .env file.');
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured. Add it to your .env file.');
     }
-    this.openai = new OpenAI({
-      baseURL: 'https://models.inference.ai.azure.com',
-      apiKey: token,
-    });
-    this.modelName =
-      this.configService.get<string>('githubModels.model') ?? 'gpt-4o-mini';
-    this.logger.log(`AI layout engine initialized (model: ${this.modelName})`);
+    this.logger.log(`AI layout engine initialized (model: ${process.env.GEMINI_MODEL || 'gemini-flash-latest'} via AdministratorAgent)`);
   }
 
   async generateLayout(dto: GenerateLayoutDto): Promise<{
@@ -740,7 +740,6 @@ export class AiService {
           retryPrompt,
           isModification,
           dto,
-          0.2,
         );
       }
 
@@ -779,15 +778,12 @@ export class AiService {
 
 
   /**
-   * Calls the model once and runs the parsed result through normalization.
-   * Returns [] on any failure (never throws).
+   * Gọi AdministratorAgent và chuẩn hóa kết quả qua normalizeNode.
+   * Returns [] nếu Agent trả về JSON không hợp lệ (không throw).
    *
-   * Handles two possible response shapes:
-   *  1. Tool call response — AI called `generate-layout` with a modifications list.
-   *     → We inject `currentlayout` server-side (AI doesn't know the sections array),
-   *       execute the tool, and normalize the resulting sections array.
-   *  2. Raw JSON response — AI returned { "sections": [...] } directly.
-   *     → Parse and normalize as before.
+   * Xử lý 2 dạng response:
+   *  1. {modifications: [...]} → thực thi qua ToolRegistry (generate-layout tool)
+   *  2. {sections: [...]}      → parse và normalize trực tiếp
    */
   private async callAndNormalize(
     prompt: string,
@@ -795,121 +791,66 @@ export class AiService {
     dto: GenerateLayoutDto,
     forcedTemperature?: number,
   ): Promise<unknown[]> {
-    const temperature = forcedTemperature ?? (isModification ? 0.3 : 0.9);
-
-    const result = await this.openai.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
-      model: this.modelName,
-      temperature,
-      max_tokens: 8192,
-      response_format: { type: 'json_object' },
-      tools: this.registry.toOpenAiTools(),
-    });
-
-    const message = result.choices[0]?.message;
-    const finishReason = result.choices[0]?.finish_reason;
-    this.logger.log(`Model finish_reason: ${finishReason}`);
-
-    // ── Branch 1: AI decided to call a tool ─────────────────────────────────
-    if (message?.tool_calls && message.tool_calls.length > 0) {
-      this.logger.log(
-        `Model invoked ${message.tool_calls.length} tool call(s): ` +
-        message.tool_calls
-          .map((tc) => (tc.type === 'function' ? tc.function.name : tc.type))
-          .join(', '),
-      );
-
-      // Process all tool calls sequentially. The `generate-layout` tool is
-      // idempotent per invocation, so we apply the last non-empty result.
-      let latestSections: unknown[] = [];
-
-      for (const toolCall of message.tool_calls) {
-        if (toolCall.type !== 'function') continue;
-
-        const toolName = toolCall.function.name;
-        this.logger.log(`  → Executing tool: "${toolName}"`);
-
-        let toolArgs: Record<string, unknown>;
-        try {
-          toolArgs = JSON.parse(toolCall.function.arguments) as Record<
-            string,
-            unknown
-          >;
-        } catch {
-          this.logger.warn(
-            `  → Failed to parse arguments for tool "${toolName}" — skipping`,
-          );
-          continue;
-        }
-
-        const tool = this.registry.get(toolName);
-        if (!tool) {
-          this.logger.warn(
-            `  → Tool "${toolName}" is not registered — skipping`,
-          );
-          continue;
-        }
-
-        // Inject the real currentlayout server-side so the AI doesn't need
-        // to reproduce the entire layout JSON in its arguments.
-        if (toolName === 'generate-layout') {
-          toolArgs.currentlayout = dto.currentLayout?.sections ?? [];
-          this.logger.log(
-            `  → Injected currentlayout (${(dto.currentLayout?.sections ?? []).length} top-level sections)`,
-          );
-        }
-
-        try {
-          const toolResultString = await tool.execute(toolArgs);
-          this.logger.log(`  → Tool "${toolName}" executed successfully`);
-          const parsedResult = JSON.parse(toolResultString);
-
-          if (Array.isArray(parsedResult) && parsedResult.length > 0) {
-            latestSections = parsedResult;
-          } else {
-            this.logger.warn(
-              `  → Tool "${toolName}" returned an empty or non-array result`,
-            );
-          }
-        } catch (error) {
-          this.logger.error(
-            `  → Tool "${toolName}" execution failed: ${(error as Error).message}`,
-          );
-        }
-      }
-
-      if (latestSections.length > 0) {
-        return latestSections
-          .map((s) => normalizeNode(s, this.logger))
-          .filter((s): s is RawNode => s !== null);
-      }
-
-      // If all tool calls failed or returned empty, fall through to raw content.
-      this.logger.warn(
-        'All tool calls produced no valid sections — falling back to raw content',
-      );
-    }
-
-    // ── Branch 2: AI returned raw JSON { "sections": [...] } ────────────────
-    const text = message?.content || '{}';
-
-    let parsed: { sections: unknown[] };
     try {
-      parsed = JSON.parse(text) as { sections: unknown[] };
-    } catch {
-      this.logger.warn('Model returned invalid JSON in content field');
+      // Gọi AdministratorAgent — nó tự quyết định dùng layout_architect hay copywriter
+      const result = await administratorAgent.run(prompt, []);
+
+      // Lấy nội dung text từ message cuối cùng của Agent
+      const lastMsg = result.messages
+        ? result.messages[result.messages.length - 1]
+        : result;
+      let text =
+        typeof lastMsg.content === 'string'
+          ? lastMsg.content
+          : JSON.stringify(lastMsg.content);
+
+      // Strip markdown fences nếu model lỡ bọc output trong ```json ... ```
+      text = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+
+      this.logger.log(`Agent response (first 120 chars): ${text.substring(0, 120)}`);
+
+      let parsedData: any;
+      try {
+        parsedData = JSON.parse(text);
+      } catch {
+        this.logger.warn('Agent returned invalid JSON: ' + text.substring(0, 120));
+        return [];
+      }
+
+      // ── Branch 1: Agent trả về {modifications:[...]} → dùng generate-layout tool
+      if (parsedData?.modifications && Array.isArray(parsedData.modifications)) {
+        const tool = this.registry.get('generate-layout');
+        if (tool) {
+          const toolArgs = {
+            modifications: parsedData.modifications,
+            currentlayout: dto.currentLayout?.sections ?? [],
+          };
+          this.logger.log(`Executing "generate-layout" tool with ${parsedData.modifications.length} modification(s)`);
+          const toolResultString = await tool.execute(toolArgs);
+          const toolResult = JSON.parse(toolResultString);
+          if (Array.isArray(toolResult) && toolResult.length > 0) {
+            return toolResult
+              .map((s) => normalizeNode(s, this.logger))
+              .filter((s): s is RawNode => s !== null);
+          }
+        }
+      }
+
+      // ── Branch 2: Agent trả về {sections:[...]} → normalize trực tiếp
+      if (!parsedData.sections || !Array.isArray(parsedData.sections)) {
+        this.logger.warn('Agent response missing a "sections" array');
+        return [];
+      }
+
+      return parsedData.sections
+        .map((s: unknown) => normalizeNode(s, this.logger))
+        .filter((s): s is RawNode => s !== null);
+    } catch (err: any) {
+      this.logger.error(`AdministratorAgent error: ${err?.message}`);
       return [];
     }
-
-    if (!parsed.sections || !Array.isArray(parsed.sections)) {
-      this.logger.warn('Model response missing a "sections" array');
-      return [];
-    }
-
-    return parsed.sections
-      .map((s) => normalizeNode(s, this.logger))
-      .filter((s): s is RawNode => s !== null);
   }
+
 
   /** Builds a DESIGN SYSTEM section to inject into the AI prompt from page meta. */
   private buildDesignSystemSection(dto: GenerateLayoutDto): string {

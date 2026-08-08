@@ -117,7 +117,7 @@ export const translations = {
         save: 'Save',
         saving: 'Saving...',
         saved: 'Saved!',
-        unsaved: 'Unsaved',
+        unsaved: 'Save',
         toggleLeftPanel: 'Toggle left panel',
         toggleRightPanel: 'Toggle right panel',
         editModeTitle: 'Edit mode — click elements to edit inline',
@@ -585,7 +585,7 @@ export const translations = {
         save: 'Lưu',
         saving: 'Đang lưu...',
         saved: 'Đã lưu!',
-        unsaved: 'Chưa lưu',
+        unsaved: 'Lưu',
         toggleLeftPanel: 'Chuyển trái',
         toggleRightPanel: 'Chuyển phải',
         editModeTitle:

@@ -23,16 +23,16 @@ import { t } from '../../../i18n';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function get(obj: Record<string, unknown>, key: string): unknown {
-  return obj[key];
+function get(obj: Record<string, unknown> | undefined | null, key: string): unknown {
+  return obj ? obj[key] : undefined;
 }
 
 function set(
-  obj: Record<string, unknown>,
+  obj: Record<string, unknown> | undefined | null,
   key: string,
   value: unknown,
 ): Record<string, unknown> {
-  return { ...obj, [key]: value };
+  return { ...(obj || {}), [key]: value };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -935,7 +935,7 @@ interface SmartPropEditorProps {
   sectionId: string;
   sectionName: string | undefined;
   sectionType: string;
-  props: Record<string, unknown>;
+  props?: Record<string, unknown>;
   focusFieldKey?: string | null; // from preview click on data-cms-field element
   onChange: (newProps: Record<string, unknown>) => void;
   onNameChange: (name: string) => void;
@@ -945,7 +945,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
   sectionId,
   sectionName,
   sectionType,
-  props,
+  props = {},
   focusFieldKey,
   onChange,
   onNameChange,
@@ -954,6 +954,8 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
   const [jsonText, setJsonText] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const fieldRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+
+  const safeProps = props || {};
 
   // const entry = componentRegistry.getEntry(sectionType);
   // const schema = entry?.schema;
@@ -987,13 +989,13 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
 
   const handleFieldChange = useCallback(
     (key: string, value: unknown) => {
-      onChange(set(props, key, value));
+      onChange(set(safeProps, key, value));
     },
-    [props, onChange],
+    [safeProps, onChange],
   );
 
   const openJsonTab = () => {
-    setJsonText(JSON.stringify(props, null, 2));
+    setJsonText(JSON.stringify(safeProps, null, 2));
     setJsonError(null);
     setActiveTab('json');
   };

@@ -59,9 +59,10 @@ export class UploadService {
 
   /** Return unique folder names owned by the user */
   async getFoldersByUser(userId: string): Promise<string[]> {
-    return this.mediaModel
+    const folders = await this.mediaModel
       .distinct('folder', { userId: new Types.ObjectId(userId) })
       .exec();
+    return folders.filter((f) => f && f !== 'Uncategorized');
   }
 
   // ─── Delete ───────────────────────────────────────────────────────────────
