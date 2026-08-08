@@ -37,16 +37,11 @@ export default $config({
             { name: "AI_MODEL", value: process.env.AI_MODEL },
             { name: "CLOUDINARY_CLOUD_NAME", value: process.env.CLOUDINARY_CLOUD_NAME },
             { name: "CLOUDINARY_API_KEY", value: process.env.CLOUDINARY_API_KEY },
-            { name: "CLOUDINARY_API_SECRET", value: process.env.CLOUDINARY_API_SECRET }
+            { name: "CLOUDINARY_API_SECRET", value: process.env.CLOUDINARY_API_SECRET },
+            { name: "GEMINI_API_KEY", value: process.env.GEMINI_API_KEY },
+            { name: "GEMINI_MODEL", value: process.env.GEMINI_MODEL || process.env.AI_MODEL || "gemini-flash-latest" }
           ],
         }],
-      },
-    });
-    const myPubSub = new gcp.pubsub.Topic("MyPubSub", {
-      name: "MyPubSub",
-      project: project,
-      labels: {
-        "deployment-tool": "sst",
       },
     });
 
