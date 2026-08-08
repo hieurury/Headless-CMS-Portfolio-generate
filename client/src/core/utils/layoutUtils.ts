@@ -11,7 +11,7 @@ export function findSectionById(
 ): LayoutSection | null {
   for (const s of sections) {
     if (!s) continue;                         // guard against null gaps
-    if (s.id === id) return s;
+    if (s.id === id || (s.name && s.name === id)) return s;
     if (s.children?.length) {
       const found = findSectionById(s.children, id);
       if (found) return found;
@@ -179,7 +179,7 @@ export function updateSectionProps(
 ): LayoutSection[] {
   return sections.map((s) => {
     if (!s) return s;                         // guard against null gaps
-    if (s.id === id) return { ...s, props: newProps };
+    if (s.id === id || (s.name && s.name === id)) return { ...s, props: { ...s.props, ...newProps } };
     if (s.children?.length) {
       return { ...s, children: updateSectionProps(s.children, id, newProps) };
     }

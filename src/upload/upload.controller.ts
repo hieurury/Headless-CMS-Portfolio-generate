@@ -20,7 +20,7 @@ import { ImageUploadInterceptor } from './controller.interceptor';
 @Controller('upload')
 @UseGuards(JwtAuthGuard)
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) { }
 
   /**
    * POST /api/v1/upload/image
@@ -34,7 +34,8 @@ export class UploadController {
     @Body('folder') folder?: string,
   ) {
     if (!file) throw new BadRequestException('No file provided');
-    const userId = (req.user as { userId: string }).userId;
+    const user = req.user as { sub?: string; userId?: string };
+    const userId = user?.sub || user?.userId || '';
     return this.uploadService.uploadImage(file, userId, folder);
   }
 
@@ -44,7 +45,8 @@ export class UploadController {
    */
   @Get()
   async getMedia(@Req() req: Request, @Query('folder') folder?: string) {
-    const userId = (req.user as { userId: string }).userId;
+    const user = req.user as { sub?: string; userId?: string };
+    const userId = user?.sub || user?.userId || '';
     return this.uploadService.getMediaByUser(userId, folder);
   }
 
@@ -54,7 +56,8 @@ export class UploadController {
    */
   @Get('folders')
   async getFolders(@Req() req: Request) {
-    const userId = (req.user as { userId: string }).userId;
+    const user = req.user as { sub?: string; userId?: string };
+    const userId = user?.sub || user?.userId || '';
     return this.uploadService.getFoldersByUser(userId);
   }
 
@@ -64,7 +67,8 @@ export class UploadController {
    */
   @Delete(':id')
   async deleteMedia(@Param('id') id: string, @Req() req: Request) {
-    const userId = (req.user as { userId: string }).userId;
+    const user = req.user as { sub?: string; userId?: string };
+    const userId = user?.sub || user?.userId || '';
     await this.uploadService.deleteMedia(id, userId);
     return { message: 'Media deleted successfully' };
   }

@@ -252,7 +252,9 @@ export const MediaGalleryPage: React.FC = () => {
             All files
           </button>
 
-          {folders.map((f) => (
+          {folders
+            .filter((f) => f && f.toLowerCase() !== 'uncategorized')
+            .map((f) => (
             <button
               key={f}
               onClick={() => setActiveFolder(f)}

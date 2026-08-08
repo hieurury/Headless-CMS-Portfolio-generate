@@ -1852,7 +1852,7 @@ export const PageEditorPage: React.FC = () => {
                         sectionId={selectedSection.id}
                         sectionName={selectedSection.name}
                         sectionType={selectedSection.type}
-                        props={selectedSection.props}
+                        props={selectedSection.props || {}}
                         focusFieldKey={selectedFieldKey}
                         onChange={(newProps) =>
                           handlePropsChange(selectedSection.id, newProps)

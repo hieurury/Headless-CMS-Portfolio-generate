@@ -820,7 +820,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
   if (!effectiveEditorMode || effectivePreviewMode) {
     return (
       <div id={section.name || section.id}>
-        <Component {...(section.props as Record<string, unknown>)} sectionId={section.name || section.id}>
+        <Component {...(section.props as Record<string, unknown>)} sectionId={section.id}>
           {renderedChildren}
         </Component>
       </div>
@@ -910,7 +910,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, isOve
       )}
 
       {/* ── The actual component ─────────────────────────────────────── */}
-      <Component {...(section.props as Record<string, unknown>)} sectionId={section.name || section.id}>
+      <Component {...(section.props as Record<string, unknown>)} sectionId={section.id}>
         {childrenForComponent}
       </Component>
 
