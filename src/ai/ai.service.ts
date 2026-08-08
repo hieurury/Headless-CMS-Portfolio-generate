@@ -708,7 +708,7 @@ export class AiService {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is not configured. Add it to your .env file.');
     }
-    this.logger.log(`AI layout engine initialized (model: ${process.env.GEMINI_MODEL || 'gemini-flash-latest'} via AdministratorAgent)`);
+    this.logger.log(`AI layout engine initialized (model: ${process.env.GEMINI_MODEL || 'gemini-3.5-flash'} via AdministratorAgent)`);
   }
 
   async generateLayout(dto: GenerateLayoutDto): Promise<{
