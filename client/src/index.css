@@ -93,6 +93,40 @@
     to { opacity: 1; transform: scale(1); }
   }
 
+  /* ─── Light Sweep Animation (Subtle moving light beam) ─── */
+  .light-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .light-sweep::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -120%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      currentColor 50%,
+      transparent 100%
+    );
+    opacity: 0.04;
+    transform: rotate(25deg);
+    animation: lightSweep 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes lightSweep {
+    0% {
+      left: -120%;
+    }
+    100% {
+      left: 220%;
+    }
+  }
+
   /* ─── Grid pattern overlay ───────────────────────────────── */
   .grid-pattern {
     background-image:

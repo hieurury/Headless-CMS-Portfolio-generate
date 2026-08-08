@@ -237,18 +237,25 @@ export const PortfolioDetailPage: React.FC = () => {
             )}
 
             {!isLoading && pages.length === 0 && (
-              <div className="text-center py-24">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center">
-                  <FileText size={36} className="text-[var(--color-text-muted)]" />
+              <div className="relative border border-[var(--color-border)] bg-[var(--color-surface)]/60 rounded p-8 sm:p-12 overflow-hidden text-center grid-pattern mb-6 light-sweep">
+                <div className="relative z-10">
+                  <div className="w-14 h-14 mx-auto mb-4 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-2)] flex items-center justify-center text-[var(--color-text)] shadow-sm">
+                    <FileText size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold text-[var(--color-text)] tracking-tight mb-1">
+                    {lang.noPages}
+                  </h3>
+                  <p className="text-xs text-[var(--color-text-muted)] max-w-sm mx-auto mb-6 leading-relaxed">
+                    Add your first page to start structuring your layout with visual drag & drop sections.
+                  </p>
+                  <button
+                    onClick={() => setShowCreate(true)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-semibold hover:opacity-90 transition-all shadow-sm active:scale-[0.98]"
+                  >
+                    <Plus size={15} />
+                    {lang.createPage}
+                  </button>
                 </div>
-                <h3 className="text-xl font-semibold text-[var(--color-text)] mb-2">{lang.noPages}</h3>
-                <p className="text-[var(--color-text-muted)] mb-6">Add your first page to start building</p>
-                <button
-                  onClick={() => setShowCreate(true)}
-                  className="px-6 py-3 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-85 transition-all shadow-sm hover:shadow-md"
-                >
-                  {lang.createPage}
-                </button>
               </div>
             )}
 
@@ -363,21 +370,21 @@ export const PortfolioDetailPage: React.FC = () => {
               </div>
 
               {postTypes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 border border-dashed border-[var(--color-border)] rounded-xl gap-3">
-                  <Layers size={24} className="text-[var(--color-text-muted)]" />
-                  <p className="text-sm text-[var(--color-text-muted)]">No post types yet.</p>
+                <div className="flex flex-col items-center justify-center py-8 border border-dashed border-[var(--color-border)] rounded-md gap-3 bg-[var(--color-surface)]/50">
+                  <Layers size={22} className="text-[var(--color-text-muted)]" />
+                  <p className="text-xs text-[var(--color-text-muted)] font-mono">No post types configured yet.</p>
                   <button
                     onClick={() => { setShowPostTypeModal(true); setPtError(null); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-semibold hover:opacity-85 transition-all"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-md border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-semibold hover:opacity-90 transition-all shadow-sm"
                   >
-                    <Plus size={13} /> Create Your First Post Type
+                    <Plus size={13} /> Create First Post Type
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedPostTypeId('')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selectedPostTypeId === ''
+                    className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium border transition-all ${selectedPostTypeId === ''
                       ? 'border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]'
                       : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
                       }`}
@@ -388,14 +395,14 @@ export const PortfolioDetailPage: React.FC = () => {
                     <div key={pt._id} className="relative group/pt flex items-center">
                       <button
                         onClick={() => setSelectedPostTypeId(pt._id)}
-                        className={`pl-3 pr-7 py-1.5 rounded-lg text-xs font-medium border transition-all ${selectedPostTypeId === pt._id
+                        className={`pl-3 pr-7 py-1.5 rounded-md text-xs font-medium border transition-all ${selectedPostTypeId === pt._id
                           ? 'border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]'
                           : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
                           }`}
                       >
                         {pt.name}
                         {pt.customFieldsSchema?.length > 0 && (
-                          <span className="ml-1.5 opacity-60">{pt.customFieldsSchema.length} fields</span>
+                          <span className="ml-1.5 opacity-60 font-mono text-[10px]">{pt.customFieldsSchema.length} fields</span>
                         )}
                       </button>
                       <button
@@ -418,17 +425,33 @@ export const PortfolioDetailPage: React.FC = () => {
 
             {/* Posts list */}
             {posts.length === 0 ? (
-              <div className="text-center py-16 border border-dashed border-[var(--color-border)] rounded-xl">
-                <AlignLeft size={28} className="mx-auto mb-3 text-[var(--color-text-muted)]" />
-                <p className="text-sm text-[var(--color-text-muted)] mb-4">No posts yet.</p>
-                {selectedPostTypeId && (
-                  <button
-                    onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
-                    className="px-5 py-2 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-85 transition-all"
-                  >
-                    Create First Post
-                  </button>
-                )}
+              <div className="relative text-center py-14 border border-dashed border-[var(--color-border)] rounded bg-[var(--color-surface)]/50 light-sweep">
+                <div className="relative z-10">
+                  <AlignLeft size={24} className="mx-auto mb-2 text-[var(--color-text-muted)]" />
+                  <p className="text-xs text-[var(--color-text-muted)] mb-4">No posts published in this portfolio yet.</p>
+                  {selectedPostTypeId ? (
+                    <button
+                      onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs hover:opacity-90 transition-all shadow-sm"
+                    >
+                      <Plus size={13} /> Create First Post
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const firstPt = postTypes[0];
+                        if (firstPt) {
+                          navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${firstPt._id}`);
+                        } else {
+                          setShowPostTypeModal(true);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs hover:opacity-90 transition-all shadow-sm"
+                    >
+                      <Plus size={13} /> {postTypes.length > 0 ? 'Create First Post' : 'Configure Post Type First'}
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
