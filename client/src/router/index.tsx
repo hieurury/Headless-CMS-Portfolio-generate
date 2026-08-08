@@ -24,6 +24,7 @@ import { PublicPortfolioHubPage } from '../pages/public/PublicPortfolioHubPage';
 import { PublicPostPage } from '../pages/public/PublicPostPage';
 import { ExplorePage } from '../pages/explore/ExplorePage';
 import { HomePage } from '../pages/home/HomePage';
+import { NotFoundPage } from '../pages/error/NotFoundPage';
 
 // ─── Route Guards ──────────────────────────────────────────────────────────
 
@@ -111,17 +112,7 @@ const router = createBrowserRouter([
   // ── 404 ──────────────────────────────────────────────────────────
   {
     path: '*',
-    element: (
-      <div className="min-h-screen flex items-center justify-center text-center px-4 bg-[#0a0a0f]">
-        <div>
-          <h1 className="text-8xl font-bold gradient-text mb-4">404</h1>
-          <p className="text-slate-400 mb-6">Page not found</p>
-          <a href="/dashboard" className="text-indigo-400 hover:underline">
-            ← Go home
-          </a>
-        </div>
-      </div>
-    ),
+    element: <NotFoundPage />,
   },
 ]);
 
