@@ -9,8 +9,11 @@ import {
   IsHexColor,
   IsIn,
   IsArray,
+  ArrayMinSize,
+  ArrayMaxSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PORTFOLIO_CATEGORIES } from '../schemas/portfolio.schema';
 
 export class SeoMetaDto {
   @IsOptional()
@@ -183,4 +186,15 @@ export class CreatePortfolioDto {
   @ValidateNested()
   @Type(() => PortfolioMetaDto)
   meta?: PortfolioMetaDto;
+
+  /**
+   * Industry categories — min 1, max 3.
+   * Defaults to ['technology'] if omitted.
+   */
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1, { message: 'At least 1 category is required' })
+  @ArrayMaxSize(3, { message: 'At most 3 categories are allowed' })
+  @IsIn([...PORTFOLIO_CATEGORIES], { each: true, message: 'Invalid category key' })
+  categories?: string[];
 }
