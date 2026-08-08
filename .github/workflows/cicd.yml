@@ -57,6 +57,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || secrets.AI_MODEL }}
+          SUB_GEMINI_MODEL: ${{ secrets.SUB_GEMINI_MODEL }}
           AI_MODEL: ${{ secrets.AI_MODEL }}
           
           # BẮT BUỘC: Chìa khóa AWS để SST mở "két sắt" lưu State File

@@ -16,7 +16,7 @@ export class ContentCopywriterAgent extends BaseAgent {
   readonly role = 'Chuyên gia sáng tạo nội dung Portfolio';
   readonly description =
     'Viết nội dung văn bản chất lượng cao cho từng phần của portfolio: tiêu đề hấp dẫn, bio chuyên nghiệp, mô tả dự án, danh sách kỹ năng, CTA. Dùng khi user muốn cải thiện nội dung text, viết lại phần giới thiệu, hoặc tạo nội dung theo ngành nghề cụ thể.';
-  readonly model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  readonly model = process.env.COPYWRITER_GEMINI_MODEL || process.env.SUB_GEMINI_MODEL || 'gemini-3.1-flash-lite';
   readonly systemPrompt = copywriterSystemPrompt;
 
   get tools(): any[] {

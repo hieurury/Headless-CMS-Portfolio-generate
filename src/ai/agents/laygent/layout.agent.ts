@@ -16,7 +16,7 @@ export class LayoutArchitectAgent extends BaseAgent {
   readonly role = 'Chuyên gia thiết kế Layout Portfolio';
   readonly description =
     'Tạo hoặc chỉnh sửa cấu trúc cây JSON gồm 12 khối block UI (nav-bar-wrapper, container, columns, rows, flex, heading, description, button, link, icon, image, badge). Dùng khi cần tạo layout mới hoàn toàn hoặc sửa cấu trúc block (thêm/xoá section, đổi layout columns sang rows, v.v.)';
-  readonly model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  readonly model = process.env.LAYOUT_GEMINI_MODEL || process.env.SUB_GEMINI_MODEL || 'gemini-3.1-flash-lite';
   readonly systemPrompt = layoutSystemPrompt;
 
   get tools(): any[] {
