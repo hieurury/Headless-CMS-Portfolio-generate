@@ -3,6 +3,39 @@ import { Document, Types } from 'mongoose';
 
 export type PortfolioDocument = Portfolio & Document;
 
+/**
+ * Canonical list of portfolio category keys.
+ * - Min 1, Max 3 per portfolio.
+ * - Default: ['technology']
+ */
+export const PORTFOLIO_CATEGORIES = [
+  'technology',
+  'design',
+  'marketing',
+  'photography',
+  'music',
+  'writing',
+  'architecture',
+  'education',
+  'business',
+  'finance',
+  'healthcare',
+  'legal',
+  'engineering',
+  'data_science',
+  'art',
+  'fashion',
+  'hospitality',
+  'sports',
+  'real_estate',
+  'media',
+  'nonprofit',
+  'gaming',
+  'research',
+] as const;
+
+export type PortfolioCategory = (typeof PORTFOLIO_CATEGORIES)[number];
+
 export class SeoMeta {
   @Prop()
   title?: string;
@@ -174,6 +207,22 @@ export class Portfolio {
 
   @Prop({ type: PortfolioMeta, default: () => ({}) })
   meta: PortfolioMeta;
+
+  /**
+   * Industry/profession categories for this portfolio.
+   * - Min: 1  Max: 3
+   * - Default: ['technology']
+   */
+  @Prop({
+    type: [String],
+    enum: PORTFOLIO_CATEGORIES,
+    default: ['technology'],
+    validate: [
+      { validator: (arr: string[]) => arr.length >= 1, message: 'At least 1 category is required' },
+      { validator: (arr: string[]) => arr.length <= 3, message: 'At most 3 categories are allowed' },
+    ],
+  })
+  categories: string[];
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Page' }], default: [] })
   pages: Types.ObjectId[];

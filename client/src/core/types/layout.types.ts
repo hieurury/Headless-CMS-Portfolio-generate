@@ -104,6 +104,64 @@ export const AVAILABLE_FONTS = [
 
 export type AvailableFont = typeof AVAILABLE_FONTS[number];
 
+// ─── Portfolio Categories ─────────────────────────────────────────────────────
+
+/** Canonical list of portfolio industry/profession category keys */
+export const PORTFOLIO_CATEGORIES = [
+  'technology',
+  'design',
+  'marketing',
+  'photography',
+  'music',
+  'writing',
+  'architecture',
+  'education',
+  'business',
+  'finance',
+  'healthcare',
+  'legal',
+  'engineering',
+  'data_science',
+  'art',
+  'fashion',
+  'hospitality',
+  'sports',
+  'real_estate',
+  'media',
+  'nonprofit',
+  'gaming',
+  'research',
+] as const;
+
+export type PortfolioCategory = (typeof PORTFOLIO_CATEGORIES)[number];
+
+/** Display labels for each category key in Vietnamese and English */
+export const CATEGORY_LABELS: Record<string, { vi: string; en: string }> = {
+  technology:   { vi: 'Công nghệ & Lập trình',       en: 'Technology & Programming' },
+  design:       { vi: 'Thiết kế & Sáng tạo',          en: 'Design & Creative' },
+  marketing:    { vi: 'Marketing & Truyền thông',      en: 'Marketing & Communications' },
+  photography:  { vi: 'Nhiếp ảnh & Quay phim',        en: 'Photography & Videography' },
+  music:        { vi: 'Âm nhạc & Âm thanh',           en: 'Music & Audio' },
+  writing:      { vi: 'Viết lách & Nội dung',          en: 'Writing & Content' },
+  architecture: { vi: 'Kiến trúc & Nội thất',         en: 'Architecture & Interior' },
+  education:    { vi: 'Giáo dục & Đào tạo',           en: 'Education & Training' },
+  business:     { vi: 'Kinh doanh & Khởi nghiệp',     en: 'Business & Entrepreneurship' },
+  finance:      { vi: 'Tài chính & Đầu tư',           en: 'Finance & Investment' },
+  healthcare:   { vi: 'Y tế & Sức khỏe',              en: 'Healthcare & Medicine' },
+  legal:        { vi: 'Pháp lý & Tư vấn',             en: 'Legal & Consulting' },
+  engineering:  { vi: 'Kỹ thuật & Cơ khí',            en: 'Engineering & Manufacturing' },
+  data_science: { vi: 'Khoa học Dữ liệu & AI',        en: 'Data Science & AI' },
+  art:          { vi: 'Nghệ thuật & Thủ công',        en: 'Art & Crafts' },
+  fashion:      { vi: 'Thời trang & Làm đẹp',         en: 'Fashion & Beauty' },
+  hospitality:  { vi: 'Du lịch & Khách sạn',          en: 'Hospitality & Tourism' },
+  sports:       { vi: 'Thể thao & Fitness',           en: 'Sports & Fitness' },
+  real_estate:  { vi: 'Bất động sản',                 en: 'Real Estate' },
+  media:        { vi: 'Truyền thông & Báo chí',       en: 'Media & Journalism' },
+  nonprofit:    { vi: 'Tổ chức phi lợi nhuận',        en: 'Nonprofit & Social Impact' },
+  gaming:       { vi: 'Game & Giải trí số',            en: 'Gaming & Digital Entertainment' },
+  research:     { vi: 'Nghiên cứu & Học thuật',       en: 'Research & Academia' },
+};
+
 /** Default design settings for a new portfolio */
 export const DEFAULT_PORTFOLIO_SETTINGS: Required<Pick<PortfolioMeta, 'pageLayout' | 'colors' | 'fonts'>> = {
   pageLayout: {
@@ -126,6 +184,8 @@ export interface Portfolio {
   description?: string;
   isPublished: boolean;
   meta: PortfolioMeta;
+  /** Industry/profession categories — min 1, max 3. Default: ['technology'] */
+  categories: string[];
   pages: Page[] | string[];
   owner: string;
   createdAt: string;

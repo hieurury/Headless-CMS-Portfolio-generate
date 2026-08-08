@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Upload, X, ImageIcon } from 'lucide-react';
 import { useEditorContext } from '../../core/context/EditorContext';
+import { MediaStoreDialog } from '../common/MediaStoreDialog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,10 +34,9 @@ function isValidImageFile(file: File): boolean {
 export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onChange, sectionId, fieldKey }) => {
   const { pendingUploads, setPendingUpload, removePendingUpload } = useEditorContext();
   const pendingUpload = sectionId ? pendingUploads.find(p => p.sectionId === sectionId && p.fieldKey === fieldKey) : undefined;
-  
+
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadError, setUploadError] = useState<string>('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // The preview shown: local blob while a file is staged, or the saved Cloudinary URL
   const previewSrc = pendingUpload ? pendingUpload.objectUrl : value;
@@ -46,10 +46,8 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
   const selectFile = useCallback((file: File) => {
     if (!sectionId) return;
     if (!isValidImageFile(file)) {
-      setUploadError('Only image files are accepted (JPG, PNG, WebP, GIF, …)');
       return;
     }
-    setUploadError('');
 
     const preview = URL.createObjectURL(file);
     setPendingUpload(sectionId, file, preview, fieldKey);
@@ -71,13 +69,6 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
     if (file) selectFile(file);
   };
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) selectFile(file);
-    // Reset input so the same file can be re-selected after clearing
-    e.target.value = '';
-  };
-
   // ── Upload ─────────────────────────────────────────────────────────────────
   // Handled globally by PageEditorPage on Save
 
@@ -89,7 +80,6 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
       URL.revokeObjectURL(pendingUpload.objectUrl);
       removePendingUpload(sectionId, fieldKey);
     }
-    setUploadError('');
     onChange('');
   };
 
@@ -109,7 +99,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={() => setIsDialogOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-medium transition-colors"
             >
               <Upload size={13} />
@@ -137,7 +127,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => setIsDialogOpen(true)}
           className={`
             relative flex flex-col items-center justify-center gap-2 w-full h-32 rounded-lg cursor-pointer
             border-2 border-dashed transition-all
@@ -160,27 +150,21 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ value, onCha
       )}
 
       {/* Hidden file input */}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={onInputChange}
+      <button
+        type="button"
+        onClick={() => setIsDialogOpen(true)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-medium transition-colors"
+      >
+        <Upload size={13} />
+        Choose from Media Store
+      </button>
+      <MediaStoreDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSelectImage={(url) => {
+          onChange(url);
+        }}
       />
-
-      {/* ── Status badge ── */}
-      {pendingUpload && (
-        <div className="flex items-center justify-center py-2 rounded-md bg-[var(--color-surface-2)] text-[var(--color-text-muted)] text-sm font-semibold border border-[var(--color-border)]">
-          Will upload on Save
-        </div>
-      )}
-
-      {/* Error message */}
-      {uploadError && (
-        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
-          {uploadError}
-        </p>
-      )}
     </div>
   );
 };

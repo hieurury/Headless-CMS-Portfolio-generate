@@ -55,7 +55,9 @@ jobs:
           # Truyền các biến môi trường ứng dụng
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          AI_TOKEN: ${{ secrets.AI_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || secrets.AI_MODEL }}
+          SUB_GEMINI_MODEL: ${{ secrets.SUB_GEMINI_MODEL }}
           AI_MODEL: ${{ secrets.AI_MODEL }}
           
           # BẮT BUỘC: Chìa khóa AWS để SST mở "két sắt" lưu State File
