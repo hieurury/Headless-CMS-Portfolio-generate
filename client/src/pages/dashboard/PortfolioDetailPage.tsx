@@ -4,6 +4,8 @@ import { usePortfolioStore } from '../../store/portfolioStore';
 import { usePageStore } from '../../store/pageStore';
 import { useUIStore } from '../../store/uiStore';
 import { usePostStore } from '../../store/postStore';
+import { CATEGORY_LABELS } from '../../core/types/layout.types';
+import { UserNavMenu } from '../../components/common/UserNavMenu';
 import { t } from '../../i18n';
 import {
   ArrowLeft, Plus, FileText, Eye, Trash2,
@@ -132,18 +134,29 @@ export const PortfolioDetailPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleLanguage}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
               title={language === 'en' ? 'Switch to Vietnamese' : 'Chuyển sang Tiếng Anh'}
             >
               {language.toUpperCase()}
             </button>
             <button
               onClick={toggleTheme}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
+
+            {/* Separator and User Dropdown Menu */}
+            <div
+              style={{
+                width: 1,
+                height: 22,
+                background: 'var(--color-border)',
+                margin: '0 4px',
+              }}
+            />
+            <UserNavMenu />
           </div>
         </div>
       </header>
@@ -152,8 +165,20 @@ export const PortfolioDetailPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--color-text)] mb-1">{portfolio?.title ?? '...'}</h1>
-            <p className="text-[var(--color-text-muted)] text-sm font-mono">/{portfolio?.slug}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text)] mb-1">{portfolio?.title ?? '...'}</h1>
+            <p className="text-[var(--color-text-muted)] text-xs sm:text-sm font-mono">/{portfolio?.slug}</p>
+            {(portfolio?.categories ?? ['technology']).length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                {(portfolio?.categories ?? ['technology']).map((cat) => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
+                  >
+                    {CATEGORY_LABELS[cat]?.[language as 'vi' | 'en'] ?? cat}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             {/* Publish toggle */}
@@ -166,13 +191,13 @@ export const PortfolioDetailPage: React.FC = () => {
                     });
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${portfolio.isPublished
-                  ? 'border-[var(--color-border-hover)] text-[var(--color-text)] bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)]'
-                  : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
+                className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-semibold transition-all border ${portfolio.isPublished
+                  ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-sm'
+                  : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]'
                   }`}
                 title={portfolio.isPublished ? 'Click to unpublish' : 'Click to publish'}
               >
-                {portfolio.isPublished ? <Globe size={14} /> : <Lock size={14} />}
+                {portfolio.isPublished ? <Globe size={14} className="text-emerald-500" /> : <Lock size={14} />}
                 {portfolio.isPublished ? lang.public : lang.private}
               </button>
             )}
@@ -180,18 +205,18 @@ export const PortfolioDetailPage: React.FC = () => {
               <button
                 id="create-page-btn"
                 onClick={() => setShowCreate(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-85 transition-all shadow-sm hover:shadow-md"
+                className="flex items-center gap-2 px-4 py-2 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs hover:opacity-85 transition-all shadow-sm active:scale-[0.98]"
               >
-                <Plus size={18} /> {lang.newPage}
+                <Plus size={16} /> {lang.newPage}
               </button>
             )}
             {activeTab === 'posts' && selectedPostTypeId && (
               <button
                 id="create-post-btn"
                 onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm hover:opacity-85 transition-all shadow-sm hover:shadow-md"
+                className="flex items-center gap-2 px-4 py-2 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs hover:opacity-85 transition-all shadow-sm active:scale-[0.98]"
               >
-                <Plus size={18} /> New Post
+                <Plus size={16} /> New Post
               </button>
             )}
           </div>
@@ -263,53 +288,53 @@ export const PortfolioDetailPage: React.FC = () => {
               {pages.map((page) => {
                 const IconComp = ICONS.find(ic => ic.name === page.meta?.icon)?.component || FileText;
                 return (
-                  <div key={page._id} className="bg-[var(--color-surface)] border border-transparent border-l-[5px] border-l-[var(--color-text)] shadow-sm hover:shadow-md rounded-lg p-5 flex items-center gap-4 transition-all duration-300 group">
-                    <div className="w-10 h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                  <div key={page._id} className="bg-[var(--color-surface)] border border-[var(--color-border)] border-l-[4px] border-l-[var(--color-text)] shadow-sm hover:shadow-md rounded p-4 sm:p-5 flex items-center gap-4 transition-all duration-200 group">
+                    <div className="w-10 h-10 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
                       <IconComp size={18} className="text-[var(--color-text)]" />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-[var(--color-text)] group-hover:opacity-80 transition-opacity">{page.title}</h3>
-                      <div className="flex items-center gap-3 mt-0.5">
+                      <h3 className="font-semibold text-sm text-[var(--color-text)] group-hover:opacity-80 transition-opacity">{page.title}</h3>
+                      <div className="flex items-center gap-2.5 mt-1 flex-wrap">
                         <code className="text-xs text-[var(--color-text-muted)] font-mono">{page.slug}</code>
                         <span className="text-[var(--color-text-faint)]">·</span>
                         <span className="text-xs text-[var(--color-text-muted)]">
                           {page.layout?.sections?.length ?? 0} {(page.layout?.sections?.length ?? 0) !== 1 ? lang.sectionsPlural : lang.sections}
                         </span>
                         {/* Published status badge */}
-                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md ${page.isPublished
-                          ? 'text-[var(--color-text-muted)] bg-[var(--color-surface-2)]'
-                          : 'text-[var(--color-text-faint)] border border-[var(--color-border)]'
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-medium px-1.5 py-0.5 rounded-sm ${page.isPublished
+                          ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20'
+                          : 'text-[var(--color-text-faint)] border border-[var(--color-border)] bg-[var(--color-surface-2)]'
                           }`}>
-                          {page.isPublished ? <Globe size={10} /> : <Lock size={10} />}
+                          {page.isPublished ? <Globe size={10} className="text-emerald-500" /> : <Lock size={10} />}
                           {page.isPublished ? lang.public : lang.private}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {/* Publish/Unpublish toggle */}
                       <button
                         onClick={() => {
                           if (portfolioId)
                             update(portfolioId, page._id, { isPublished: !page.isPublished } as Parameters<typeof update>[2]);
                         }}
-                        className={`p-2 rounded-lg transition-colors ${page.isPublished
-                          ? 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
+                        className={`p-2 rounded border border-[var(--color-border)] transition-colors ${page.isPublished
+                          ? 'text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/30'
                           : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                           }`}
                         title={page.isPublished ? 'Unpublish page' : 'Publish page'}
                       >
-                        <Globe size={16} />
+                        <Globe size={14} />
                       </button>
 
                       {/* Edit */}
                       <Link
                         to={`/dashboard/portfolios/${portfolioId}/pages/${page._id}/edit`}
-                        className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                        className="p-2 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                         title="Open editor"
                       >
-                        <Pencil size={16} />
+                        <Pencil size={14} />
                       </Link>
 
                       {/* JSON Inspector */}
@@ -319,19 +344,19 @@ export const PortfolioDetailPage: React.FC = () => {
                           const w = window.open('', '_blank');
                           w?.document.write(`<pre style="background:var(--color-bg);color:var(--color-text);padding:2rem;font-family:monospace;font-size:13px;white-space:pre-wrap;">${json}</pre>`);
                         }}
-                        className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                        className="p-2 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                         title="Inspect JSON layout"
                       >
-                        <Code2 size={16} />
+                        <Code2 size={14} />
                       </button>
 
                       {/* Preview */}
                       <Link
                         to={`/preview/${portfolioId}/${encodeURIComponent(page._id)}`}
-                        className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                        className="p-2 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                         title="Preview page"
                       >
-                        <Eye size={16} />
+                        <Eye size={14} />
                       </Link>
 
                       {/* Delete */}
@@ -340,10 +365,10 @@ export const PortfolioDetailPage: React.FC = () => {
                           if (portfolioId && confirm('Delete this page?'))
                             remove(portfolioId, page._id);
                         }}
-                        className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        className="p-2 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                         title="Delete page"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -539,28 +564,31 @@ export const PortfolioDetailPage: React.FC = () => {
       {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCreate(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-8 shadow-2xl animate-slide-up"
+            className="relative w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded p-6 sm:p-7 shadow-2xl animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-[var(--color-text)] mb-6">{lang.createPage}</h2>
+            <h2 className="text-lg font-bold text-[var(--color-text)] mb-5 tracking-tight flex items-center gap-2">
+              <Plus size={18} />
+              {lang.createPage}
+            </h2>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <div className="relative shrink-0">
-                  <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Icon</label>
+                  <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">Icon</label>
                   <button
                     type="button"
                     onClick={() => setShowIconPicker(!showIconPicker)}
-                    className="h-[46px] w-[54px] flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
+                    className="h-10 w-12 flex items-center justify-center rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] hover:border-[var(--color-text)] transition-colors"
                   >
                     {(() => {
                       const C = ICONS.find(ic => ic.name === form.icon)?.component || FileText;
-                      return <C size={20} />;
+                      return <C size={18} />;
                     })()}
                   </button>
                   {showIconPicker && (
-                    <div className="absolute top-[100%] mt-2 left-0 w-[220px] p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl grid grid-cols-5 gap-1 z-20">
+                    <div className="absolute top-[100%] mt-2 left-0 w-[220px] p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded shadow-xl grid grid-cols-5 gap-1 z-20">
                       {ICONS.map(ic => (
                         <button
                           key={ic.name}
@@ -569,14 +597,14 @@ export const PortfolioDetailPage: React.FC = () => {
                           className={`p-2 rounded flex items-center justify-center transition-colors ${form.icon === ic.name ? 'bg-[var(--color-surface-2)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-surface-2)]'}`}
                           title={ic.name}
                         >
-                          <ic.component size={18} className="text-[var(--color-text)]" />
+                          <ic.component size={16} className="text-[var(--color-text)]" />
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Page Title</label>
+                  <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">Page Title</label>
                   <input
                     id="page-title"
                     value={form.title}
@@ -587,33 +615,33 @@ export const PortfolioDetailPage: React.FC = () => {
                     })}
                     placeholder="Home, About, Projects..."
                     required
-                    className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
+                    className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-xs"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-[var(--color-text-muted)] mb-1.5">Slug</label>
+                <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">Slug</label>
                 <input
                   id="page-slug"
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
                   placeholder="/ or /about"
-                  className="h-[46px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono text-sm"
+                  className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono text-xs"
                 />
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-2.5 pt-3">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="flex-1 h-[46px] rounded-lg border border-[var(--color-border)] text-[var(--color-text)] font-medium transition-all hover:bg-[var(--color-surface-2)] shadow-sm">
+                  className="flex-1 h-10 rounded border border-[var(--color-border)] text-[var(--color-text)] font-medium text-xs transition-all hover:bg-[var(--color-surface-2)]">
                   Cancel
                 </button>
                 <button
                   id="page-create-confirm"
                   type="submit"
                   disabled={creating}
-                  className="flex-1 flex items-center justify-center gap-2 h-[46px] rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold transition-all disabled:opacity-60 hover:opacity-85 shadow-sm hover:shadow-md"
+                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs transition-all disabled:opacity-60 hover:opacity-90 shadow-sm"
                 >
-                  {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                  Create
+                  {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                  Create Page
                 </button>
               </div>
             </form>
@@ -624,22 +652,22 @@ export const PortfolioDetailPage: React.FC = () => {
       {/* ── Create PostType Modal ──────────────────────────────────────────── */}
       {showPostTypeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowPostTypeModal(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-lg bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-[var(--color-surface)] border border-[var(--color-border)] rounded p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[var(--color-text)] flex items-center gap-2">
-                <Settings size={18} /> New Post Type
+              <h2 className="text-base font-bold text-[var(--color-text)] flex items-center gap-2">
+                <Settings size={16} /> New Post Type
               </h2>
-              <button onClick={() => setShowPostTypeModal(false)} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] transition-colors">
+              <button onClick={() => setShowPostTypeModal(false)} className="p-1.5 rounded hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] transition-colors">
                 <X size={16} />
               </button>
             </div>
 
             {ptError && (
-              <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="mb-4 px-4 py-2.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                 {ptError}
               </div>
             )}
@@ -647,32 +675,32 @@ export const PortfolioDetailPage: React.FC = () => {
             <form onSubmit={handleCreatePostType} className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">Name *</label>
+                <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">Name *</label>
                 <input
                   id="posttype-name"
                   value={ptForm.name}
                   onChange={(e) => setPtForm({ ...ptForm, name: e.target.value })}
                   placeholder="e.g. Blog Post, Project, Product"
                   required
-                  className="h-[42px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-sm"
+                  className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-xs"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">Description (optional)</label>
+                <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">Description (optional)</label>
                 <input
                   value={ptForm.description}
                   onChange={(e) => setPtForm({ ...ptForm, description: e.target.value })}
                   placeholder="Short description of this post type"
-                  className="h-[42px] w-full px-4 rounded-lg bg-transparent border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-sm"
+                  className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-xs"
                 />
               </div>
 
               {/* Custom Fields */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-[var(--color-text-muted)]">Custom Fields</label>
+                  <label className="text-xs font-mono text-[var(--color-text-muted)]">Custom Fields</label>
                   <button
                     type="button"
                     onClick={addPtField}
@@ -685,32 +713,32 @@ export const PortfolioDetailPage: React.FC = () => {
                 {ptFields.length === 0 ? (
                   <div
                     onClick={addPtField}
-                    className="flex items-center justify-center py-6 rounded-lg border border-dashed border-[var(--color-border)] text-xs text-[var(--color-text-faint)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text-muted)] cursor-pointer transition-all gap-2"
+                    className="flex items-center justify-center py-6 rounded border border-dashed border-[var(--color-border)] text-xs text-[var(--color-text-faint)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text-muted)] cursor-pointer transition-all gap-2"
                   >
                     <Plus size={13} /> Click to add a custom field
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {ptFields.map((field, i) => (
-                      <div key={i} className="flex items-start gap-2 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)]">
+                      <div key={i} className="flex items-start gap-2 p-3 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)]">
                         <GripVertical size={14} className="mt-2.5 text-[var(--color-text-faint)] shrink-0" />
                         <div className="flex-1 grid grid-cols-2 gap-2">
                           <input
                             value={field.label}
                             onChange={(e) => updatePtField(i, 'label', e.target.value)}
                             placeholder="Label (e.g. Price)"
-                            className="h-8 px-2.5 rounded-md bg-transparent border border-[var(--color-border)] text-[var(--color-text)] text-xs placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
+                            className="h-8 px-2.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-xs placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
                           />
                           <input
                             value={field.name}
                             onChange={(e) => updatePtField(i, 'name', e.target.value)}
                             placeholder="Key (e.g. price)"
-                            className="h-8 px-2.5 rounded-md bg-transparent border border-[var(--color-border)] text-[var(--color-text)] text-xs placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono"
+                            className="h-8 px-2.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-xs placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono"
                           />
                           <select
                             value={field.type}
                             onChange={(e) => updatePtField(i, 'type', e.target.value)}
-                            className="h-8 px-2.5 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-xs focus:outline-none focus:border-[var(--color-text)] transition-all cursor-pointer"
+                            className="h-8 px-2.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-xs focus:outline-none focus:border-[var(--color-text)] transition-all cursor-pointer"
                           >
                             <option value="text">Text</option>
                             <option value="textarea">Textarea</option>
@@ -726,7 +754,7 @@ export const PortfolioDetailPage: React.FC = () => {
                               value={field.options}
                               onChange={(e) => updatePtField(i, 'options', e.target.value)}
                               placeholder="Options: A, B, C"
-                              className="h-8 px-2.5 rounded-md bg-transparent border border-[var(--color-border)] text-[var(--color-text)] text-xs placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
+                              className="h-8 px-2.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-xs placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all"
                             />
                           ) : (
                             <div className="h-8" />
@@ -735,7 +763,7 @@ export const PortfolioDetailPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => removePtField(i)}
-                          className="p-1.5 mt-0.5 rounded-md text-[var(--color-text-faint)] hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0"
+                          className="p-1.5 mt-0.5 rounded text-[var(--color-text-faint)] hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0"
                         >
                           <X size={13} />
                         </button>

@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { useUIStore } from '../../store/uiStore';
 import { UserNavMenu } from '../../components/common/UserNavMenu';
+import { CategoryPicker } from '../../components/common/CategoryPicker';
 import { t } from '../../i18n';
+import { PORTFOLIO_CATEGORIES, CATEGORY_LABELS } from '../../core/types/layout.types';
 import {
   Plus,
   Folder,
@@ -66,6 +68,7 @@ export const DashboardPage: React.FC = () => {
     slug: '',
     description: '',
     icon: 'Folder',
+    categories: ['technology'] as string[],
   });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -102,9 +105,10 @@ export const DashboardPage: React.FC = () => {
         slug: cleanSlug,
         description: form.description,
         meta: { icon: form.icon },
+        categories: form.categories.length > 0 ? form.categories : ['technology'],
       });
       setShowCreate(false);
-      setForm({ title: '', slug: '', description: '', icon: 'Folder' });
+      setForm({ title: '', slug: '', description: '', icon: 'Folder', categories: ['technology'] });
       navigate(`/dashboard/portfolios/${p._id}`);
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
@@ -330,19 +334,24 @@ export const DashboardPage: React.FC = () => {
                         <div className="w-11 h-11 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center text-lg">
                           <IconComp size={20} className="text-[var(--color-text)]" />
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm border text-[11px] font-mono font-medium ${
+                            p.isPublished
+                              ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+                              : 'text-[var(--color-text-muted)] border-[var(--color-border)] bg-[var(--color-surface-2)]'
+                          }`}
+                        >
                           {p.isPublished ? (
                             <Globe
-                              size={13}
-                              className="text-[var(--color-text-muted)]"
+                              size={12}
+                              className="text-emerald-500"
                             />
                           ) : (
                             <Lock
-                              size={13}
-                              className="text-[var(--color-text-muted)]"
+                              size={12}
                             />
                           )}
-                          <span className="text-xs text-[var(--color-text-muted)] font-mono">
+                          <span>
                             {p.isPublished ? lang.public : lang.private}
                           </span>
                         </div>
@@ -359,6 +368,19 @@ export const DashboardPage: React.FC = () => {
                           <p className="text-xs text-[var(--color-text-faint)] mt-2 line-clamp-2 leading-relaxed">
                             {p.description}
                           </p>
+                        )}
+                        {/* Category tags */}
+                        {(p.categories ?? ['technology']).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {(p.categories ?? ['technology']).map((cat) => (
+                              <span
+                                key={cat}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-mono font-medium border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
+                              >
+                                {CATEGORY_LABELS[cat]?.[language as 'vi' | 'en'] ?? cat}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
 
@@ -546,6 +568,14 @@ export const DashboardPage: React.FC = () => {
                   className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-xs"
                 />
               </div>
+
+              {/* ─── Category Picker ─── */}
+              <CategoryPicker
+                selectedCategories={form.categories}
+                onChange={(categories) => setForm({ ...form, categories })}
+                min={1}
+                max={3}
+              />
               <div className="flex gap-2.5 pt-3">
                 <button
                   type="button"
