@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PosttypeService } from './posttype.service';
 import { getModelToken } from '@nestjs/mongoose';
+import { Posttype } from './schema/posttype.schema';
+import { Post } from '../posts/schemas/post.schema';
 
 describe('PosttypeService', () => {
   let service: PosttypeService;
@@ -10,7 +12,11 @@ describe('PosttypeService', () => {
       providers: [
         PosttypeService,
         {
-          provide: getModelToken('Posttype'),
+          provide: getModelToken(Posttype.name),
+          useValue: {},
+        },
+        {
+          provide: getModelToken(Post.name),
           useValue: {},
         },
       ],
