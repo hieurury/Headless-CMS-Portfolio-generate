@@ -37,7 +37,7 @@ export abstract class BaseAgent {
   /** Khởi tạo ChatGoogleGenerativeAI model instance */
   getModelInstance(): ChatGoogleGenerativeAI {
     return new ChatGoogleGenerativeAI({
-      model: process.env.GEMINI_MODEL || this.model || 'gemini-3.5-flash',
+      model: this.model || process.env.SUB_GEMINI_MODEL || process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
       apiKey: process.env.GEMINI_API_KEY,
       temperature: 0.7,
     });

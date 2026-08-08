@@ -23,11 +23,11 @@ export type ChatMessage = {
  */
 export class AdministratorAgent {
   readonly name = 'administrator';
-  readonly model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  readonly model = process.env.ADMIN_GEMINI_MODEL || process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
   private getModelInstance(): ChatGoogleGenerativeAI {
     return new ChatGoogleGenerativeAI({
-      model: process.env.GEMINI_MODEL || this.model,
+      model: process.env.ADMIN_GEMINI_MODEL || process.env.GEMINI_MODEL || this.model,
       apiKey: process.env.GEMINI_API_KEY,
       temperature: 0.3,
     });

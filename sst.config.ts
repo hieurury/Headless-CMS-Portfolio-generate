@@ -39,7 +39,8 @@ export default $config({
             { name: "CLOUDINARY_API_KEY", value: process.env.CLOUDINARY_API_KEY },
             { name: "CLOUDINARY_API_SECRET", value: process.env.CLOUDINARY_API_SECRET },
             { name: "GEMINI_API_KEY", value: process.env.GEMINI_API_KEY },
-            { name: "GEMINI_MODEL", value: process.env.GEMINI_MODEL || process.env.AI_MODEL || "gemini-flash-latest" }
+            { name: "GEMINI_MODEL", value: process.env.GEMINI_MODEL || process.env.AI_MODEL || "gemini-3.5-flash-lite" },
+            { name: "SUB_GEMINI_MODEL", value: process.env.SUB_GEMINI_MODEL || "gemini-3.1-flash-lite" }
           ],
         }],
       },
