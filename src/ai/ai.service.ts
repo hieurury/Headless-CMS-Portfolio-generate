@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { GenerateLayoutDto } from './dto/generate-layout.dto';
+import { ToolRegistry } from './tool-registry.service';
 
 /**
  * ════════════════════════════════════════════════════════════════════════
@@ -50,8 +51,14 @@ const COMMON_COLOR_PROPS: Record<string, PropDef> = {
   backgroundColor: { kind: 'color' },
 };
 
-const ALIGN_X_LCR: PropDef = { kind: 'string', options: ['left', 'center', 'right'] };
-const ALIGN_Y_TMB: PropDef = { kind: 'string', options: ['top', 'middle', 'bottom'] };
+const ALIGN_X_LCR: PropDef = {
+  kind: 'string',
+  options: ['left', 'center', 'right'],
+};
+const ALIGN_Y_TMB: PropDef = {
+  kind: 'string',
+  options: ['top', 'middle', 'bottom'],
+};
 
 const BLOCK_DEFS: Record<string, BlockDef> = {
   'nav-bar-wrapper': {
@@ -61,9 +68,21 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       ...COMMON_COLOR_PROPS,
       sticky: { kind: 'boolean', default: true },
       transparent: { kind: 'boolean', default: false },
-      background: { kind: 'string', options: ['dark', 'glass', 'light', 'none'], default: 'dark' },
-      padding: { kind: 'string', options: ['sm', 'md', 'lg', 'xl'], default: 'lg' },
-      maxWidth: { kind: 'string', options: ['lg', 'xl', '2xl', 'full'], default: 'xl' },
+      background: {
+        kind: 'string',
+        options: ['dark', 'glass', 'light', 'none'],
+        default: 'dark',
+      },
+      padding: {
+        kind: 'string',
+        options: ['sm', 'md', 'lg', 'xl'],
+        default: 'lg',
+      },
+      maxWidth: {
+        kind: 'string',
+        options: ['lg', 'xl', '2xl', 'full'],
+        default: 'xl',
+      },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
     },
@@ -74,9 +93,21 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     props: {
       ...COMMON_COLOR_PROPS,
       columns: { kind: 'string', options: ['2', '3', '4'], default: '2' },
-      gap: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl'], default: 'md' },
-      alignX: { kind: 'string', options: ['start', 'center', 'end', 'stretch'], default: 'stretch' },
-      alignY: { kind: 'string', options: ['start', 'center', 'end', 'stretch'], default: 'stretch' },
+      gap: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl'],
+        default: 'md',
+      },
+      alignX: {
+        kind: 'string',
+        options: ['start', 'center', 'end', 'stretch'],
+        default: 'stretch',
+      },
+      alignY: {
+        kind: 'string',
+        options: ['start', 'center', 'end', 'stretch'],
+        default: 'stretch',
+      },
       // colSpans is a number array (e.g. [1,2]) — frontend silently falls back
       // to equal widths if length doesn't match `columns`, so no strict enum here.
       colSpans: { kind: 'string' },
@@ -88,9 +119,21 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     props: {
       ...COMMON_COLOR_PROPS,
       rows: { kind: 'string', options: ['2', '3', '4'], default: '2' },
-      gap: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl'], default: 'md' },
-      alignX: { kind: 'string', options: ['start', 'center', 'end', 'stretch'], default: 'stretch' },
-      alignY: { kind: 'string', options: ['start', 'center', 'end', 'stretch'], default: 'stretch' },
+      gap: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl'],
+        default: 'md',
+      },
+      alignX: {
+        kind: 'string',
+        options: ['start', 'center', 'end', 'stretch'],
+        default: 'stretch',
+      },
+      alignY: {
+        kind: 'string',
+        options: ['start', 'center', 'end', 'stretch'],
+        default: 'stretch',
+      },
       rowSpans: { kind: 'string' },
     },
   },
@@ -99,11 +142,31 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     childRule: 'any',
     props: {
       ...COMMON_COLOR_PROPS,
-      direction: { kind: 'string', options: ['row', 'column', 'row-reverse', 'column-reverse'], default: 'row' },
-      gap: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl'], default: 'md' },
-      justify: { kind: 'string', options: ['start', 'center', 'end', 'between', 'around', 'evenly'], default: 'start' },
-      align: { kind: 'string', options: ['start', 'center', 'end', 'stretch', 'baseline'], default: 'center' },
-      wrap: { kind: 'string', options: ['nowrap', 'wrap', 'wrap-reverse'], default: 'wrap' },
+      direction: {
+        kind: 'string',
+        options: ['row', 'column', 'row-reverse', 'column-reverse'],
+        default: 'row',
+      },
+      gap: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl'],
+        default: 'md',
+      },
+      justify: {
+        kind: 'string',
+        options: ['start', 'center', 'end', 'between', 'around', 'evenly'],
+        default: 'start',
+      },
+      align: {
+        kind: 'string',
+        options: ['start', 'center', 'end', 'stretch', 'baseline'],
+        default: 'center',
+      },
+      wrap: {
+        kind: 'string',
+        options: ['nowrap', 'wrap', 'wrap-reverse'],
+        default: 'wrap',
+      },
     },
   },
   container: {
@@ -111,9 +174,21 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     childRule: 'single',
     props: {
       ...COMMON_COLOR_PROPS,
-      style: { kind: 'string', options: ['none', 'card', 'glass', 'outlined', 'filled'], default: 'none' },
-      padding: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl'], default: 'none' },
-      borderRadius: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'], default: 'none' },
+      style: {
+        kind: 'string',
+        options: ['none', 'card', 'glass', 'outlined', 'filled'],
+        default: 'none',
+      },
+      padding: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl'],
+        default: 'none',
+      },
+      borderRadius: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'none',
+      },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
     },
@@ -124,16 +199,44 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     props: {
       ...COMMON_COLOR_PROPS,
       text: { kind: 'string', default: 'Heading' },
-      level: { kind: 'string', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], default: 'h2' },
-      size: { kind: 'string', options: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'], default: 'xl' },
-      textAlign: { kind: 'string', options: ['left', 'center', 'right'], default: 'left' },
+      level: {
+        kind: 'string',
+        options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+        default: 'h2',
+      },
+      size: {
+        kind: 'string',
+        options: ['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'],
+        default: 'xl',
+      },
+      textAlign: {
+        kind: 'string',
+        options: ['left', 'center', 'right'],
+        default: 'left',
+      },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
       gradient: { kind: 'boolean', default: false },
-      marginTop: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'], default: 'none' },
-      marginBottom: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'], default: 'md' },
-      paddingTop: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'], default: 'none' },
-      paddingBottom: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'], default: 'none' },
+      marginTop: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'none',
+      },
+      marginBottom: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'md',
+      },
+      paddingTop: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'none',
+      },
+      paddingBottom: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'none',
+      },
     },
   },
   description: {
@@ -142,8 +245,16 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     props: {
       ...COMMON_COLOR_PROPS,
       text: { kind: 'text', default: 'Description text.' },
-      size: { kind: 'string', options: ['xs', 'sm', 'base', 'lg', 'xl'], default: 'base' },
-      textAlign: { kind: 'string', options: ['left', 'center', 'right'], default: 'left' },
+      size: {
+        kind: 'string',
+        options: ['xs', 'sm', 'base', 'lg', 'xl'],
+        default: 'base',
+      },
+      textAlign: {
+        kind: 'string',
+        options: ['left', 'center', 'right'],
+        default: 'left',
+      },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
     },
@@ -155,7 +266,11 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       ...COMMON_COLOR_PROPS,
       label: { kind: 'string', default: 'Link' },
       href: { kind: 'string', default: '#' },
-      variant: { kind: 'string', options: ['inline', 'nav', 'underline', 'pill'], default: 'nav' },
+      variant: {
+        kind: 'string',
+        options: ['inline', 'nav', 'underline', 'pill'],
+        default: 'nav',
+      },
       size: { kind: 'string', options: ['sm', 'base', 'lg'], default: 'base' },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
@@ -172,15 +287,35 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       href: { kind: 'string', default: '#' },
       variant: {
         kind: 'string',
-        options: ['primary', 'secondary', 'ghost', 'danger', 'success', 'warning', 'outline'],
+        options: [
+          'primary',
+          'secondary',
+          'ghost',
+          'danger',
+          'success',
+          'warning',
+          'outline',
+        ],
         default: 'primary',
       },
-      size: { kind: 'string', options: ['xs', 'sm', 'md', 'lg', 'xl'], default: 'md' },
-      shape: { kind: 'string', options: ['default', 'pill', 'square', 'icon-only'], default: 'default' },
+      size: {
+        kind: 'string',
+        options: ['xs', 'sm', 'md', 'lg', 'xl'],
+        default: 'md',
+      },
+      shape: {
+        kind: 'string',
+        options: ['default', 'pill', 'square', 'icon-only'],
+        default: 'default',
+      },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
       icon: { kind: 'string', default: '' },
-      iconPosition: { kind: 'string', options: ['left', 'right'], default: 'right' },
+      iconPosition: {
+        kind: 'string',
+        options: ['left', 'right'],
+        default: 'right',
+      },
       fullWidth: { kind: 'boolean', default: false },
       external: { kind: 'boolean', default: false },
     },
@@ -191,11 +326,27 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     props: {
       ...COMMON_COLOR_PROPS,
       name: { kind: 'string', default: 'Sparkles' },
-      size: { kind: 'string', options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'], default: 'md' },
-      shape: { kind: 'string', options: ['none', 'circle', 'square', 'rounded'], default: 'rounded' },
+      size: {
+        kind: 'string',
+        options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'],
+        default: 'md',
+      },
+      shape: {
+        kind: 'string',
+        options: ['none', 'circle', 'square', 'rounded'],
+        default: 'rounded',
+      },
       accent: {
         kind: 'string',
-        options: ['indigo', 'violet', 'emerald', 'amber', 'rose', 'sky', 'slate'],
+        options: [
+          'indigo',
+          'violet',
+          'emerald',
+          'amber',
+          'rose',
+          'sky',
+          'slate',
+        ],
         default: 'indigo',
       },
       color: { kind: 'color' },
@@ -210,12 +361,25 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       ...COMMON_COLOR_PROPS,
       url: {
         kind: 'string',
-        default: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
+        default:
+          'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
       },
       alt: { kind: 'string', default: 'Image' },
-      aspectRatio: { kind: 'string', options: ['auto', '16/9', '4/3', '1/1', '3/4'], default: 'auto' },
-      objectFit: { kind: 'string', options: ['cover', 'contain', 'fill'], default: 'cover' },
-      borderRadius: { kind: 'string', options: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'], default: 'md' },
+      aspectRatio: {
+        kind: 'string',
+        options: ['auto', '16/9', '4/3', '1/1', '3/4'],
+        default: 'auto',
+      },
+      objectFit: {
+        kind: 'string',
+        options: ['cover', 'contain', 'fill'],
+        default: 'cover',
+      },
+      borderRadius: {
+        kind: 'string',
+        options: ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'],
+        default: 'md',
+      },
       alignX: ALIGN_X_LCR,
       alignY: ALIGN_Y_TMB,
     },
@@ -226,10 +390,22 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     props: {
       ...COMMON_COLOR_PROPS,
       text: { kind: 'string', default: 'New' },
-      variant: { kind: 'string', options: ['solid', 'outline', 'subtle'], default: 'subtle' },
+      variant: {
+        kind: 'string',
+        options: ['solid', 'outline', 'subtle'],
+        default: 'subtle',
+      },
       color: {
         kind: 'string',
-        options: ['indigo', 'rose', 'emerald', 'amber', 'sky', 'slate', 'violet'],
+        options: [
+          'indigo',
+          'rose',
+          'emerald',
+          'amber',
+          'sky',
+          'slate',
+          'violet',
+        ],
         default: 'indigo',
       },
       size: { kind: 'string', options: ['sm', 'md', 'lg'], default: 'sm' },
@@ -398,7 +574,10 @@ function clampPropValue(def: PropDef, value: unknown): unknown {
 }
 
 /** Clean a node's props object against its BlockDef — clamps known enum props, leaves unknown extra keys untouched (harmless). */
-function cleanProps(type: string, rawProps: Record<string, unknown>): Record<string, unknown> {
+function cleanProps(
+  type: string,
+  rawProps: Record<string, unknown>,
+): Record<string, unknown> {
   const def = BLOCK_DEFS[type];
   const cleaned: Record<string, unknown> = { ...rawProps };
   if (!def) return cleaned;
@@ -426,7 +605,12 @@ function emptySpacer(): RawNode {
  */
 function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
   const node = raw as RawNode;
-  if (!node || typeof node !== 'object' || !node.type || !VALID_TYPES.includes(node.type)) {
+  if (
+    !node ||
+    typeof node !== 'object' ||
+    !node.type ||
+    !VALID_TYPES.includes(node.type)
+  ) {
     if (node?.type) logger.warn(`Filtered unknown block type: "${node.type}"`);
     return null;
   }
@@ -436,9 +620,9 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
 
   // Normalize children recursively first.
   let children: RawNode[] = Array.isArray(node.children)
-    ? (node.children
+    ? node.children
       .map((c) => normalizeNode(c, logger))
-      .filter((c): c is RawNode => c !== null))
+      .filter((c): c is RawNode => c !== null)
     : [];
 
   // Enforce child-count rules per block type so the rendered grid never breaks.
@@ -458,30 +642,44 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
       ];
     }
   } else if (def.childRule === 'columns') {
-    const expected = Math.min(4, Math.max(2, parseInt(String(cleanedProps.columns ?? '2'), 10) || 2));
+    const expected = Math.min(
+      4,
+      Math.max(2, parseInt(String(cleanedProps.columns ?? '2'), 10) || 2),
+    );
     cleanedProps.columns = String(expected);
     if (children.length > expected) {
-      logger.warn(`columns="${expected}" had ${children.length} children — trimming extras`);
+      logger.warn(
+        `columns="${expected}" had ${children.length} children — trimming extras`,
+      );
       children = children.slice(0, expected);
     } else if (children.length < expected) {
-      logger.warn(`columns="${expected}" had only ${children.length} children — padding with spacers`);
+      logger.warn(
+        `columns="${expected}" had only ${children.length} children — padding with spacers`,
+      );
       while (children.length < expected) children.push(emptySpacer());
     }
   } else if (def.childRule === 'rows') {
-    const expected = Math.min(4, Math.max(2, parseInt(String(cleanedProps.rows ?? '2'), 10) || 2));
+    const expected = Math.min(
+      4,
+      Math.max(2, parseInt(String(cleanedProps.rows ?? '2'), 10) || 2),
+    );
     cleanedProps.rows = String(expected);
     if (children.length > expected) {
-      logger.warn(`rows="${expected}" had ${children.length} children — trimming extras`);
+      logger.warn(
+        `rows="${expected}" had ${children.length} children — trimming extras`,
+      );
       children = children.slice(0, expected);
     } else if (children.length < expected) {
-      logger.warn(`rows="${expected}" had only ${children.length} children — padding with spacers`);
+      logger.warn(
+        `rows="${expected}" had only ${children.length} children — padding with spacers`,
+      );
       while (children.length < expected) children.push(emptySpacer());
     }
   }
   // 'any' (flex) — no enforcement needed.
 
   return {
-    id: (node.id && typeof node.id === 'string') ? node.id : genId(),
+    id: node.id && typeof node.id === 'string' ? node.id : genId(),
     type: node.type,
     name: node.name ?? '',
     props: cleanedProps,
@@ -495,18 +693,21 @@ export class AiService {
   private readonly openai: OpenAI;
   private readonly modelName: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly registry: ToolRegistry,
+  ) {
     const token = this.configService.get<string>('githubModels.token');
+    this.logger.log(`AI layout engine initialized (token: ${token})`);
     if (!token) {
-      throw new Error(
-        'AI_TOKEN is not configured. Add it to your .env file.',
-      );
+      throw new Error('AI_TOKEN is not configured. Add it to your .env file.');
     }
     this.openai = new OpenAI({
       baseURL: 'https://models.inference.ai.azure.com',
       apiKey: token,
     });
-    this.modelName = this.configService.get<string>('githubModels.model') ?? 'gpt-4o-mini';
+    this.modelName =
+      this.configService.get<string>('githubModels.model') ?? 'gpt-4o-mini';
     this.logger.log(`AI layout engine initialized (model: ${this.modelName})`);
   }
 
@@ -520,16 +721,27 @@ export class AiService {
     try {
       this.logger.log(`Generating layout for: "${dto.prompt}"`);
 
-      let validSections = await this.callAndNormalize(basePrompt, isModification);
+      let validSections = await this.callAndNormalize(
+        basePrompt,
+        isModification,
+        dto,
+      );
 
       // ── Self-repair retry ──────────────────────────────────────────
       // If the first pass produced nothing usable (bad JSON, all-unknown
       // types, etc.), give the model exactly one more chance with a
       // sharper, shorter corrective instruction instead of failing outright.
       if (validSections.length === 0) {
-        this.logger.warn('First generation pass produced no valid blocks — retrying once');
+        this.logger.warn(
+          'First generation pass produced no valid blocks — retrying once',
+        );
         const retryPrompt = `${basePrompt}\n\nYOUR PREVIOUS OUTPUT WAS REJECTED because it used invalid block types or malformed JSON. Re-read the BLOCK SYSTEM list above carefully. Use ONLY the 12 listed "type" values, follow the exact child-count rules, and output strictly valid JSON: { "sections": [ ... ] }`;
-        validSections = await this.callAndNormalize(retryPrompt, isModification, 0.2);
+        validSections = await this.callAndNormalize(
+          retryPrompt,
+          isModification,
+          dto,
+          0.2,
+        );
       }
 
       if (validSections.length === 0) {
@@ -544,23 +756,43 @@ export class AiService {
         layout: { sections: validSections },
         sectionsGenerated: validSections.length,
       };
-    } catch (error) {
+    } catch (error: any) {
       if (
         error instanceof BadRequestException ||
         error instanceof ServiceUnavailableException
       ) {
         throw error;
       }
-      const message = (error as Error).message ?? 'Unknown AI error';
-      this.logger.error(`AI generation failed: ${message}`);
+
+      // ── LOG CHI TIẾT LỖI TỪ AI SERVER ──────────────────────────
+      this.logger.error('=== [AI ERROR DETAILS] ===');
+      this.logger.error(`Status: ${error?.status || error?.statusCode}`);
+      this.logger.error(`Message: ${error?.message}`);
+      this.logger.error(`Response Data: ${JSON.stringify(error?.error || error?.response?.data || error?.response || {}, null, 2)}`);
+      this.logger.error(`Stack: ${error?.stack}`);
+      this.logger.error('==========================');
+
+      const message = error?.message ?? 'Unknown AI error';
       throw new BadRequestException(`AI generation failed: ${message}`);
     }
   }
 
-  /** Calls the model once and runs the parsed result through normalization. Returns [] on any failure (never throws). */
+
+  /**
+   * Calls the model once and runs the parsed result through normalization.
+   * Returns [] on any failure (never throws).
+   *
+   * Handles two possible response shapes:
+   *  1. Tool call response — AI called `generate-layout` with a modifications list.
+   *     → We inject `currentlayout` server-side (AI doesn't know the sections array),
+   *       execute the tool, and normalize the resulting sections array.
+   *  2. Raw JSON response — AI returned { "sections": [...] } directly.
+   *     → Parse and normalize as before.
+   */
   private async callAndNormalize(
     prompt: string,
     isModification: boolean,
+    dto: GenerateLayoutDto,
     forcedTemperature?: number,
   ): Promise<unknown[]> {
     const temperature = forcedTemperature ?? (isModification ? 0.3 : 0.9);
@@ -571,14 +803,101 @@ export class AiService {
       temperature,
       max_tokens: 8192,
       response_format: { type: 'json_object' },
+      tools: this.registry.toOpenAiTools(),
     });
-    const text = result.choices[0]?.message?.content || '{}';
+
+    const message = result.choices[0]?.message;
+    const finishReason = result.choices[0]?.finish_reason;
+    this.logger.log(`Model finish_reason: ${finishReason}`);
+
+    // ── Branch 1: AI decided to call a tool ─────────────────────────────────
+    if (message?.tool_calls && message.tool_calls.length > 0) {
+      this.logger.log(
+        `Model invoked ${message.tool_calls.length} tool call(s): ` +
+        message.tool_calls
+          .map((tc) => (tc.type === 'function' ? tc.function.name : tc.type))
+          .join(', '),
+      );
+
+      // Process all tool calls sequentially. The `generate-layout` tool is
+      // idempotent per invocation, so we apply the last non-empty result.
+      let latestSections: unknown[] = [];
+
+      for (const toolCall of message.tool_calls) {
+        if (toolCall.type !== 'function') continue;
+
+        const toolName = toolCall.function.name;
+        this.logger.log(`  → Executing tool: "${toolName}"`);
+
+        let toolArgs: Record<string, unknown>;
+        try {
+          toolArgs = JSON.parse(toolCall.function.arguments) as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          this.logger.warn(
+            `  → Failed to parse arguments for tool "${toolName}" — skipping`,
+          );
+          continue;
+        }
+
+        const tool = this.registry.get(toolName);
+        if (!tool) {
+          this.logger.warn(
+            `  → Tool "${toolName}" is not registered — skipping`,
+          );
+          continue;
+        }
+
+        // Inject the real currentlayout server-side so the AI doesn't need
+        // to reproduce the entire layout JSON in its arguments.
+        if (toolName === 'generate-layout') {
+          toolArgs.currentlayout = dto.currentLayout?.sections ?? [];
+          this.logger.log(
+            `  → Injected currentlayout (${(dto.currentLayout?.sections ?? []).length} top-level sections)`,
+          );
+        }
+
+        try {
+          const toolResultString = await tool.execute(toolArgs);
+          this.logger.log(`  → Tool "${toolName}" executed successfully`);
+          const parsedResult = JSON.parse(toolResultString);
+
+          if (Array.isArray(parsedResult) && parsedResult.length > 0) {
+            latestSections = parsedResult;
+          } else {
+            this.logger.warn(
+              `  → Tool "${toolName}" returned an empty or non-array result`,
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `  → Tool "${toolName}" execution failed: ${(error as Error).message}`,
+          );
+        }
+      }
+
+      if (latestSections.length > 0) {
+        return latestSections
+          .map((s) => normalizeNode(s, this.logger))
+          .filter((s): s is RawNode => s !== null);
+      }
+
+      // If all tool calls failed or returned empty, fall through to raw content.
+      this.logger.warn(
+        'All tool calls produced no valid sections — falling back to raw content',
+      );
+    }
+
+    // ── Branch 2: AI returned raw JSON { "sections": [...] } ────────────────
+    const text = message?.content || '{}';
 
     let parsed: { sections: unknown[] };
     try {
       parsed = JSON.parse(text) as { sections: unknown[] };
     } catch {
-      this.logger.warn('Model returned invalid JSON');
+      this.logger.warn('Model returned invalid JSON in content field');
       return [];
     }
 
@@ -612,7 +931,8 @@ export class AiService {
       lines.push('COLOR PALETTE (Light Mode):');
       if (l.primary) lines.push(`  - Primary color: ${l.primary}`);
       if (l.secondary) lines.push(`  - Secondary color: ${l.secondary}`);
-      if (l.accents?.length) lines.push(`  - Accent colors: ${l.accents.join(', ')}`);
+      if (l.accents?.length)
+        lines.push(`  - Accent colors: ${l.accents.join(', ')}`);
       lines.push('');
     }
     if (meta.colors?.dark) {
@@ -620,14 +940,16 @@ export class AiService {
       lines.push('COLOR PALETTE (Dark Mode):');
       if (d.primary) lines.push(`  - Primary color: ${d.primary}`);
       if (d.secondary) lines.push(`  - Secondary color: ${d.secondary}`);
-      if (d.accents?.length) lines.push(`  - Accent colors: ${d.accents.join(', ')}`);
+      if (d.accents?.length)
+        lines.push(`  - Accent colors: ${d.accents.join(', ')}`);
       lines.push('');
     }
 
     // Fonts
     if (meta.fonts) {
       lines.push('TYPOGRAPHY:');
-      if (meta.fonts.main) lines.push(`  - Main font family: ${meta.fonts.main}`);
+      if (meta.fonts.main)
+        lines.push(`  - Main font family: ${meta.fonts.main}`);
       lines.push('');
     }
 
@@ -637,9 +959,13 @@ export class AiService {
       lines.push(`  - Layout type: ${meta.pageLayout.type}`);
       if (meta.pageLayout.type === 'custom' && meta.pageLayout.padding) {
         const p = meta.pageLayout.padding;
-        lines.push(`  - Custom padding: top=${p.top}px, right=${p.right}px, bottom=${p.bottom}px, left=${p.left}px`);
+        lines.push(
+          `  - Custom padding: top=${p.top}px, right=${p.right}px, bottom=${p.bottom}px, left=${p.left}px`,
+        );
       } else if (meta.pageLayout.type === 'fluid') {
-        lines.push('  - Page content is constrained with horizontal side margins (similar to a container class)');
+        lines.push(
+          '  - Page content is constrained with horizontal side margins (similar to a container class)',
+        );
       } else {
         lines.push('  - Page content spans the full frame width');
       }
@@ -659,6 +985,38 @@ export class AiService {
     return lines.join('\n') + '\n';
   }
 
+  /**
+   * Builds a compact, token-efficient representation of the layout tree
+   * containing ONLY id, type, and name (no props, no rendered content).
+   *
+   * Purpose: Give the AI just enough context to identify which node to target
+   * by id — without blowing the token budget on props / image URLs / long text.
+   * The full layout is injected server-side when the tool executes.
+   */
+  private buildCompactLayoutMap(nodes: unknown[], indent = 0): string {
+    const pad = '  '.repeat(indent);
+    return nodes
+      .map((raw) => {
+        const n = raw as {
+          id?: string;
+          type?: string;
+          name?: string;
+          props?: Record<string, unknown>;
+          children?: unknown[];
+        };
+        const label = n.props?.text ?? n.props?.label ?? n.name ?? '';
+        const preview = label ? ` "${String(label).slice(0, 40)}"` : '';
+        const line = `${pad}- [${n.type ?? '?'}] id="${n.id ?? '?'}"${preview}`;
+        if (n.children && n.children.length > 0) {
+          return (
+            line + '\n' + this.buildCompactLayoutMap(n.children, indent + 1)
+          );
+        }
+        return line;
+      })
+      .join('\n');
+  }
+
   /** Builds the full prompt (system context + optional modification block + user request). */
   private buildPrompt(dto: GenerateLayoutDto, isModification: boolean): string {
     let fullPrompt = `${COMPONENT_CONTEXT}\n\n`;
@@ -675,39 +1033,56 @@ export class AiService {
 MODIFICATION MODE — READ ALL RULES BEFORE ACTING
 ═══════════════════════════════════════════════════
 
-CURRENT LAYOUT (the exact JSON tree currently rendered on screen):
-${JSON.stringify(dto.currentLayout, null, 2)}
+CURRENT LAYOUT NODE MAP (id + type only — use the "id" value to target nodes):
+${this.buildCompactLayoutMap((dto.currentLayout as { sections?: unknown[] })?.sections ?? [])}
+
+NOTE: The server holds the full layout data. You only need the node "id" when using the tool.
 
 YOUR TASK:
-The user wants a SURGICAL modification. Think of this like a code diff:
-- Identify WHICH block(s) need to change based on the user's request
-- Change ONLY those block(s) — keep everything else IDENTICAL (same props, same children, same order)
+The user wants a SURGICAL modification. You have TWO options to respond:
+
+OPTION A — Use the "generate-layout" TOOL (preferred for precise, targeted changes):
+  Call the tool with a "modifications" array. Each modification targets one node by its "id" field.
+  Available modification types:
+  - "ADD_CHILD"  → append newNode inside the target node's children list
+  - "ADD_BEFORE" → insert newNode immediately before the target node (same level)
+  - "ADD_AFTER"  → insert newNode immediately after the target node (same level)
+  - "UPDATE"     → replace the entire target node with newNode
+  - "DELETE"     → remove the target node from the tree
+  You do NOT need to reproduce the full layout — the server injects currentlayout automatically.
+  Use this option when: adding/removing/updating specific blocks, especially when the layout is large.
+
+OPTION B — Return the full updated layout as raw JSON { "sections": [...] }:
+  Copy the CURRENT LAYOUT exactly, then apply your changes inline.
+  Use this option when: the change is so widespread (e.g. complete redesign of a section) that
+  targeted patching would require more than 5 individual modifications.
+
+REGARDLESS OF WHICH OPTION YOU CHOOSE:
+- Change ONLY what the user asked — keep everything else IDENTICAL (same props, same children, same order)
 - Do NOT add new sections unless the user explicitly says "add a new section for..."
 - Do NOT remove sections unless the user explicitly says "remove..."
 - Do NOT rename, reorder, or restyle anything the user did not mention
 - Still obey every rule in BLOCK SYSTEM above (valid types, exact child counts, no children on atoms)
 
-MODIFICATION WORKFLOW (follow in order):
-Step 1 — LOCATE: Find the exact block(s) in CURRENT LAYOUT that match the user's request.
-Step 2 — PLAN: Decide in one sentence what you will change and what you will keep.
-Step 3 — BUILD: Output the full updated "sections" array. Unchanged sections must be COPIED EXACTLY (same props, same children, same structure).
+EXAMPLES FOR OPTION A (tool call):
 
-MODIFICATION EXAMPLES:
+Example A1 — "Delete the hero section" (id: "block-ai-1234")
+Tool call modifications: [
+  { "type": "DELETE", "targetId": "block-ai-1234" }
+]
 
-Example A — "Add a logo icon to the left of the navbar brand name"
-Before (left column of navbar):
-  { "type": "heading", "props": { "text": "MyPortfolio" } }
-After (left column of navbar):
-  { "type": "flex", "props": { "direction": "row", "gap": "sm", "align": "center" }, "children": [
-    { "type": "icon", "props": { "name": "Code2", "size": "md", "accent": "violet" } },
-    { "type": "heading", "props": { "text": "MyPortfolio", "size": "xl" } }
-  ]}
-→ ONLY the left column inner structure changes. Nav links, all other sections = unchanged.
+Example A2 — "Add a badge saying 'React' after the heading in block-ai-5678"
+Tool call modifications: [
+  { "type": "ADD_AFTER", "targetId": "block-ai-5678",
+    "newNode": { "type": "badge", "props": { "text": "React", "variant": "subtle", "color": "sky" } } }
+]
 
-Example B — "Change the hero heading text to 'I Build Digital Experiences'"
-Before: { "type": "heading", "props": { "text": "Hello World", "level": "h1" } }
-After:  { "type": "heading", "props": { "text": "I Build Digital Experiences", "level": "h1" } }
-→ ONLY that one heading's text changes. Props like size, gradient, alignX stay identical.
+Example A3 — "Rename heading to 'Hello World' AND delete the footer"
+Tool call modifications: [
+  { "type": "UPDATE", "targetId": "block-ai-heading-id",
+    "newNode": { "type": "heading", "props": { "text": "Hello World", "level": "h1", "size": "5xl" } } },
+  { "type": "DELETE", "targetId": "block-ai-footer-id" }
+]
 
 ANTI-PATTERNS (things you must NEVER do in modification mode):
 ❌ Inventing new nav links that weren't in the original

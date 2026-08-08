@@ -20,14 +20,40 @@ export class PostsService {
       .replace(/-+/g, '-');
   }
 
+  /**
+   * Xác định publishedAt:
+   * - Nếu status là PUBLISHED và không có publishedAt → set ngay bây giờ
+   * - Nếu status là SCHEDULED và có publishedAt trong tương lai → giữ nguyên
+   * - Các trường hợp khác → để null
+   */
+  private resolvePublishedAt(
+    status: POST_STATUS | undefined,
+    publishedAt: string | undefined,
+  ): Date | undefined {
+    if (status === POST_STATUS.PUBLISHED) {
+      return publishedAt ? new Date(publishedAt) : new Date();
+    }
+    if (status === POST_STATUS.SCHEDULED && publishedAt) {
+      return new Date(publishedAt);
+    }
+    return undefined;
+  }
+
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
     const slug = this.createSlug(createPostDto.title) + '-' + Date.now();
+    const resolvedStatus = createPostDto.status ?? POST_STATUS.DRAFT;
+    const publishedAt = this.resolvePublishedAt(
+      resolvedStatus,
+      createPostDto.publishedAt,
+    );
+
     const post = new this.postModel({
       ...createPostDto,
       slug,
       authorId,
       layout: { sections: [] },
-      status: createPostDto.status ?? POST_STATUS.DRAFT,
+      status: resolvedStatus,
+      publishedAt,
     });
     return post.save();
   }
@@ -44,8 +70,21 @@ export class PostsService {
   }
 
   async update(id: string, updatePostDto: UpdatePostDto): Promise<Post> {
+    // Nếu cập nhật status, cũng tính lại publishedAt
+    const updates: Record<string, any> = { ...updatePostDto };
+    if (updatePostDto.status !== undefined) {
+      const publishedAt = this.resolvePublishedAt(
+        updatePostDto.status,
+        updatePostDto.publishedAt,
+      );
+      // Chỉ ghi đè publishedAt nếu hàm trả về giá trị (tránh xóa ngày đã tồn tại)
+      if (publishedAt) {
+        updates.publishedAt = publishedAt;
+      }
+    }
+
     const post = await this.postModel
-      .findByIdAndUpdate(id, updatePostDto, { new: true })
+      .findByIdAndUpdate(id, updates, { new: true })
       .exec();
     if (!post) throw new NotFoundException(`Post #${id} not found`);
     return post;
@@ -54,5 +93,12 @@ export class PostsService {
   async remove(id: string): Promise<void> {
     const result = await this.postModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException(`Post #${id} not found`);
+  }
+
+  /** Tăng viewCount 1 đơn vị (gọi khi user mở bài viết) */
+  async incrementViewCount(id: string): Promise<void> {
+    await this.postModel
+      .findByIdAndUpdate(id, { $inc: { viewCount: 1 } })
+      .exec();
   }
 }

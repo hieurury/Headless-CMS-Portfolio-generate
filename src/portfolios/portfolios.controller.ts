@@ -27,10 +27,7 @@ export class PortfoliosController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreatePortfolioDto,
-  ) {
+  create(@CurrentUser() user: JwtPayload, @Body() dto: CreatePortfolioDto) {
     return this.portfoliosService.create(user.sub, dto);
   }
 

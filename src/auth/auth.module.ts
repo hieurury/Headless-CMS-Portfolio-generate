@@ -6,18 +6,22 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     UsersModule,
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secret'),
+        // Default to access token secret; individual sign calls may override this
+        secret: configService.get<string>('jwt.accessSecret'),
         signOptions: {
-          expiresIn: (configService.get<string>('jwt.expiresIn') ?? '7d') as any,
+          expiresIn: (configService.get<string>('jwt.accessExpiresIn') ??
+            '15m') as any,
         },
       }),
     }),
@@ -27,3 +31,4 @@ import { UsersModule } from '../users/users.module';
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
+

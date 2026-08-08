@@ -93,6 +93,11 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
     };
   }, [onClose]);
 
+  const commitAndClose = useCallback(() => {
+    onChange(localValue);
+    onClose();
+  }, [localValue, onChange, onClose]);
+
   // Keyboard: Escape to close, Enter to confirm (except textarea)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -105,12 +110,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  });
-
-  const commitAndClose = useCallback(() => {
-    onChange(localValue);
-    onClose();
-  }, [localValue, onChange, onClose]);
+  }, [commitAndClose, schema.type]);
 
   const handleChange = (v: unknown) => {
     setLocalValue(v);

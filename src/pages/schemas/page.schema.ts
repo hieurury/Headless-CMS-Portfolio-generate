@@ -34,10 +34,16 @@ export class PageColorScheme {
 }
 
 export class PageColors {
-  @Prop({ type: PageColorScheme, default: () => ({ primary: '#6366f1', secondary: '#8b5cf6', accents: [] }) })
+  @Prop({
+    type: PageColorScheme,
+    default: () => ({ primary: '#6366f1', secondary: '#8b5cf6', accents: [] }),
+  })
   light: PageColorScheme;
 
-  @Prop({ type: PageColorScheme, default: () => ({ primary: '#818cf8', secondary: '#a78bfa', accents: [] }) })
+  @Prop({
+    type: PageColorScheme,
+    default: () => ({ primary: '#818cf8', secondary: '#a78bfa', accents: [] }),
+  })
   dark: PageColorScheme;
 }
 
@@ -64,7 +70,10 @@ export class PageLayoutSettings {
   @Prop({ default: 'normal', enum: ['normal', 'fluid', 'custom'] })
   type: 'normal' | 'fluid' | 'custom';
 
-  @Prop({ type: PageLayoutPadding, default: () => ({ top: '0', right: '24', bottom: '0', left: '24' }) })
+  @Prop({
+    type: PageLayoutPadding,
+    default: () => ({ top: '0', right: '24', bottom: '0', left: '24' }),
+  })
   padding: PageLayoutPadding;
 }
 
@@ -75,7 +84,10 @@ export class PageMeta {
   /** Page layout / margin settings */
   @Prop({
     type: PageLayoutSettings,
-    default: () => ({ type: 'normal', padding: { top: '0', right: '24', bottom: '0', left: '24' } }),
+    default: () => ({
+      type: 'normal',
+      padding: { top: '0', right: '24', bottom: '0', left: '24' },
+    }),
   })
   pageLayout?: PageLayoutSettings;
 

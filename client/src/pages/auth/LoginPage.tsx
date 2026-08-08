@@ -6,6 +6,31 @@ import { t } from '../../i18n';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 
+// ─── Shared input style (đồng bộ với RegisterPage / ForgotPasswordPage) ───────
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  background: 'var(--color-surface-2)',
+  color: 'var(--color-text)',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  fontSize: 14,
+  outline: 'none',
+  boxShadow: 'var(--shadow-sm)',
+  transition: 'box-shadow 0.2s',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.5px',
+  textTransform: 'uppercase',
+  color: 'var(--color-text-muted)',
+  marginBottom: 6,
+};
+
 export const LoginPage: React.FC = () => {
   const { language } = useUIStore();
   const lang = t(language).auth;
@@ -15,14 +40,11 @@ export const LoginPage: React.FC = () => {
   const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
-  // Auto-hide error notification
+  // Auto-dismiss error toast
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        clearError();
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
+    if (!error) return;
+    const timer = setTimeout(clearError, 4000);
+    return () => clearTimeout(timer);
   }, [error, clearError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,43 +53,127 @@ export const LoginPage: React.FC = () => {
     try {
       await login(email, password);
       navigate('/dashboard');
-    } catch {
-      // error is in store
+    } catch (err: unknown) {
+      // Unverified account — redirect to step 2 of registration
+      if ((err as any)?.requiresVerification) {
+        navigate('/register?step=2');
+        return;
+      }
+      // Other errors are already set in store
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative">
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '80px 16px 24px',
+        background: 'var(--color-bg)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       <AuthNavbar />
-      
-      {/* Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[var(--color-surface-2)] blur-[120px]" />
-      </div>
 
-      {/* Toast Notification */}
+      {/* Ambient glow */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '30%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'var(--color-surface-2)',
+          filter: 'blur(100px)',
+          opacity: 0.4,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Error Toast */}
       {error && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
-          <div className="px-5 py-3 rounded-xl bg-red-500/10 border-0 shadow-lg text-red-400 text-sm flex items-center gap-3 backdrop-blur-md">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></div>
-            <span className="font-medium">{error}</span>
+        <div
+          style={{
+            position: 'fixed',
+            top: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 50,
+          }}
+          className="animate-fade-in"
+        >
+          <div
+            style={{
+              background: 'var(--color-error-bg)',
+              border: '1px solid var(--color-error-border)',
+              color: 'var(--color-error)',
+              padding: '10px 18px',
+              borderRadius: 'var(--radius-lg)',
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: 'var(--shadow-md)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'var(--color-error)',
+              }}
+            />
+            <span style={{ fontWeight: 500 }}>{error}</span>
           </div>
         </div>
       )}
 
-      <div className="w-full max-w-md animate-slide-up mt-12">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">{lang.loginTitle}</h1>
-          <p className="text-[var(--color-text-muted)]">{lang.loginSubtitle}</p>
+      {/* Card */}
+      <div
+        style={{ width: '100%', maxWidth: 440, position: 'relative' }}
+        className="animate-slide-up"
+      >
+        {/* Heading */}
+        <div style={{ marginBottom: 28, textAlign: 'center' }}>
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: 'var(--color-text)',
+              margin: '0 0 6px',
+              letterSpacing: '-0.4px',
+            }}
+          >
+            {lang.loginTitle}
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
+            {lang.loginSubtitle}
+          </p>
         </div>
 
-        {/* Form */}
-        <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl shadow-xl rounded-xl p-8 space-y-5">
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form card */}
+        <div
+          style={{
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '28px 28px 24px',
+            boxShadow: 'var(--shadow-xl)',
+          }}
+        >
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          >
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">{lang.emailLabel}</label>
+              <label style={labelStyle}>{lang.emailLabel}</label>
               <input
                 id="login-email"
                 type="email"
@@ -75,13 +181,48 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={lang.emailPlaceholder}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-[var(--color-surface-2)] shadow-sm border-0 text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] transition-all"
+                style={inputStyle}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)')
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')
+                }
               />
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">{lang.passwordLabel}</label>
-              <div className="relative">
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 6,
+                }}
+              >
+                <label style={{ ...labelStyle, marginBottom: 0 }}>
+                  {lang.passwordLabel}
+                </label>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--color-text-muted)',
+                    textDecoration: 'none',
+                    transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--color-text)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--color-text-muted)')
+                  }
+                >
+                  Quên mật khẩu?
+                </Link>
+              </div>
+              <div style={{ position: 'relative' }}>
                 <input
                   id="login-password"
                   type={showPass ? 'text' : 'password'}
@@ -89,36 +230,92 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={lang.passwordPlaceholder}
                   required
-                  className="w-full px-4 py-3 pr-12 rounded-lg bg-[var(--color-surface-2)] shadow-sm border-0 text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] transition-all"
+                  style={{ ...inputStyle, paddingRight: 42 }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)')
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')
+                  }
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+                  onClick={() => setShowPass((v) => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-text-muted)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                  }}
                 >
-                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
+            {/* Submit */}
             <button
               id="login-submit"
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg shadow-md bg-[var(--color-text)] text-[var(--color-bg)] font-semibold hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              style={{
+                width: '100%',
+                padding: '11px',
+                background: 'var(--color-text)',
+                color: 'var(--color-bg)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'opacity 0.2s',
+                marginTop: 4,
+              }}
             >
-              {isLoading ? <><Loader2 size={18} className="animate-spin" /> {lang.signingInBtn}</> : lang.signInBtn}
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> {lang.signingInBtn}
+                </>
+              ) : (
+                lang.signInBtn
+              )}
             </button>
           </form>
 
-          <div className="text-center pt-2">
-            <p className="text-[var(--color-text-muted)] text-sm">
-              {lang.noAccount}{' '}
-              <Link to="/register" className="text-[var(--color-text)] hover:opacity-80 font-medium transition-colors underline">
-                {lang.createOne}
-              </Link>
-            </p>
-          </div>
+          {/* Footer link */}
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: 13,
+              color: 'var(--color-text-muted)',
+              marginTop: 16,
+              marginBottom: 0,
+            }}
+          >
+            {lang.noAccount}{' '}
+            <Link
+              to="/register"
+              style={{
+                color: 'var(--color-text)',
+                fontWeight: 500,
+                textDecoration: 'underline',
+              }}
+            >
+              {lang.createOne}
+            </Link>
+          </p>
         </div>
       </div>
     </div>

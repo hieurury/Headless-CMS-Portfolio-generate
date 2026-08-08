@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { PosttypeService } from './posttype.service';
 import { CreatePosttypeDto } from './dto/create-posttype.dto';
 import { UpdatePosttypeDto } from './dto/update-posttype.dto';
@@ -28,7 +38,11 @@ export class PosttypeController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePosttypeDto: UpdatePosttypeDto, @Req() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePosttypeDto: UpdatePosttypeDto,
+    @Req() req: any,
+  ) {
     const authorId = req.user.sub;
     return this.posttypeService.update(id, updatePosttypeDto, authorId);
   }

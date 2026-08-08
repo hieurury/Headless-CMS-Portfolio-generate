@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { usePostStore } from '../../store/postStore';
 import { ArrowLeft, Loader2, Calendar, Tag } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
+import MyEditor from '../editor/components/BlockNote';
 
 /**
  * PostPreviewPage
@@ -102,6 +103,13 @@ export const PostPreviewPage: React.FC = () => {
             if (!value) return null;
 
             if (field.type === 'markdown') {
+              if (Array.isArray(value) || (typeof value === 'string' && value.trim().startsWith('['))) {
+                return (
+                  <div key={field.name} className="my-6 rounded-lg overflow-hidden border border-[var(--color-border)]">
+                    <MyEditor value={value} editable={false} />
+                  </div>
+                );
+              }
               return (
                 <div key={field.name} data-color-mode="dark" className="prose prose-invert max-w-none">
                   <MDEditor.Markdown source={value} style={{ backgroundColor: 'transparent' }} />
