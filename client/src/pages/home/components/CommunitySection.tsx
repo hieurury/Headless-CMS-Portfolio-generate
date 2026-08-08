@@ -4,11 +4,28 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useUIStore } from '../../../store/uiStore';
 import { t } from '../../../i18n';
-import { ExternalLink, Globe, Loader2 } from 'lucide-react';
+import { ExternalLink, Globe, Loader2, FileText } from 'lucide-react';
 import { publicService } from '../../../services/public.service';
 import { CATEGORY_LABELS } from '../../../core/types/layout.types';
 
 gsap.registerPlugin(ScrollTrigger);
+
+/** Deterministic color from a string — maps to one of 8 muted accent colors */
+function getAvatarColor(str: string): string {
+  const colors = [
+    'linear-gradient(135deg,#3b4fd8,#6366f1)',
+    'linear-gradient(135deg,#0e7490,#06b6d4)',
+    'linear-gradient(135deg,#065f46,#10b981)',
+    'linear-gradient(135deg,#92400e,#f59e0b)',
+    'linear-gradient(135deg,#7c3aed,#a78bfa)',
+    'linear-gradient(135deg,#9f1239,#f43f5e)',
+    'linear-gradient(135deg,#1d4ed8,#38bdf8)',
+    'linear-gradient(135deg,#166534,#4ade80)',
+  ];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return colors[hash % colors.length];
+}
 
 interface CommunityItem {
   id: string;
@@ -17,7 +34,9 @@ interface CommunityItem {
   slug: string;
   description: string;
   categories: string[];
+  pageCount: number;
   avatar: string;
+  avatarUrl?: string;
   icon?: string;
 }
 
@@ -28,11 +47,22 @@ interface CommunityCardProps {
 }
 
 const CommunityCard: React.FC<CommunityCardProps> = ({ item, visitLabel, language }) => {
+  const avatarGradient = getAvatarColor(item.creator);
   return (
     <div className="community-card" id={`community-card-${item.id}`}>
       <div className="community-card__header">
-        <div className="community-card__avatar">
-          {item.icon ? (
+        {/* Avatar: real image or colored letter */}
+        <div
+          className="community-card__avatar"
+          style={!item.avatarUrl ? { background: avatarGradient, border: 'none', color: '#fff' } : undefined}
+        >
+          {item.avatarUrl ? (
+            <img
+              src={item.avatarUrl}
+              alt={item.creator}
+              className="community-card__avatar-img"
+            />
+          ) : item.icon ? (
             <span className="text-base leading-none">{item.icon}</span>
           ) : (
             item.avatar
@@ -42,6 +72,13 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ item, visitLabel, languag
           <div className="community-card__creator">{item.creator}</div>
           <div className="community-card__site">{item.siteName}</div>
         </div>
+        {/* Page count badge */}
+        {item.pageCount > 0 && (
+          <div className="community-card__pages">
+            <FileText size={10} />
+            <span>{item.pageCount}</span>
+          </div>
+        )}
       </div>
       <p className="community-card__desc">{item.description}</p>
       <div className="community-card__footer">
@@ -95,9 +132,11 @@ export const CommunitySection: React.FC = () => {
               creator: p.ownerName || (language === 'vi' ? 'Tác giả' : 'Creator'),
               siteName: p.title,
               slug: p.slug,
-              description: p.description || (language === 'vi' ? 'Portfolio chuyên nghiệp xây dựng trên Ruryfo CMS.' : 'Professional portfolio built on Ruryfo CMS.'),
+              description: p.description || '',
               categories,
+              pageCount: p.pageCount || 0,
               avatar: avatarLetter,
+              avatarUrl: p.ownerAvatar || undefined,
               icon: (p.meta as any)?.icon,
             };
           });

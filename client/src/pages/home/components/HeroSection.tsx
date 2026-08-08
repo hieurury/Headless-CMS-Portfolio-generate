@@ -134,7 +134,6 @@ export const HeroSection: React.FC = () => {
   const tr = t(language);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const badgeRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const btnsRef = useRef<HTMLDivElement>(null);
@@ -145,8 +144,7 @@ export const HeroSection: React.FC = () => {
   // GSAP entrance
   useEffect(() => {
     const tl = gsap.timeline({ delay: 0.4 });
-    tl.fromTo(badgeRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' })
-      .fromTo(titleRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, '-=0.2')
+    tl.fromTo(titleRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' })
       .fromTo(descRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.3')
       .fromTo(btnsRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2')
       .fromTo(statsRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2');
@@ -162,10 +160,6 @@ export const HeroSection: React.FC = () => {
 
       {/* Content */}
       <div ref={contentRef} className="hero-content">
-        <div ref={badgeRef} className="hero-badge" id="hero-badge">
-          <span className="hero-badge__dot" />
-          {tr.hero.badge}
-        </div>
 
         <h1 ref={titleRef} className="hero-title" id="hero-title">
           {tr.hero.title}
@@ -199,22 +193,22 @@ export const HeroSection: React.FC = () => {
         </div>
 
         {/* Real Stats & Capability Pills */}
-        <div ref={statsRef} className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-8 pt-6 border-t border-[var(--home-border)] text-xs font-mono text-[var(--home-text-muted)] max-w-2xl mx-auto">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
-            <Globe2 size={13} className="text-[var(--home-text)]" />
-            <span>{tr.hero.stats?.categories || '20+ Categories'}</span>
+        <div ref={statsRef} className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-8 pt-6 border-t border-[var(--home-border)] text-xs font-mono text-[var(--home-text-muted)] max-w-2xl mx-auto">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Globe2 size={13} className="text-sky-400" />
+            <span>{tr.hero.stats?.categories || '20+ Ngành nghề'}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
-            <Layers size={13} className="text-[var(--home-text)]" />
-            <span>{tr.hero.stats?.blocks || '10+ UI Blocks'}</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Layers size={13} className="text-violet-400" />
+            <span>{tr.hero.stats?.blocks || '10+ Khối giao diện'}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--home-border)] bg-[var(--home-surface-2)]">
             <Sparkles size={13} className="text-emerald-400" />
-            <span>{tr.hero.stats?.ai || 'Gemini AI Powered'}</span>
+            <span>{tr.hero.stats?.ai || 'Tích hợp Gemini AI'}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
-            <Code size={13} className="text-[var(--home-text)]" />
-            <span>{tr.hero.stats?.customizable || '100% Extensible'}</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Code size={13} className="text-amber-400" />
+            <span>{tr.hero.stats?.customizable || '100% Tùy biến'}</span>
           </div>
         </div>
       </div>

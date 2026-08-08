@@ -15,6 +15,7 @@ export interface PublicPortfolioCard {
   slug: string;
   description: string;
   ownerName: string;
+  ownerAvatar: string;
   pageCount: number;
   meta: { theme?: string; primaryColor?: string; fontFamily?: string };
   createdAt: string;
@@ -137,6 +138,7 @@ export class PublicService {
         slug: 1,
         description: { $ifNull: ['$description', ''] },
         ownerName: { $ifNull: ['$ownerDoc.name', 'Unknown'] },
+        ownerAvatar: { $ifNull: ['$ownerDoc.avatar', ''] },
         pageCount: {
           $ifNull: [{ $arrayElemAt: ['$pageCounts.n', 0] }, 0],
         },
@@ -173,6 +175,7 @@ export class PublicService {
         slug: r.slug as string,
         description: r.description as string,
         ownerName: r.ownerName as string,
+        ownerAvatar: (r.ownerAvatar as string) || '',
         pageCount: r.pageCount as number,
         meta: (r.meta as PublicPortfolioCard['meta']) ?? {},
         createdAt: (r.createdAt as Date).toISOString(),

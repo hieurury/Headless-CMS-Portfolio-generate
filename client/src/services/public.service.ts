@@ -6,6 +6,7 @@ export interface PublicPortfolioCard {
   slug: string;
   description: string;
   ownerName: string;
+  ownerAvatar: string;
   pageCount: number;
   meta: { theme?: string; primaryColor?: string; fontFamily?: string };
   createdAt: string;
