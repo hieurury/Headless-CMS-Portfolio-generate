@@ -6,12 +6,13 @@ import { useUIStore } from '../../store/uiStore';
 import { usePostStore } from '../../store/postStore';
 import { CATEGORY_LABELS } from '../../core/types/layout.types';
 import { UserNavMenu } from '../../components/common/UserNavMenu';
+import { CategoryPicker } from '../../components/common/CategoryPicker';
 import { t } from '../../i18n';
 import {
   ArrowLeft, Plus, FileText, Eye, Trash2,
-  Loader2, Code2, ChevronRight, Pencil, Globe, Lock,
+  Loader2, Code2, ChevronRight, Pencil, Globe, Lock, Check,
   Folder, Briefcase, Code, Palette, Laptop, Camera, Book, Video, Image as ImageIcon, Sun, Moon,
-  Layers, Tag, AlignLeft, Settings, X, GripVertical,
+  Layers, Tag, AlignLeft, Settings, X, GripVertical, Settings2,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -41,6 +42,20 @@ export const PortfolioDetailPage: React.FC = () => {
   const [form, setForm] = useState({ title: '', slug: '', icon: 'FileText' });
   const [creating, setCreating] = useState(false);
   const [selectedPostTypeId, setSelectedPostTypeId] = useState<string>('');
+
+  // Edit Portfolio modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    slug: '',
+    description: '',
+    icon: 'Folder',
+    categories: ['technology'] as string[],
+  });
+  const [showEditIconPicker, setShowEditIconPicker] = useState(false);
+  const [updatingPortfolio, setUpdatingPortfolio] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   // PostType creation modal state
   const [showPostTypeModal, setShowPostTypeModal] = useState(false);
   const [ptForm, setPtForm] = useState({ name: '', description: '' });
@@ -65,6 +80,51 @@ export const PortfolioDetailPage: React.FC = () => {
 
     }
   }, [activeTab, fetchPostTypes, fetchPosts, selectedPostTypeId]);
+
+  const slugify = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+  const handleOpenEditPortfolio = () => {
+    if (portfolio) {
+      setEditForm({
+        title: portfolio.title || '',
+        slug: portfolio.slug || '',
+        description: portfolio.description || '',
+        icon: portfolio.meta?.icon || 'Folder',
+        categories: portfolio.categories?.length ? [...portfolio.categories] : ['technology'],
+      });
+      setEditError(null);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleSavePortfolio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!portfolioId || !editForm.title.trim()) return;
+    setUpdatingPortfolio(true);
+    setEditError(null);
+    try {
+      await usePortfolioStore.getState().update(portfolioId, {
+        title: editForm.title.trim(),
+        slug: editForm.slug.trim(),
+        description: editForm.description.trim(),
+        categories: editForm.categories,
+        meta: {
+          ...portfolio?.meta,
+          icon: editForm.icon,
+        },
+      });
+      setShowEditModal(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to update portfolio';
+      setEditError(Array.isArray(msg) ? msg[0] : msg);
+    } finally {
+      setUpdatingPortfolio(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,7 +240,18 @@ export const PortfolioDetailPage: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Edit Portfolio Info */}
+            <button
+              id="edit-portfolio-btn"
+              onClick={handleOpenEditPortfolio}
+              className="flex items-center gap-1.5 px-3 py-2 rounded text-xs font-semibold transition-all border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] shadow-sm"
+              title={language === 'vi' ? 'Chỉnh sửa thông tin portfolio' : 'Edit portfolio info'}
+            >
+              <Pencil size={13} />
+              <span>{lang.editPortfolio || (language === 'vi' ? 'Sửa thông tin' : 'Edit Info')}</span>
+            </button>
+
             {/* Publish toggle */}
             {portfolio && (
               <button
@@ -774,11 +845,11 @@ export const PortfolioDetailPage: React.FC = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowPostTypeModal(false)}
-                  className="flex-1 h-[42px] rounded-lg border border-[var(--color-border)] text-[var(--color-text)] font-medium transition-all hover:bg-[var(--color-surface-2)]"
+                  className="flex-1 h-10 rounded border border-[var(--color-border)] text-[var(--color-text)] font-medium text-xs transition-all hover:bg-[var(--color-surface-2)]"
                 >
                   Cancel
                 </button>
@@ -786,10 +857,184 @@ export const PortfolioDetailPage: React.FC = () => {
                   id="posttype-create-confirm"
                   type="submit"
                   disabled={ptSaving || !ptForm.name.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 h-[42px] rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold transition-all disabled:opacity-50 hover:opacity-85"
+                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs transition-all disabled:opacity-50 hover:opacity-85 shadow-sm"
                 >
-                  {ptSaving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                  {ptSaving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Portfolio Modal ──────────────────────────────────────────── */}
+      {showEditModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded p-6 sm:p-7 shadow-2xl animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-bold text-[var(--color-text)] flex items-center gap-2">
+                <Pencil size={16} />
+                {lang.editPortfolioModalTitle || (language === 'vi' ? 'Sửa thông tin Portfolio' : 'Edit Portfolio Info')}
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1.5 rounded hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="mb-4 px-4 py-2.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                {editError}
+              </div>
+            )}
+
+            <form onSubmit={handleSavePortfolio} className="space-y-4">
+              <div className="flex gap-3">
+                <div className="relative shrink-0">
+                  <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">
+                    Icon
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditIconPicker(!showEditIconPicker)}
+                    className="h-10 w-12 flex items-center justify-center rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] hover:border-[var(--color-text)] transition-colors"
+                  >
+                    {(() => {
+                      const C =
+                        ICONS.find((ic) => ic.name === editForm.icon)
+                          ?.component || Folder;
+                      return <C size={18} />;
+                    })()}
+                  </button>
+                  {showEditIconPicker && (
+                    <div className="absolute top-[100%] mt-2 left-0 w-[220px] p-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded shadow-xl grid grid-cols-5 gap-1 z-20">
+                      {ICONS.map((ic) => (
+                        <button
+                          key={ic.name}
+                          type="button"
+                          onClick={() => {
+                            setEditForm({
+                              ...editForm,
+                              icon: ic.name,
+                            });
+                            setShowEditIconPicker(false);
+                          }}
+                          className={`p-2 rounded flex items-center justify-center transition-colors ${
+                            editForm.icon === ic.name
+                              ? 'bg-[var(--color-surface-2)] border border-[var(--color-border)]'
+                              : 'hover:bg-[var(--color-surface-2)]'
+                          }`}
+                          title={ic.name}
+                        >
+                          <ic.component
+                            size={16}
+                            className="text-[var(--color-text)]"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">
+                    Title
+                  </label>
+                  <input
+                    id="edit-portfolio-title"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        title: e.target.value,
+                        slug: slugify(e.target.value),
+                      })
+                    }
+                    placeholder="Portfolio Title"
+                    required
+                    className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">
+                  Slug
+                </label>
+                <input
+                  id="edit-portfolio-slug"
+                  value={editForm.slug}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      slug: slugify(e.target.value),
+                    })
+                  }
+                  placeholder="portfolio-slug"
+                  required
+                  className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all font-mono text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-[var(--color-text-muted)] mb-1.5">
+                  Description (optional)
+                </label>
+                <input
+                  value={editForm.description}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="A short description..."
+                  className="h-10 w-full px-3 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text)] transition-all text-xs"
+                />
+              </div>
+
+              {/* Category Picker */}
+              <CategoryPicker
+                selectedCategories={editForm.categories}
+                onChange={(categories) =>
+                  setEditForm({
+                    ...editForm,
+                    categories,
+                  })
+                }
+                min={1}
+                max={3}
+              />
+
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 h-10 rounded border border-[var(--color-border)] text-[var(--color-text)] font-medium text-xs transition-all hover:bg-[var(--color-surface-2)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  id="portfolio-edit-confirm"
+                  type="submit"
+                  disabled={updatingPortfolio || !editForm.title.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs transition-all disabled:opacity-60 hover:opacity-90 shadow-sm"
+                >
+                  {updatingPortfolio ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Check size={14} />
+                  )}
+                  {lang.saveChanges || (language === 'vi' ? 'Lưu thay đổi' : 'Save Changes')}
                 </button>
               </div>
             </form>

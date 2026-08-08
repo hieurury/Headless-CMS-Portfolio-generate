@@ -328,50 +328,58 @@ export const DashboardPage: React.FC = () => {
                   return (
                     <div
                       key={p._id}
-                      className="bg-[var(--color-surface)] rounded p-6 space-y-4 shadow-sm border border-[var(--color-border)] hover:border-[var(--color-border-hover)] hover:shadow-md transition-all duration-200 group"
+                      className="bg-[var(--color-surface)] rounded p-5 sm:p-6 shadow-sm border border-[var(--color-border)] hover:border-[var(--color-border-hover)] hover:shadow-md transition-all duration-200 group flex flex-col justify-between h-full"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="w-11 h-11 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center text-lg">
-                          <IconComp size={20} className="text-[var(--color-text)]" />
+                      {/* Top Content Area */}
+                      <div className="flex flex-col flex-1">
+                        {/* Header: Icon & Published Badge */}
+                        <div className="flex items-start justify-between mb-3.5">
+                          <div className="w-10 h-10 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center text-lg shrink-0">
+                            <IconComp size={18} className="text-[var(--color-text)]" />
+                          </div>
+                          <div
+                            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm border text-[11px] font-mono font-medium ${
+                              p.isPublished
+                                ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+                                : 'text-[var(--color-text-muted)] border-[var(--color-border)] bg-[var(--color-surface-2)]'
+                            }`}
+                          >
+                            {p.isPublished ? (
+                              <Globe
+                                size={12}
+                                className="text-emerald-500"
+                              />
+                            ) : (
+                              <Lock
+                                size={12}
+                              />
+                            )}
+                            <span>
+                              {p.isPublished ? lang.public : lang.private}
+                            </span>
+                          </div>
                         </div>
-                        <div
-                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm border text-[11px] font-mono font-medium ${
-                            p.isPublished
-                              ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
-                              : 'text-[var(--color-text-muted)] border-[var(--color-border)] bg-[var(--color-surface-2)]'
-                          }`}
-                        >
-                          {p.isPublished ? (
-                            <Globe
-                              size={12}
-                              className="text-emerald-500"
-                            />
-                          ) : (
-                            <Lock
-                              size={12}
-                            />
-                          )}
-                          <span>
-                            {p.isPublished ? lang.public : lang.private}
-                          </span>
-                        </div>
-                      </div>
 
-                      <div>
-                        <h3 className="text-base font-bold text-[var(--color-text)] group-hover:opacity-85 transition-opacity line-clamp-1">
-                          {p.title}
-                        </h3>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-1 font-mono">
-                          /{p.slug}
-                        </p>
+                        {/* Title & Slug */}
+                        <div>
+                          <h3 className="text-base font-bold text-[var(--color-text)] group-hover:opacity-85 transition-opacity line-clamp-1">
+                            {p.title}
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-0.5 font-mono">
+                            /{p.slug}
+                          </p>
+                        </div>
+
+                        {/* Description */}
                         {p.description && (
                           <p className="text-xs text-[var(--color-text-faint)] mt-2 line-clamp-2 leading-relaxed">
                             {p.description}
                           </p>
                         )}
+
                         {/* Category tags */}
                         {(p.categories ?? ['technology']).length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
+                          <div className="flex flex-wrap gap-1 mt-3">
                             {(p.categories ?? ['technology']).map((cat) => (
                               <span
                                 key={cat}
@@ -384,50 +392,69 @@ export const DashboardPage: React.FC = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 pt-3 border-t border-[var(--color-border)]">
+                      {/* Bottom Action Row: Uniform 4 slots across all cards */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-4 pt-3.5 border-t border-[var(--color-border)]">
                         <Link
                           to={`/dashboard/portfolios/${p._id}`}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-xs font-semibold text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-2)] transition-colors shadow-sm"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded text-xs font-semibold text-[var(--color-text)] border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] transition-colors shadow-sm"
                         >
                           <ExternalLink size={13} /> {lang.manage}
                         </Link>
 
-                        {p.isPublished && (
-                          <>
-                            {/* View public */}
-                            <Link
-                              to={`/p/${p.slug}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-2 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors border border-[var(--color-border)]"
-                              title="View public portfolio"
-                            >
-                              <Globe size={14} />
-                            </Link>
-                            {/* Copy link */}
-                            <button
-                              onClick={() => handleCopyLink(p.slug, p._id)}
-                              className="p-2 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors border border-[var(--color-border)]"
-                              title="Copy public link"
-                            >
-                              {copiedId === p._id ? (
-                                <Check
-                                  size={14}
-                                  className="text-[var(--color-text)]"
-                                />
-                              ) : (
-                                <Copy size={14} />
-                              )}
-                            </button>
-                          </>
+                        {/* View public portfolio button */}
+                        {p.isPublished ? (
+                          <Link
+                            to={`/p/${p.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors border border-[var(--color-border)] shrink-0"
+                            title="View public portfolio"
+                          >
+                            <Globe size={14} />
+                          </Link>
+                        ) : (
+                          <button
+                            disabled
+                            className="p-2 rounded text-[var(--color-text-faint)] opacity-30 cursor-not-allowed border border-[var(--color-border)] shrink-0"
+                            title="Portfolio is private (publish to view)"
+                          >
+                            <Globe size={14} />
+                          </button>
                         )}
 
+                        {/* Copy public link button */}
+                        {p.isPublished ? (
+                          <button
+                            onClick={() => handleCopyLink(p.slug, p._id)}
+                            className="p-2 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors border border-[var(--color-border)] shrink-0"
+                            title="Copy public link"
+                          >
+                            {copiedId === p._id ? (
+                              <Check
+                                size={14}
+                                className="text-emerald-500"
+                              />
+                            ) : (
+                              <Copy size={14} />
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="p-2 rounded text-[var(--color-text-faint)] opacity-30 cursor-not-allowed border border-[var(--color-border)] shrink-0"
+                            title="Portfolio is private"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        )}
+
+                        {/* Delete button */}
                         <button
                           onClick={() => {
                             if (confirm('Delete this portfolio?'))
                               removePortfolio(p._id);
                           }}
-                          className="p-2 rounded text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors border border-[var(--color-border)]"
+                          className="p-2 rounded text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shrink-0"
                           title={lang.delete}
                         >
                           <Trash2 size={14} />

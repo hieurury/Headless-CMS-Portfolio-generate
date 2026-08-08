@@ -122,6 +122,9 @@ export const translations = {
       searchCategory: 'Search categories...',
       noCategoriesFound: 'No matching categories found',
       atLeastOneCategory: 'At least 1 category is required',
+      editPortfolio: 'Edit Info',
+      editPortfolioModalTitle: 'Edit Portfolio Info',
+      saveChanges: 'Save Changes',
     },
     notFound: {
       badge: '404 · PAGE NOT FOUND',
@@ -615,6 +618,9 @@ export const translations = {
       searchCategory: 'Tìm kiếm danh mục...',
       noCategoriesFound: 'Không tìm thấy danh mục phù hợp',
       atLeastOneCategory: 'Cần tối thiểu 1 danh mục',
+      editPortfolio: 'Sửa thông tin',
+      editPortfolioModalTitle: 'Sửa thông tin Portfolio',
+      saveChanges: 'Lưu thay đổi',
     },
     notFound: {
       badge: '404 · TRANG KHÔNG TỒN TẠI',
