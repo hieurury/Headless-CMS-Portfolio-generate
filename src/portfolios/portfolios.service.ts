@@ -39,6 +39,10 @@ export class PortfoliosService {
 
     const portfolio = new this.portfolioModel({
       ...dto,
+      categories:
+        dto.categories && dto.categories.length > 0
+          ? dto.categories
+          : ['technology'],
       owner: ownerOid,
     });
     return portfolio.save();

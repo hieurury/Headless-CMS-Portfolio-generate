@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useUIStore } from '../../../store/uiStore';
+import { useAuthStore } from '../../../store/authStore';
 import { t } from '../../../i18n';
-import { Sun, Moon, Menu, X } from 'lucide-react';
+import { Sun, Moon, Menu, X, LayoutDashboard } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
+  const { isAuthenticated } = useAuthStore();
   const tr = t(language);
   const navRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -29,6 +31,14 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const scrollToFeatures = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById('features-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav
       ref={navRef}
@@ -39,26 +49,31 @@ export const Navbar: React.FC = () => {
         {/* Logo */}
         <Link to="/" className="home-navbar__logo" id="navbar-logo">
           <img
-            src="icons.svg"
-            alt="CMS Portfolio Logo"
+            src="/icons.svg"
+            alt="Ruryfo CMS Logo"
             className="home-navbar__logo-mark"
           />
-          <span className="home-navbar__logo-text">CMS Portfolio</span>
+          <span className="home-navbar__logo-text">Ruryfo CMS</span>
         </Link>
 
         {/* Right side: Links & Controls */}
         <div className="home-navbar__right">
           {/* Desktop links */}
           <div className="home-navbar__links" id="navbar-links">
-            <Link to="/docs" className="home-navbar__link" id="navbar-docs">
-              {tr.nav.docs}
-            </Link>
+            <a
+              href="#features-section"
+              onClick={scrollToFeatures}
+              className="home-navbar__link"
+              id="navbar-features"
+            >
+              {language === 'vi' ? 'Tính năng' : 'Features'}
+            </a>
             <Link
               to="/explore"
               className="home-navbar__link"
               id="navbar-community"
             >
-              {tr.nav.community}
+              {language === 'vi' ? 'Showcase' : 'Showcase'}
             </Link>
           </div>
 
@@ -96,10 +111,21 @@ export const Navbar: React.FC = () => {
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
 
-            {/* Login */}
-            <Link to="/login" className="home-navbar__login" id="navbar-login">
-              {tr.nav.login}
-            </Link>
+            {/* Auth CTA */}
+            {isAuthenticated ? (
+              <Link
+                to="/dashboard"
+                className="home-navbar__login flex items-center gap-1.5"
+                id="navbar-dashboard"
+              >
+                <LayoutDashboard size={14} />
+                <span>Dashboard</span>
+              </Link>
+            ) : (
+              <Link to="/login" className="home-navbar__login" id="navbar-login">
+                {tr.nav.login}
+              </Link>
+            )}
 
             {/* Mobile menu button */}
             <button
@@ -117,26 +143,29 @@ export const Navbar: React.FC = () => {
       {/* Mobile dropdown */}
       {mobileOpen && (
         <div className="home-navbar__mobile" id="navbar-mobile-dropdown">
-          <Link
-            to="/docs"
+          <a
+            href="#features-section"
             className="home-navbar__mobile-link"
-            onClick={() => setMobileOpen(false)}
+            onClick={(e) => {
+              setMobileOpen(false);
+              scrollToFeatures(e);
+            }}
           >
-            {tr.nav.docs}
-          </Link>
+            {language === 'vi' ? 'Tính năng' : 'Features'}
+          </a>
           <Link
             to="/explore"
             className="home-navbar__mobile-link"
             onClick={() => setMobileOpen(false)}
           >
-            {tr.nav.community}
+            {language === 'vi' ? 'Showcase cộng đồng' : 'Community Showcase'}
           </Link>
           <Link
-            to="/login"
+            to={isAuthenticated ? '/dashboard' : '/login'}
             className="home-navbar__mobile-link home-navbar__mobile-link--cta"
             onClick={() => setMobileOpen(false)}
           >
-            {tr.nav.login}
+            {isAuthenticated ? 'Dashboard' : tr.nav.login}
           </Link>
         </div>
       )}
