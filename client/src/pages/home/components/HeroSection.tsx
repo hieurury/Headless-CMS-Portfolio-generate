@@ -2,8 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useUIStore } from '../../../store/uiStore';
+import { useAuthStore } from '../../../store/authStore';
 import { t } from '../../../i18n';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Layers, Code, Globe2 } from 'lucide-react';
 
 const GithubIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -129,6 +130,7 @@ function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>,
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 export const HeroSection: React.FC = () => {
   const { language, theme } = useUIStore();
+  const { isAuthenticated } = useAuthStore();
   const tr = t(language);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -136,16 +138,18 @@ export const HeroSection: React.FC = () => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const btnsRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
 
   useParticleCanvas(canvasRef, theme);
 
   // GSAP entrance
   useEffect(() => {
-    const tl = gsap.timeline({ delay: 0.6 });
+    const tl = gsap.timeline({ delay: 0.4 });
     tl.fromTo(badgeRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' })
       .fromTo(titleRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, '-=0.2')
       .fromTo(descRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.3')
-      .fromTo(btnsRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2');
+      .fromTo(btnsRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2')
+      .fromTo(statsRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2');
   }, []);
 
   return (
@@ -176,7 +180,7 @@ export const HeroSection: React.FC = () => {
         <div ref={btnsRef} className="hero-btns" id="hero-btns">
           <a
             id="hero-btn-source"
-            href="https://github.com"
+            href="https://github.com/hieurury/Headless-CMS-Portfolio-generate"
             target="_blank"
             rel="noopener noreferrer"
             className="hero-btn hero-btn--outline"
@@ -186,12 +190,32 @@ export const HeroSection: React.FC = () => {
           </a>
           <Link
             id="hero-btn-start"
-            to="/register"
+            to={isAuthenticated ? '/dashboard' : '/register'}
             className="hero-btn hero-btn--primary"
           >
-            {tr.hero.btnStart}
+            {isAuthenticated ? (language === 'vi' ? 'Vào Dashboard' : 'Open Dashboard') : tr.hero.btnStart}
             <ArrowRight size={16} />
           </Link>
+        </div>
+
+        {/* Real Stats & Capability Pills */}
+        <div ref={statsRef} className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-8 pt-6 border-t border-[var(--home-border)] text-xs font-mono text-[var(--home-text-muted)] max-w-2xl mx-auto">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Globe2 size={13} className="text-[var(--home-text)]" />
+            <span>{tr.hero.stats?.categories || '20+ Categories'}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Layers size={13} className="text-[var(--home-text)]" />
+            <span>{tr.hero.stats?.blocks || '10+ UI Blocks'}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Sparkles size={13} className="text-emerald-400" />
+            <span>{tr.hero.stats?.ai || 'Gemini AI Powered'}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--home-border)] bg-[var(--home-surface-2)]">
+            <Code size={13} className="text-[var(--home-text)]" />
+            <span>{tr.hero.stats?.customizable || '100% Extensible'}</span>
+          </div>
         </div>
       </div>
 

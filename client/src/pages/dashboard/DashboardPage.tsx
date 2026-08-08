@@ -5,7 +5,7 @@ import { useUIStore } from '../../store/uiStore';
 import { UserNavMenu } from '../../components/common/UserNavMenu';
 import { CategoryPicker } from '../../components/common/CategoryPicker';
 import { t } from '../../i18n';
-import { PORTFOLIO_CATEGORIES, CATEGORY_LABELS } from '../../core/types/layout.types';
+import { CATEGORY_LABELS } from '../../core/types/layout.types';
 import {
   Plus,
   Folder,

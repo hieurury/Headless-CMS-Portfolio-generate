@@ -12,7 +12,7 @@ import {
   ArrowLeft, Plus, FileText, Eye, Trash2,
   Loader2, Code2, ChevronRight, Pencil, Globe, Lock, Check,
   Folder, Briefcase, Code, Palette, Laptop, Camera, Book, Video, Image as ImageIcon, Sun, Moon,
-  Layers, Tag, AlignLeft, Settings, X, GripVertical, Settings2,
+  Layers, Tag, AlignLeft, Settings, X, GripVertical,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 

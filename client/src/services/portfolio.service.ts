@@ -16,7 +16,8 @@ export const portfolioService = {
     title: string;
     slug: string;
     description?: string;
-    meta?: { theme?: string; primaryColor?: string; fontFamily?: string };
+    categories?: string[];
+    meta?: { theme?: string; primaryColor?: string; fontFamily?: string; icon?: string; categories?: string[] };
   }): Promise<Portfolio> => {
     const res = await api.post<Portfolio>('/portfolios', data);
     return res.data;
