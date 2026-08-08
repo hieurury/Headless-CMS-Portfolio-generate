@@ -53,9 +53,5 @@ export default $config({
       role: "roles/run.invoker",
       members: ["allUsers"],
     });
-
-    return {
-      url: myService.uri,
-    };
   },
 });
