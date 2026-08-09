@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { publicService, type PublicPostResponse } from '../../services/public.service';
 import { Loader2, Lock, LayoutGrid, Calendar, Tag } from 'lucide-react';
 import { SeoHelmet } from '../../core/renderer/SeoHelmet';
+import { useI18n } from '../../hooks/useI18n';
 import MDEditor from '@uiw/react-md-editor';
 
 /**
@@ -20,6 +21,7 @@ export const PublicPostPage: React.FC = () => {
   const [data, setData] = useState<PublicPostResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     const load = async () => {
@@ -30,12 +32,7 @@ export const PublicPostPage: React.FC = () => {
         const result = await publicService.getPost(portfolioSlug, postSlug);
         setData(result);
       } catch (err: unknown) {
-        const status = (err as { response?: { status?: number } })?.response?.status;
-        setError(
-          status === 404
-            ? 'This post is not available or has not been published yet.'
-            : 'Failed to load post. Please try again.',
-        );
+        setError(t('publicHub.postNotAvailableDesc'));
       } finally {
         setIsLoading(false);
       }
@@ -49,7 +46,6 @@ export const PublicPostPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 size={40} className="animate-spin text-[var(--color-text-muted)]" />
-          <p className="text-[var(--color-text-muted)] text-sm">Loading post...</p>
         </div>
       </div>
     );
@@ -59,18 +55,18 @@ export const PublicPostPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center shadow-sm">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center shadow-sm">
             <Lock size={28} className="text-[var(--color-text-muted)]" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)] mb-3">Not Available</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-text)] mb-3">{t('publicHub.notAvailable')}</h1>
           <p className="text-[var(--color-text-muted)] text-sm mb-6">
-            {error ?? 'This post could not be found.'}
+            {error ?? t('publicHub.postNotAvailableDesc')}
           </p>
           <Link
             to={`/p/${portfolioSlug}`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold hover:opacity-85 transition-opacity shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold hover:opacity-85 transition-opacity shadow-sm"
           >
-            ← Back to Portfolio
+            ← {t('publicHub.backToHub')}
           </Link>
         </div>
       </div>
@@ -104,7 +100,7 @@ export const PublicPostPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 h-12 flex items-center gap-4 overflow-x-auto scrollbar-hide">
           <Link
             to={`/p/${portfolioSlug}`}
-            className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-1.5 rounded-lg hover:bg-[var(--color-surface-2)] transition-all shrink-0 font-medium"
+            className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-1.5 rounded-sm hover:bg-[var(--color-surface-2)] transition-all shrink-0 font-medium"
           >
             <LayoutGrid size={12} />
             <span className="truncate max-w-[120px]">{data.portfolio.title}</span>
@@ -119,7 +115,7 @@ export const PublicPostPage: React.FC = () => {
       {/* Post Content */}
       <main className="pt-12 pb-20 max-w-4xl mx-auto px-6">
         {data.post.coverImage && (
-          <div className="w-full h-[400px] rounded-2xl overflow-hidden mb-8 border border-[var(--color-border)] shadow-sm">
+          <div className="w-full h-[400px] rounded-sm overflow-hidden mb-8 border border-[var(--color-border)] shadow-sm">
             <img src={data.post.coverImage} alt={data.post.title} className="w-full h-full object-cover" />
           </div>
         )}
@@ -159,7 +155,7 @@ export const PublicPostPage: React.FC = () => {
               return (
                 <div key={field.name} className="my-6">
                   <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">{field.label}</p>
-                  <img src={value} alt={field.label} className="rounded-xl border border-[var(--color-border)] max-w-full shadow-sm" />
+                  <img src={value} alt={field.label} className="rounded-lg border border-[var(--color-border)] max-w-full shadow-sm" />
                 </div>
               );
             }

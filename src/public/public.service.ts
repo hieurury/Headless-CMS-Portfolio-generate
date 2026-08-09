@@ -17,6 +17,8 @@ export interface PublicPortfolioCard {
   ownerName: string;
   ownerAvatar: string;
   pageCount: number;
+  postCount: number;
+  categories?: string[];
   meta: { theme?: string; primaryColor?: string; fontFamily?: string };
   createdAt: string;
 }
@@ -62,6 +64,7 @@ export class PublicService {
     page = 1,
     limit = 12,
     excludeOwnerId?: string,
+    category?: string,
   ): Promise<PaginatedResult<PublicPortfolioCard>> {
     const skip = (page - 1) * limit;
     const trimmedQuery = query?.trim() ?? '';
@@ -69,6 +72,12 @@ export class PublicService {
     // ── Stage 1: Filter only published portfolios ──────────────────
     // Optionally exclude the requesting user's own portfolios
     const initialMatch: Record<string, unknown> = { isPublished: true };
+    if (category) {
+      const cats = category.split(',').map(c => c.trim()).filter(Boolean);
+      if (cats.length > 0) {
+        initialMatch.categories = { $in: cats };
+      }
+    }
     if (excludeOwnerId) {
       try {
         initialMatch.owner = { $ne: new Types.ObjectId(excludeOwnerId) };
@@ -113,6 +122,28 @@ export class PublicService {
           as: 'pageCounts',
         },
       },
+
+      // ── Stage 3.5: Count published posts per portfolio ───────────────
+      {
+        $lookup: {
+          from: 'posts',
+          let: { ownerId: '$owner' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$authorId', { $toString: '$$ownerId' }] }, // Convert ObjectId to string for match because Post.authorId is saved as string or wait... actually, let's cast both to string just in case or just let mongo handle it. But to be safe, if authorId is stored as string in posts:
+                    { $eq: ['$status', 'published'] },
+                  ],
+                },
+              },
+            },
+            { $count: 'n' },
+          ],
+          as: 'postCounts',
+        },
+      },
     ];
 
     // ── Stage 4: Search filter (applied BEFORE $project on raw fields) ──
@@ -142,6 +173,10 @@ export class PublicService {
         pageCount: {
           $ifNull: [{ $arrayElemAt: ['$pageCounts.n', 0] }, 0],
         },
+        postCount: {
+          $ifNull: [{ $arrayElemAt: ['$postCounts.n', 0] }, 0],
+        },
+        categories: 1,
         meta: 1,
         createdAt: 1,
       },
@@ -177,6 +212,8 @@ export class PublicService {
         ownerName: r.ownerName as string,
         ownerAvatar: (r.ownerAvatar as string) || '',
         pageCount: r.pageCount as number,
+        postCount: (r.postCount as number) || 0,
+        categories: (r.categories as string[]) || [],
         meta: (r.meta as PublicPortfolioCard['meta']) ?? {},
         createdAt: (r.createdAt as Date).toISOString(),
       })),
@@ -194,8 +231,8 @@ export class PublicService {
   async findPublicPortfolio(portfolioSlug: string) {
     const portfolio = await this.portfolioModel
       .findOne({ slug: portfolioSlug, isPublished: true })
-      .select('_id title slug description meta isPublished')
-      .populate('owner', 'name')
+      .select('_id title slug description meta isPublished owner')
+      .populate('owner', 'name avatar')
       .lean()
       .exec();
 
@@ -212,15 +249,37 @@ export class PublicService {
       .lean()
       .exec();
 
+    // Fetch published posts by the portfolio owner
+    const posts = await this.postModel
+      .find({
+        authorId: String(portfolio.owner?._id),
+        status: POST_STATUS.PUBLISHED,
+      })
+      .select('_id title slug excerpt coverImage viewCount createdAt')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
     return {
       title: portfolio.title,
       slug: portfolio.slug,
       description: portfolio.description,
       ownerName:
         (portfolio.owner as { name?: string } | null)?.name ?? 'Unknown',
+      ownerAvatar:
+        (portfolio.owner as { avatar?: string } | null)?.avatar ?? '',
       meta: portfolio.meta,
       // Return normalized slugs so the frontend can build correct URLs
       pages: pages.map((p) => ({ ...p, urlSlug: normalizeSlug(p.slug) })),
+      posts: posts.map((p) => ({
+        _id: String(p._id),
+        title: p.title as string,
+        slug: p.slug as string,
+        excerpt: p.excerpt as string,
+        coverImage: p.coverImage as string,
+        views: ((p as any).viewCount as number) || 0,
+        createdAt: ((p as any).createdAt as Date)?.toISOString(),
+      })),
     };
   }
 

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Router } from './router';
 import { useUIStore } from './store/uiStore';
+import { CustomCursor } from './components/common/CustomCursor';
 
 const App: React.FC = () => {
   const { theme } = useUIStore();
@@ -14,7 +15,12 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
-  return <Router />;
+  return (
+    <>
+      <CustomCursor />
+      <Router />
+    </>
+  );
 };
 
 export default App;

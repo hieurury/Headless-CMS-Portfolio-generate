@@ -8,6 +8,8 @@ export interface PublicPortfolioCard {
   ownerName: string;
   ownerAvatar: string;
   pageCount: number;
+  postCount: number;
+  categories?: string[];
   meta: { theme?: string; primaryColor?: string; fontFamily?: string };
   createdAt: string;
 }
@@ -36,8 +38,18 @@ export interface PublicPortfolioHub {
   slug: string;
   description: string;
   ownerName: string;
+  ownerAvatar: string;
   meta: Record<string, unknown>;
   pages: PublicPageEntry[];
+  posts: {
+    _id: string;
+    title: string;
+    slug: string;
+    excerpt?: string;
+    coverImage?: string;
+    views: number;
+    createdAt: string;
+  }[];
 }
 
 export interface PublicPageNavEntry {
@@ -76,12 +88,14 @@ export const publicService = {
     page = 1,
     limit = 12,
     excludeOwnerId?: string,
+    category?: string,
   ): Promise<PaginatedResult<PublicPortfolioCard>> => {
     const params = new URLSearchParams();
     if (query && query.trim()) params.set('q', query.trim());
     params.set('page', String(page));
     params.set('limit', String(limit));
     if (excludeOwnerId) params.set('excludeOwnerId', excludeOwnerId);
+    if (category && category !== 'all') params.set('category', category);
     const res = await api.get<PaginatedResult<PublicPortfolioCard>>(
       `/public?${params.toString()}`,
     );

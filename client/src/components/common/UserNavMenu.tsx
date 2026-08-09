@@ -30,7 +30,7 @@ export const UserNavMenu: React.FC = () => {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-2.5 py-1.5 rounded transition-all duration-200"
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-sm transition-all duration-200"
         style={{
           background: isOpen ? 'var(--color-surface-3)' : 'var(--color-surface-2)',
           boxShadow: 'var(--shadow-sm)',
@@ -92,10 +92,10 @@ export const UserNavMenu: React.FC = () => {
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-2 w-56 rounded z-50 animate-fade-in"
+          className="absolute right-0 top-full mt-2 w-56 rounded-sm z-50 animate-fade-in"
           style={{
             background: 'var(--color-surface)',
-            borderRadius: 'var(--radius-md)',
+            borderRadius: 'var(--radius-sm)',
             boxShadow: 'var(--shadow-xl)',
             padding: '6px',
           }}

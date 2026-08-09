@@ -20,12 +20,14 @@ export class PublicController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('excludeOwnerId') excludeOwnerId?: string,
+    @Query('category') category?: string,
   ) {
     return this.publicService.listAllPublished(
       q,
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 12,
       excludeOwnerId,
+      category,
     );
   }
 
