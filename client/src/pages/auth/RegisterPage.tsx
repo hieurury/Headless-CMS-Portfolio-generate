@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/auth.service';
-import { Eye, EyeOff, Loader2, ChevronRight, Check, X, AtSign } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ChevronRight, Check, X } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';
@@ -15,7 +15,6 @@ import { translateError } from '../../i18n';
 const STEPS = ['Tạo tài khoản', 'Xác thực email', 'Thông tin cá nhân'];
 const OTP_RESEND_DELAY = 60;
 const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{2,29}$/;
-const SITE_URL = window.location.origin;
 
 const INTERESTS = [
   'Marketing',
@@ -159,7 +158,7 @@ const Step1: React.FC<{
   const getUsernameStatusIcon = () => {
     if (usernameStatus === 'checking') return <Loader2 size={14} className="animate-spin" style={{ color: 'var(--color-text-muted)' }} />;
     if (usernameStatus === 'available') return <Check size={14} style={{ color: '#22c55e' }} />;
-    if (usernameStatus === 'taken' || usernameStatus === 'invalid') return <X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} title={usernameMessage} />;
+    if (usernameStatus === 'taken' || usernameStatus === 'invalid') return <span title={usernameMessage} style={{display: 'flex'}}><X size={14} style={{ color: 'var(--color-error)' }} /></span>;
     return null;
   };
 
@@ -237,7 +236,7 @@ const Step1: React.FC<{
               position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
               display: 'flex', alignItems: 'center',
             }}>
-              <X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} title="Email không hợp lệ" />
+              <span title="Email không hợp lệ" style={{display: 'flex'}}><X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} /></span>
             </div>
           )}
         </div>
@@ -274,7 +273,7 @@ const Step1: React.FC<{
               position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)',
               display: 'flex', alignItems: 'center',
             }}>
-              <X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} title="Mật khẩu phải từ 6 ký tự trở lên" />
+              <span title="Mật khẩu phải từ 6 ký tự trở lên" style={{display: 'flex'}}><X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} /></span>
             </div>
           )}
           <button

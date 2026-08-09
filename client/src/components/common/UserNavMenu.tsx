@@ -37,7 +37,7 @@ export const UserNavMenu: React.FC = () => {
           border: 'none',
           cursor: 'pointer',
         }}
-        title={user?.name || 'Tài khoản'}
+        title={(user?.fullName || user?.username) || 'Tài khoản'}
       >
         {/* Avatar */}
         <div
@@ -57,9 +57,9 @@ export const UserNavMenu: React.FC = () => {
           }}
         >
           {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            <img src={user.avatar} alt={(user.fullName || user.username)} className="w-full h-full object-cover" />
           ) : (
-            (user?.name || 'U').charAt(0).toUpperCase()
+            ((user?.fullName || user?.username) || 'U').charAt(0).toUpperCase()
           )}
         </div>
 
@@ -75,7 +75,7 @@ export const UserNavMenu: React.FC = () => {
             whiteSpace: 'nowrap',
           }}
         >
-          {user?.name || 'User'}
+          {(user?.fullName || user?.username) || 'User'}
         </span>
 
         {/* Chevron icon */}
@@ -113,7 +113,7 @@ export const UserNavMenu: React.FC = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {user?.name || 'User'}
+              {(user?.fullName || user?.username) || 'User'}
             </p>
             <p
               style={{

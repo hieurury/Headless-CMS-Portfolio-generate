@@ -30,25 +30,11 @@ import { NotFoundPage } from '../pages/error/NotFoundPage';
 
 // ─── Static path segments that must NOT be caught by /:username ───────────────
 // These are reserved paths that take priority over dynamic username routes.
-const RESERVED_PATHS = new Set([
-  'login',
-  'register',
-  'forgot-password',
-  'explore',
-  'dashboard',
-  'preview',
-  'preview-post',
-  'sitemap.xml',
-  'robots.txt',
-]);
+
 
 // ─── Route Guards ──────────────────────────────────────────────────────────
 
-const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <Outlet />;
-};
+
 
 const PublicRoute: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
