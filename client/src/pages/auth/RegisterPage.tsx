@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/auth.service';
-import { Eye, EyeOff, Loader2, ChevronRight, Check, X } from 'lucide-react';
+import { Eye, EyeOff, Check, Loader2, ChevronLeft, ChevronRight, Mail, X, Tag, Search, Sparkles, Plus } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';
@@ -16,18 +16,13 @@ const STEPS = ['Tạo tài khoản', 'Xác thực email', 'Thông tin cá nhân'
 const OTP_RESEND_DELAY = 60;
 const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{2,29}$/;
 
-const INTERESTS = [
-  'Marketing',
-  'Công nghệ thông tin',
-  'Kỹ thuật',
-  'Thiết kế',
-  'Kinh doanh',
-  'Giáo dục',
-  'Y tế',
-  'Nghệ thuật & Sáng tạo',
-  'Khoa học dữ liệu',
-  'Phát triển phần mềm',
-];
+// Helper to remove Vietnamese diacritics for smart search
+const normalizeVietnamese = (str: string) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+};
 
 // ─── Error Toast ─────────────────────────────────────────────────────────────
 
@@ -441,6 +436,47 @@ const Step3: React.FC<{
   const [slogan, setSlogan] = useState('');
   const [occupation, setOccupation] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [fetchedCategories, setFetchedCategories] = useState<string[]>([]);
+  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const categoryPopoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    authService.getCategories().then((res) => {
+      if (mounted) setFetchedCategories(res);
+    }).catch(console.error);
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        categoryPopoverRef.current &&
+        !categoryPopoverRef.current.contains(e.target as Node)
+      ) {
+        setIsCategoryPopoverOpen(false);
+      }
+    };
+    if (isCategoryPopoverOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCategoryPopoverOpen]);
+
+  const sampleSuggestedCategories = useMemo(() => {
+    return fetchedCategories.slice(0, 3);
+  }, [fetchedCategories]);
+
+  const filteredCategories = useMemo(() => {
+    const query = normalizeVietnamese(categorySearchQuery.trim());
+    if (!query) return fetchedCategories;
+    return fetchedCategories.filter((cat) =>
+      normalizeVietnamese(cat).includes(query)
+    );
+  }, [categorySearchQuery, fetchedCategories]);
 
   const toggleInterest = (item: string) => {
     setSelectedInterests((prev) =>
@@ -544,27 +580,159 @@ const Step3: React.FC<{
       {/* Interests */}
       <div>
         <label style={{ ...stepLabelStyle, marginBottom: 8 }}>Danh mục quan tâm</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {INTERESTS.map((item) => {
-            const selected = selectedInterests.includes(item);
-            return (
-              <button
-                key={item}
-                type="button"
-                onClick={() => toggleInterest(item)}
-                style={{
-                  padding: '5px 11px', borderRadius: 'var(--radius-sm)', border: 'none',
-                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  background: selected ? 'var(--color-text)' : 'var(--color-surface-2)',
-                  color: selected ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                  boxShadow: selected ? 'var(--shadow-sm)' : 'none',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {item}
-              </button>
-            );
-          })}
+        <div style={{ position: 'relative' }} ref={categoryPopoverRef}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            {selectedInterests.length > 0 ? (
+              selectedInterests.map((item) => (
+                <span
+                  key={item}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '4px 8px', borderRadius: 'var(--radius-sm)',
+                    fontSize: 12, fontWeight: 500,
+                    background: 'var(--color-surface-2)', color: 'var(--color-text)',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => toggleInterest(item)}
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, opacity: 0.6 }}
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))
+            ) : (
+              <span style={{ fontSize: 12, color: 'var(--color-text-faint)', fontStyle: 'italic', marginRight: 4 }}>
+                Chưa chọn danh mục nào
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsCategoryPopoverOpen(!isCategoryPopoverOpen);
+                setCategorySearchQuery('');
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: 'none',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: isCategoryPopoverOpen ? 'var(--color-text)' : 'var(--color-surface-2)',
+                color: isCategoryPopoverOpen ? 'var(--color-bg)' : 'var(--color-text)',
+                boxShadow: 'var(--shadow-sm)', transition: 'all 0.15s'
+              }}
+            >
+              <Plus size={13} />
+              Thêm danh mục
+            </button>
+          </div>
+
+          {/* Category Popover */}
+          {isCategoryPopoverOpen && (
+            <div
+              className="animate-fade-in"
+              style={{
+                position: 'absolute', left: 0, bottom: '100%', marginBottom: 8, zIndex: 50,
+                background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.5)', borderRadius: 'var(--radius-md)',
+                width: 360, maxWidth: '100%', padding: 14
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid var(--color-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Tag size={14} style={{ color: 'var(--color-text)' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Danh mục quan tâm</span>
+                </div>
+                <button type="button" onClick={() => setIsCategoryPopoverOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <X size={14} style={{ color: 'var(--color-text-muted)' }} />
+                </button>
+              </div>
+
+              <div style={{ position: 'relative', marginBottom: 12 }}>
+                <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Tìm kiếm danh mục..."
+                  value={categorySearchQuery}
+                  onChange={(e) => setCategorySearchQuery(e.target.value)}
+                  style={{
+                    width: '100%', padding: '6px 28px 6px 30px', fontSize: 12,
+                    background: 'var(--color-surface-2)', color: 'var(--color-text)',
+                    border: 'none', borderRadius: 'var(--radius-sm)', outline: 'none'
+                  }}
+                />
+                {categorySearchQuery && (
+                  <button type="button" onClick={() => setCategorySearchQuery('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <X size={12} style={{ color: 'var(--color-text-muted)' }} />
+                  </button>
+                )}
+              </div>
+
+              {!categorySearchQuery.trim() ? (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: 6 }}>
+                    <Sparkles size={11} /> Gợi ý tiêu biểu
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {sampleSuggestedCategories.map(cat => {
+                      const isSelected = selectedInterests.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleInterest(cat)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            padding: '4px 10px', fontSize: 12, fontWeight: 500, borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
+                            background: isSelected ? 'var(--color-text)' : 'var(--color-surface-2)',
+                            color: isSelected ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                            boxShadow: 'var(--shadow-sm)'
+                          }}
+                        >
+                          {isSelected ? <Check size={12} /> : <Plus size={12} />} {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: 6 }}>
+                    Kết quả tìm kiếm ({filteredCategories.length})
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map(cat => {
+                        const isSelected = selectedInterests.includes(cat);
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => toggleInterest(cat)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              padding: '4px 10px', fontSize: 12, fontWeight: 500, borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
+                              background: isSelected ? 'var(--color-text)' : 'var(--color-surface-2)',
+                              color: isSelected ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                              boxShadow: 'var(--shadow-sm)'
+                            }}
+                          >
+                            {isSelected ? <Check size={12} /> : <Plus size={12} />} {cat}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span style={{ fontSize: 12, color: 'var(--color-text-faint)' }}>Không tìm thấy danh mục.</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

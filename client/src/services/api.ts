@@ -18,14 +18,9 @@ const clearAuthAndRedirect = () => {
   localStorage.removeItem('cms_user');
   localStorage.removeItem(ZUSTAND_AUTH_KEY);
 
-  if (
-    !window.location.pathname.startsWith('/login') &&
-    !window.location.pathname.startsWith('/register') &&
-    !window.location.pathname.startsWith('/forgot-password') &&
-    !window.location.pathname.startsWith('/reset-password') &&
-    !window.location.pathname.startsWith('/explore')
-  ) {
-    window.location.href = '/login';
+  // If they are not already on the login page, redirect them with an error message
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login?error=invalid_session';
   }
 };
 
@@ -53,6 +48,20 @@ const onTokenRefreshed = (newToken: string) => {
   refreshSubscribers = [];
 };
 
+// ─── Endpoints that should NEVER trigger the auto-refresh flow ───────────────
+// These are public auth endpoints; a 401 from them means "wrong credentials",
+// NOT "your session expired" — the interceptor must leave them alone.
+const AUTH_PUBLIC_ENDPOINTS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
+  '/auth/forgot-password',
+  '/auth/verify-reset-otp',
+  '/auth/reset-password',
+  '/auth/refresh',
+];
+
 api.interceptors.response.use(
   (response) => response,
   async (error: unknown) => {
@@ -66,6 +75,16 @@ api.interceptors.response.use(
 
     // Only intercept 401 errors that have not already been retried
     if (status !== 401 || !originalRequest || originalRequest._retried) {
+      return Promise.reject(error);
+    }
+
+    // Skip refresh logic for public auth endpoints — a 401 here means bad
+    // credentials or expired OTP, NOT an expired session token.
+    const requestUrl = originalRequest.url ?? '';
+    const isPublicAuthEndpoint = AUTH_PUBLIC_ENDPOINTS.some((ep) =>
+      requestUrl.endsWith(ep),
+    );
+    if (isPublicAuthEndpoint) {
       return Promise.reject(error);
     }
 

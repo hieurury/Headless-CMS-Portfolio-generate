@@ -24,8 +24,10 @@ export const authService = {
     userId: string; // accountId sent as userId for backward compat with VerifyOtpDto
     code: string;
   }): Promise<AuthResponse> => {
-    const res = await api.post<AuthResponse>('/auth/verify-otp', data);
-    return res.data;
+    const res = await api.post<{ account: AuthResponse['user']; accessToken: string; refreshToken: string }>('/auth/verify-otp', data);
+    // Backend returns { account, accessToken, refreshToken } — normalize to { user, ... }
+    const { account, ...rest } = res.data;
+    return { user: account, ...rest };
   },
 
   /** Resend OTP to a user */
@@ -52,11 +54,15 @@ export const authService = {
     email: string;
     password: string;
   }): Promise<AuthResponse | UnverifiedLoginResponse> => {
-    const res = await api.post<AuthResponse | UnverifiedLoginResponse>(
-      '/auth/login',
-      data,
-    );
-    return res.data;
+    const res = await api.post<
+      | { account: AuthResponse['user']; accessToken: string; refreshToken: string }
+      | UnverifiedLoginResponse
+    >('/auth/login', data);
+    // Backend returns { account, accessToken, refreshToken } — normalize to { user, ... }
+    const raw = res.data;
+    if ('requiresVerification' in raw) return raw;
+    const { account, ...rest } = raw;
+    return { user: account, ...rest };
   },
 
   // ─── Current user ───────────────────────────────────────────────────────────
@@ -111,7 +117,9 @@ export const authService = {
     resetToken: string;
     password: string;
   }): Promise<AuthResponse> => {
-    const res = await api.post<AuthResponse>('/auth/reset-password', data);
-    return res.data;
+    const res = await api.post<{ account: AuthResponse['user']; accessToken: string; refreshToken: string }>('/auth/reset-password', data);
+    // Backend returns { account, accessToken, refreshToken } — normalize to { user, ... }
+    const { account, ...rest } = res.data;
+    return { user: account, ...rest };
   },
 };

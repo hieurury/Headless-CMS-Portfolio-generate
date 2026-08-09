@@ -33,25 +33,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const DEFAULT_CATEGORIES = [
-  'Công nghệ thông tin',
-  'Phát triển phần mềm',
-  'Thiết kế UI/UX',
-  'Thiết kế đồ họa',
-  'Marketing & Truyền thông',
-  'Sáng tạo nội dung',
-  'Kinh doanh & Khởi nghiệp',
-  'Nhiếp ảnh & Quay phim',
-  'Trí tuệ nhân tạo (AI)',
-  'Khoa học dữ liệu',
-  'Giáo dục & Đào tạo',
-  'Nghệ thuật & Âm nhạc',
-  'Viết lách & Dịch thuật',
-  'Thương mại điện tử',
-  'Quản trị sản phẩm (PM)',
-  'Tài chính & Đầu tư',
-];
-
 // Helper to remove Vietnamese diacritics for smart search
 const normalizeVietnamese = (str: string) => {
   return str
@@ -95,7 +76,7 @@ export const ProfilePage: React.FC = () => {
   // Category Popover & DB State
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
-  const [availableCategories, setAvailableCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const categoryPopoverRef = useRef<HTMLDivElement>(null);
 
@@ -121,10 +102,9 @@ export const ProfilePage: React.FC = () => {
       try {
         setLoadingCategories(true);
         const data = await authService.getCategories();
-        if (Array.isArray(data) && data.length > 0) {
-          const merged = Array.from(new Set([...DEFAULT_CATEGORIES, ...data]));
-          setAvailableCategories(merged);
-        }
+        // Merge existing available categories with new fetched data
+        const merged = Array.from(new Set([...availableCategories, ...data]));
+        setAvailableCategories(merged);
       } catch (err) {
         console.error('Failed to load categories from DB', err);
       } finally {
