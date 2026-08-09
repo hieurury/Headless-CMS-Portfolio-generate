@@ -130,7 +130,7 @@ function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>,
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 export const HeroSection: React.FC = () => {
   const { language, theme } = useUIStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const tr = t(language);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -184,7 +184,7 @@ export const HeroSection: React.FC = () => {
           </a>
           <Link
             id="hero-btn-start"
-            to={isAuthenticated ? '/dashboard' : '/register'}
+            to={isAuthenticated ? `/${user?.username}/dashboard` : '/register'}
             className="hero-btn hero-btn--primary"
           >
             {isAuthenticated ? (language === 'vi' ? 'Vào Dashboard' : 'Open Dashboard') : tr.hero.btnStart}

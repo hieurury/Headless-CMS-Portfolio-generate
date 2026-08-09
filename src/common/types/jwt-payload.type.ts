@@ -9,7 +9,7 @@
  * as a parameter type in decorated controller methods.
  */
 export class JwtPayload {
-  sub: string;
+  sub: string;      // Account _id
   email: string;
-  name: string;
+  username: string; // Public username for URL routing
 }

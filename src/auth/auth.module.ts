@@ -5,19 +5,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { UsersModule } from '../users/users.module';
+import { AccountsModule } from '../accounts/accounts.module';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    UsersModule,
+    AccountsModule,
     MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        // Default to access token secret; individual sign calls may override this
         secret: configService.get<string>('jwt.accessSecret'),
         signOptions: {
           expiresIn: (configService.get<string>('jwt.accessExpiresIn') ??
@@ -31,4 +30,3 @@ import { MailModule } from '../mail/mail.module';
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
-

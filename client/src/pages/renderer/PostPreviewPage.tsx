@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePostStore } from '../../store/postStore';
+import { useAuthStore } from '../../store/authStore';
 import { ArrowLeft, Loader2, Calendar, Tag } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import MyEditor from '../editor/components/BlockNote';
@@ -11,6 +12,7 @@ import MyEditor from '../editor/components/BlockNote';
  */
 export const PostPreviewPage: React.FC = () => {
   const { portfolioId, postId } = useParams<{ portfolioId: string; postId: string }>();
+  const { user } = useAuthStore();
   const { currentPost, currentPostType, fetchPostById, fetchPostTypeById, isLoading, error } = usePostStore();
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export const PostPreviewPage: React.FC = () => {
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
-          <Link to={`/dashboard/portfolios/${portfolioId}`} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
+          <Link to={`/${user?.username}/dashboard/portfolios/${portfolioId}`} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
             ← Back to portfolio
           </Link>
         </div>
@@ -55,7 +57,7 @@ export const PostPreviewPage: React.FC = () => {
       <div className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
         <div className="container-max mx-auto px-6 h-14 flex items-center gap-4">
           <Link
-            to={`/dashboard/portfolios/${portfolioId}/posts/${postId}/edit`}
+            to={`/${user?.username}/dashboard/portfolios/${portfolioId}/posts/${postId}/edit`}
             className="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
           >
             <ArrowLeft size={14} /> Back to Edit

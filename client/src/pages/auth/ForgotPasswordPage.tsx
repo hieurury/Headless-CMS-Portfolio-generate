@@ -430,7 +430,8 @@ export const ForgotPasswordPage: React.FC = () => {
   const handleResetPassword = useCallback(
     async (password: string) => {
       await resetPassword(resetToken, password);
-      navigate('/dashboard');
+      const user = useAuthStore.getState().user;
+      navigate(`/${user?.username}/dashboard`);
     },
     [resetPassword, resetToken, navigate],
   );

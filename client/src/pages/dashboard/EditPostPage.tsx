@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePostStore } from "../../store/postStore";
 import { usePortfolioStore } from "../../store/portfolioStore";
+import { useAuthStore } from "../../store/authStore";
 import type { PostType } from "../../services/post.service";
 import { uploadService } from "../../services/post.service";
 import MyEditor from "../editor/components/BlockNote";
@@ -117,6 +118,7 @@ const FieldWrapper: React.FC<FieldWrapperProps> = ({ field, index, value, onChan
 export const EditPostPage: React.FC = () => {
   const { portfolioId, postId } = useParams<{ portfolioId: string; postId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { updatePost, fetchPostById, fetchPostTypeById, currentPost, currentPostType, isLoading } = usePostStore();
   const { current: portfolio } = usePortfolioStore();
   const [title, setTitle] = useState("");
@@ -184,7 +186,7 @@ export const EditPostPage: React.FC = () => {
         publishedAt: status === "scheduled" && publishedAt ? publishedAt : undefined,
       };
       await updatePost(postId, payload);
-      navigate(`/dashboard/portfolios/${portfolioId}`);
+      navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || "Failed to update post";
       setError(Array.isArray(msg) ? msg[0] : msg);
@@ -204,7 +206,7 @@ export const EditPostPage: React.FC = () => {
       <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
         <div className="container-max mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm">
-            <button onClick={() => navigate(`/dashboard/portfolios/${portfolioId}`)} className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
+            <button onClick={() => navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}`)} className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
               <ArrowLeft size={15} /> Back
             </button>
             <ChevronRight size={13} className="text-[var(--color-border)]" />
@@ -229,9 +231,9 @@ export const EditPostPage: React.FC = () => {
             >
               <Eye size={14} /> Preview
             </button>
-            {portfolio?.slug && currentPost?.slug && (
+            {portfolio && currentPost && currentPost.status === 'published' && (
               <a
-                href={`/p/${portfolio.slug}/post/${currentPost.slug}`}
+                href={`/${user?.username ?? ''}/${portfolio.slug}/post/${currentPost.slug}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-2 h-9 px-4 rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors text-sm font-medium"

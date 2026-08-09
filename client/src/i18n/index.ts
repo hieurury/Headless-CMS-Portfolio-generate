@@ -545,6 +545,23 @@ export const translations = {
       backToHome: 'Back to home',
       postNotAvailableDesc: 'This post is not available or has been unpublished.',
     },
+    serverErrors: {
+      'Please provide a valid email or username': 'Please provide a valid email or username',
+      'Please provide a valid email address': 'Please provide a valid email address',
+      'Password must be at least 6 characters long': 'Password must be at least 6 characters long',
+      'Password must be at most 72 characters long': 'Password must be at most 72 characters long',
+      'Username must be at least 3 characters': 'Username must be at least 3 characters',
+      'Username must be at most 30 characters': 'Username must be at most 30 characters',
+      'Username must start with a letter or digit and contain only a-z, 0-9, - or _': 'Username must start with a letter or digit and contain only a-z, 0-9, - or _',
+      'Username is already taken': 'Username is already taken',
+      'Invalid credentials': 'Invalid credentials',
+      'Login failed': 'Login failed',
+      'Registration failed': 'Registration failed',
+      'Invalid code': 'Invalid code',
+      'No pending account to verify': 'No pending account to verify',
+      'User not found': 'User not found',
+      'Access denied': 'Access denied',
+    },
   },
   vi: {
     nav: {
@@ -555,8 +572,8 @@ export const translations = {
     auth: {
       loginTitle: 'Chào mừng trở lại',
       loginSubtitle: 'Đăng nhập vào tài khoản CMS của bạn',
-      emailLabel: 'Email',
-      emailPlaceholder: 'ban@vidu.com',
+      emailLabel: 'Email / Username',
+      emailPlaceholder: 'ban@vidu.com hoặc hieurury',
       passwordLabel: 'Mật khẩu',
       passwordPlaceholder: '••••••••',
       signInBtn: 'Đăng nhập',
@@ -1091,6 +1108,23 @@ export const translations = {
       backToHome: 'Quay về trang chủ',
       postNotAvailableDesc: 'Bài viết này không tồn tại hoặc đã bị gỡ xuống.',
     },
+    serverErrors: {
+      'Please provide a valid email or username': 'Vui lòng cung cấp email hoặc tên đăng nhập hợp lệ',
+      'Please provide a valid email address': 'Vui lòng cung cấp địa chỉ email hợp lệ',
+      'Password must be at least 6 characters long': 'Mật khẩu phải dài ít nhất 6 ký tự',
+      'Password must be at most 72 characters long': 'Mật khẩu chỉ dài tối đa 72 ký tự',
+      'Username must be at least 3 characters': 'Tên đăng nhập phải có ít nhất 3 ký tự',
+      'Username must be at most 30 characters': 'Tên đăng nhập chỉ dài tối đa 30 ký tự',
+      'Username must start with a letter or digit and contain only a-z, 0-9, - or _': 'Tên đăng nhập phải bắt đầu bằng chữ cái hoặc số và chỉ chứa a-z, 0-9, - hoặc _',
+      'Username is already taken': 'Tên đăng nhập đã được sử dụng',
+      'Invalid credentials': 'Thông tin đăng nhập không hợp lệ',
+      'Login failed': 'Đăng nhập thất bại',
+      'Registration failed': 'Đăng ký thất bại',
+      'Invalid code': 'Mã xác thực không hợp lệ',
+      'No pending account to verify': 'Không có tài khoản nào chờ xác thực',
+      'User not found': 'Không tìm thấy người dùng',
+      'Access denied': 'Từ chối truy cập',
+    },
   },
 };
 
@@ -1098,4 +1132,17 @@ export type Translations = typeof translations.en;
 
 export function t(language: Language): Translations {
   return translations[language] as Translations;
+}
+
+export function translateError(error: string, language: Language): string {
+  if (!error) return error;
+  const serverErrors = translations[language].serverErrors as Record<string, string>;
+  
+  if (serverErrors[error]) return serverErrors[error];
+  
+  for (const [key, value] of Object.entries(serverErrors)) {
+    if (error.includes(key)) return value;
+  }
+  
+  return error;
 }

@@ -9,10 +9,11 @@ import type {
 export const authService = {
   // ─── Registration flow ──────────────────────────────────────────────────────
 
-  /** Step 1: Create account → returns { userId } */
+  /** Step 1: Create account with email, password, and username → returns { accountId } */
   register: async (data: {
     email: string;
     password: string;
+    username: string;
   }): Promise<RegisterResponse> => {
     const res = await api.post<RegisterResponse>('/auth/register', data);
     return res.data;
@@ -20,7 +21,7 @@ export const authService = {
 
   /** Step 2: Verify OTP → returns full auth tokens */
   verifyOtp: async (data: {
-    userId: string;
+    userId: string; // accountId sent as userId for backward compat with VerifyOtpDto
     code: string;
   }): Promise<AuthResponse> => {
     const res = await api.post<AuthResponse>('/auth/verify-otp', data);
@@ -33,9 +34,20 @@ export const authService = {
     return res.data;
   },
 
+  // ─── Username availability ──────────────────────────────────────────────────
+
+  /** Check if a username is available (debounced on frontend) */
+  checkUsername: async (
+    username: string,
+  ): Promise<{ available: boolean; reason?: string }> => {
+    const res = await api.get<{ available: boolean; reason?: string }>(
+      `/auth/check-username?username=${encodeURIComponent(username)}`,
+    );
+    return res.data;
+  },
+
   // ─── Login ──────────────────────────────────────────────────────────────────
 
-  /** Login — may return requiresVerification if email not verified */
   login: async (data: {
     email: string;
     password: string;
@@ -57,7 +69,8 @@ export const authService = {
   // ─── Profile update (step 3) ────────────────────────────────────────────────
 
   updateProfile: async (data: {
-    name?: string;
+    username?: string;
+    fullName?: string;
     avatar?: string;
     background?: string;
     age?: number;
@@ -70,6 +83,7 @@ export const authService = {
   },
 
   // ─── Categories ────────────────────────────────────────────────────────────
+
   getCategories: async (): Promise<string[]> => {
     const res = await api.get<string[]>('/auth/categories');
     return res.data;
@@ -77,13 +91,11 @@ export const authService = {
 
   // ─── Forgot password flow ───────────────────────────────────────────────────
 
-  /** Step 1: Send OTP to email */
   forgotPassword: async (data: { email: string }): Promise<{ message: string }> => {
     const res = await api.post<{ message: string }>('/auth/forgot-password', data);
     return res.data;
   },
 
-  /** Step 2: Verify reset OTP → returns resetToken */
   verifyResetOtp: async (data: {
     email: string;
     code: string;
@@ -95,7 +107,6 @@ export const authService = {
     return res.data;
   },
 
-  /** Step 3: Reset password with resetToken → returns auth tokens (auto-login) */
   resetPassword: async (data: {
     resetToken: string;
     password: string;

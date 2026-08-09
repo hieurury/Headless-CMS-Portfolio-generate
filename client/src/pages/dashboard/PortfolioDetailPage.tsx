@@ -35,6 +35,7 @@ export const PortfolioDetailPage: React.FC = () => {
   const { current: portfolio, fetchOne } = usePortfolioStore();
   const { pages, fetchAll, create, remove, update, isLoading } = usePageStore();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
+  const { user } = useAuthStore();
   const { postTypes, posts, fetchPostTypes, fetchPosts, removePost, createPostType, removePostType } = usePostStore();
   const [activeTab, setActiveTab] = useState<'pages' | 'posts'>('pages');
   const [showCreate, setShowCreate] = useState(false);
@@ -64,7 +65,6 @@ export const PortfolioDetailPage: React.FC = () => {
   const [ptError, setPtError] = useState<string | null>(null);
 
   const lang = t(language).dashboard;
-  const { user } = useAuthStore();
   const userId = user?._id;
   useEffect(() => {
     if (portfolioId) {
@@ -183,7 +183,7 @@ export const PortfolioDetailPage: React.FC = () => {
         <div className="container-max mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(`/${user?.username}/dashboard`)}
               className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors text-sm"
             >
               <ArrowLeft size={16} /> {lang.dashboard}
@@ -284,7 +284,7 @@ export const PortfolioDetailPage: React.FC = () => {
             {activeTab === 'posts' && selectedPostTypeId && (
               <button
                 id="create-post-btn"
-                onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
+                onClick={() => navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
                 className="flex items-center gap-2 px-4 py-2 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs hover:opacity-85 transition-all shadow-sm active:scale-[0.98]"
               >
                 <Plus size={16} /> New Post
@@ -401,7 +401,7 @@ export const PortfolioDetailPage: React.FC = () => {
 
                       {/* Edit */}
                       <Link
-                        to={`/dashboard/portfolios/${portfolioId}/pages/${page._id}/edit`}
+                        to={`/${user?.username}/dashboard/portfolios/${portfolioId}/pages/${page._id}/edit`}
                         className="p-2 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                         title="Open editor"
                       >
@@ -527,7 +527,7 @@ export const PortfolioDetailPage: React.FC = () => {
                   <p className="text-xs text-[var(--color-text-muted)] mb-4">No posts published in this portfolio yet.</p>
                   {selectedPostTypeId ? (
                     <button
-                      onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
+                      onClick={() => navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${selectedPostTypeId}`)}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-xs hover:opacity-90 transition-all shadow-sm"
                     >
                       <Plus size={13} /> Create First Post
@@ -537,7 +537,7 @@ export const PortfolioDetailPage: React.FC = () => {
                       onClick={() => {
                         const firstPt = postTypes[0];
                         if (firstPt) {
-                          navigate(`/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${firstPt._id}`);
+                          navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}/posts/new?postTypeId=${firstPt._id}`);
                         } else {
                           setShowPostTypeModal(true);
                         }
@@ -591,7 +591,7 @@ export const PortfolioDetailPage: React.FC = () => {
                       <div className="flex items-center gap-1.5 shrink-0">
                         {/* Preview / View Public */}
                         <a
-                          href={`/p/${portfolio?.slug}/post/${post.slug}`}
+                          href={`/${user?.username ?? ''}/${portfolio?.slug}/post/${post.slug}`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
@@ -603,7 +603,7 @@ export const PortfolioDetailPage: React.FC = () => {
                           userId == post.authorId && (
                             <>
                               <button
-                                onClick={() => navigate(`/dashboard/portfolios/${portfolioId}/posts/${post._id}/edit`)}
+                                onClick={() => navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}/posts/${post._id}/edit`)}
                                 className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors"
                                 title="Edit post"
                               >

@@ -4,6 +4,7 @@ import {
   Post,
   Patch,
   Body,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -36,13 +37,29 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/register
-   * Create a new unverified account. Sends OTP to email.
-   * Returns { userId } — used to proceed to step 2 (OTP verification).
+   * Create a new unverified account with email, password, and username.
+   * Returns { accountId } — used to proceed to step 2 (OTP verification).
    */
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  // ─── Username Availability ──────────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/auth/check-username?username=xxx
+   * Public endpoint — check if a username is available.
+   * Returns { available: boolean, reason?: string }
+   */
+  @Get('check-username')
+  @HttpCode(HttpStatus.OK)
+  checkUsername(
+    @Query('username') username: string,
+    @Query('excludeAccountId') excludeAccountId?: string,
+  ) {
+    return this.authService.checkUsername(username?.toLowerCase?.() ?? '', excludeAccountId);
   }
 
   // ─── OTP Verification (Step 2) ──────────────────────────────────────────────
@@ -71,8 +88,8 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/login
-   * - Verified account → { accessToken, refreshToken, user }
-   * - Unverified account → { requiresVerification: true, userId } + fresh OTP sent
+   * - Verified account → { accessToken, refreshToken, account }
+   * - Unverified account → { requiresVerification: true, accountId } + fresh OTP sent
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -104,7 +121,6 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/logout
-   * Invalidate the current user's refresh token.
    */
   @Post('logout')
   @UseGuards(JwtAuthGuard)
@@ -117,7 +133,7 @@ export class AuthController {
 
   /**
    * GET /api/v1/auth/me
-   * Get the currently authenticated user's full profile.
+   * Get the currently authenticated user's full profile (account + user_profile merged).
    */
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -129,7 +145,7 @@ export class AuthController {
 
   /**
    * PATCH /api/v1/auth/profile
-   * Update optional profile fields (step 3 of registration or settings page).
+   * Update profile fields (step 3 of registration or settings page).
    */
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
@@ -155,10 +171,6 @@ export class AuthController {
 
   // ─── Forgot Password (Step 1) ───────────────────────────────────────────────
 
-  /**
-   * POST /api/v1/auth/forgot-password
-   * Send a 6-digit OTP to the user's email for password reset.
-   */
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body('email') email: string) {
@@ -168,10 +180,6 @@ export class AuthController {
 
   // ─── Verify Reset OTP (Step 2) ──────────────────────────────────────────────
 
-  /**
-   * POST /api/v1/auth/verify-reset-otp
-   * Verify the reset OTP. Returns a short-lived resetToken for step 3.
-   */
   @Post('verify-reset-otp')
   @HttpCode(HttpStatus.OK)
   verifyResetOtp(@Body() dto: VerifyResetOtpDto) {
@@ -180,10 +188,6 @@ export class AuthController {
 
   // ─── Reset Password (Step 3) ────────────────────────────────────────────────
 
-  /**
-   * POST /api/v1/auth/reset-password
-   * Reset the password and auto-login. Returns auth tokens.
-   */
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   resetPassword(@Body() dto: ResetPasswordDto) {

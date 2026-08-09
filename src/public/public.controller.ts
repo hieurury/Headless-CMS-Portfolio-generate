@@ -4,6 +4,9 @@ import { PublicService } from './public.service';
 /**
  * PublicController — no authentication required.
  * All routes are open to the public internet.
+ *
+ * URL structure: /:username/:portfolioSlug/...
+ * All routes are prefixed with /api/v1/public
  */
 @Controller('public')
 export class PublicController {
@@ -12,28 +15,26 @@ export class PublicController {
   /**
    * GET /api/v1/public?q=keyword&page=1&limit=12
    * List all published portfolios with optional search and pagination.
-   * Searches: title, description, owner name.
    */
   @Get()
   listAll(
     @Query('q') q?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('excludeOwnerId') excludeOwnerId?: string,
+    @Query('excludeUsername') excludeUsername?: string,
     @Query('category') category?: string,
   ) {
     return this.publicService.listAllPublished(
       q,
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 12,
-      excludeOwnerId,
+      excludeUsername,
       category,
     );
   }
 
   /**
    * GET /api/v1/public/sitemap.xml
-   * Generates a dynamic XML sitemap of all published portfolios.
    */
   @Get('sitemap.xml')
   @Header('Content-Type', 'application/xml')
@@ -45,20 +46,9 @@ export class PublicController {
     ).replace(/\/$/, '');
     const now = new Date().toISOString();
 
-    // Static pages with appropriate priorities
     const staticUrls = [
-      {
-        loc: `${frontendUrl}/`,
-        changefreq: 'weekly',
-        priority: '1.0',
-        lastmod: now,
-      },
-      {
-        loc: `${frontendUrl}/explore`,
-        changefreq: 'daily',
-        priority: '0.9',
-        lastmod: now,
-      },
+      { loc: `${frontendUrl}/`, changefreq: 'weekly', priority: '1.0', lastmod: now },
+      { loc: `${frontendUrl}/explore`, changefreq: 'daily', priority: '0.9', lastmod: now },
     ];
 
     const staticXml = staticUrls
@@ -73,7 +63,6 @@ export class PublicController {
       )
       .join('');
 
-    // Dynamic portfolio/page URLs
     const dynamicXml = data
       .map(
         (item) => `
@@ -96,7 +85,6 @@ export class PublicController {
 
   /**
    * GET /api/v1/public/robots.txt
-   * Generates a robots.txt file allowing all bots and pointing to the sitemap.
    */
   @Get('robots.txt')
   @Header('Content-Type', 'text/plain')
@@ -115,8 +103,7 @@ Disallow: /preview/
 Disallow: /login
 Disallow: /register
 
-# Allow public portfolio pages
-Allow: /p/
+# Allow public routes (all user profile pages)
 Allow: /explore
 
 Sitemap: ${frontendUrl}/sitemap.xml
@@ -124,35 +111,50 @@ Sitemap: ${frontendUrl}/sitemap.xml
   }
 
   /**
-   * GET /api/v1/public/:portfolioSlug
+   * GET /api/v1/public/user/:username
+   * Returns public profile + list of published portfolios for a user.
+   */
+  @Get('user/:username')
+  getUserProfile(@Param('username') username: string) {
+    return this.publicService.getUserPublicProfile(username);
+  }
+
+  /**
+   * GET /api/v1/public/user/:username/:portfolioSlug
    * Returns portfolio meta + list of published pages (hub page).
    */
-  @Get(':portfolioSlug')
-  findPortfolio(@Param('portfolioSlug') portfolioSlug: string) {
-    return this.publicService.findPublicPortfolio(portfolioSlug);
-  }
-
-  /**
-   * GET /api/v1/public/:portfolioSlug/:pageSlug
-   * Returns the full layout JSON + all page navigation for the renderer.
-   */
-  @Get(':portfolioSlug/:pageSlug')
-  findPage(
+  @Get('user/:username/:portfolioSlug')
+  findPortfolio(
+    @Param('username') username: string,
     @Param('portfolioSlug') portfolioSlug: string,
-    @Param('pageSlug') pageSlug: string,
   ) {
-    return this.publicService.findPublicPage(portfolioSlug, pageSlug);
+    return this.publicService.findPublicPortfolio(username, portfolioSlug);
   }
 
   /**
-   * GET /api/v1/public/:portfolioSlug/posts/:postSlug
+   * GET /api/v1/public/user/:username/:portfolioSlug/post/:postSlug
    * Returns public post data + portfolio meta.
+   * NOTE: Must be declared BEFORE the generic /:pageSlug route.
    */
-  @Get(':portfolioSlug/posts/:postSlug')
+  @Get('user/:username/:portfolioSlug/post/:postSlug')
   findPost(
+    @Param('username') username: string,
     @Param('portfolioSlug') portfolioSlug: string,
     @Param('postSlug') postSlug: string,
   ) {
-    return this.publicService.findPublicPost(portfolioSlug, postSlug);
+    return this.publicService.findPublicPost(username, portfolioSlug, postSlug);
+  }
+
+  /**
+   * GET /api/v1/public/user/:username/:portfolioSlug/:pageSlug
+   * Returns the full layout JSON + all page navigation for the renderer.
+   */
+  @Get('user/:username/:portfolioSlug/:pageSlug')
+  findPage(
+    @Param('username') username: string,
+    @Param('portfolioSlug') portfolioSlug: string,
+    @Param('pageSlug') pageSlug: string,
+  ) {
+    return this.publicService.findPublicPage(username, portfolioSlug, pageSlug);
   }
 }

@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { AccountsModule } from './accounts/accounts.module';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { PagesModule } from './pages/pages.module';
 import { ComponentsModule } from './components/components.module';
@@ -32,7 +32,7 @@ import { PostsModule } from './posts/posts.module';
     }),
 
     // ─── Feature Modules ─────────────────────────────────────────────
-    UsersModule,
+    AccountsModule,
     AuthModule,
     PortfoliosModule,
     PagesModule,

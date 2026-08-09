@@ -8,7 +8,7 @@ import { Sun, Moon, Menu, X, LayoutDashboard } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const tr = t(language);
   const navRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
             {/* Auth CTA */}
             {isAuthenticated ? (
               <Link
-                to="/dashboard"
+                to={`/${user?.username}/dashboard`}
                 className="home-navbar__login flex items-center gap-1.5"
                 id="navbar-dashboard"
               >
@@ -161,7 +161,7 @@ export const Navbar: React.FC = () => {
             {language === 'vi' ? 'Showcase cộng đồng' : 'Community Showcase'}
           </Link>
           <Link
-            to={isAuthenticated ? '/dashboard' : '/login'}
+            to={isAuthenticated ? `/${user?.username}/dashboard` : '/login'}
             className="home-navbar__mobile-link home-navbar__mobile-link--cta"
             onClick={() => setMobileOpen(false)}
           >

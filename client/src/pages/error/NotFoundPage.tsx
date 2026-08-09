@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
+import { useAuthStore } from '../../store/authStore';
 import { t } from '../../i18n';
 import {
   LayoutGrid,
@@ -15,6 +16,7 @@ import {
 
 export const NotFoundPage: React.FC = () => {
   const { language, theme, toggleTheme, toggleLanguage } = useUIStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const tr = t(language).notFound;
 
@@ -85,7 +87,7 @@ export const NotFoundPage: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3 w-full max-w-md mb-8">
             <Link
-              to="/dashboard"
+              to={`/${user?.username}/dashboard`}
               className="flex-1 min-w-[160px] h-11 px-5 rounded border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm active:scale-[0.98]"
             >
               <LayoutGrid size={16} />

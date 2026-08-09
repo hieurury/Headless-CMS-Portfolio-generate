@@ -5,8 +5,10 @@ export interface PublicPortfolioCard {
   title: string;
   slug: string;
   description: string;
-  ownerName: string;
+  ownerUsername: string;
+  ownerName: string;     // fullName or username fallback
   ownerAvatar: string;
+  ownerEmail: string;
   pageCount: number;
   postCount: number;
   categories?: string[];
@@ -22,23 +24,25 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-/** A page entry in the hub page list — includes urlSlug for correct link building */
+/** A page entry in the hub page list */
 export interface PublicPageEntry {
   _id: string;
   title: string;
   slug: string;
-  /** Normalized slug safe for use in URLs — strips leading /, converts "/" to "home" */
+  /** Normalized slug safe for use in URLs */
   urlSlug: string;
   order: number;
   meta?: { icon?: string };
 }
 
 export interface PublicPortfolioHub {
+  username: string;
+  ownerName: string;
+  ownerAvatar: string;
+  ownerEmail: string;
   title: string;
   slug: string;
   description: string;
-  ownerName: string;
-  ownerAvatar: string;
   meta: Record<string, unknown>;
   pages: PublicPageEntry[];
   posts: {
@@ -59,17 +63,60 @@ export interface PublicPageNavEntry {
 }
 
 export interface PublicPageResponse {
-  portfolio: { title: string; slug: string; description?: string; ownerName?: string; meta: Record<string, unknown> };
+  portfolio: {
+    title: string;
+    slug: string;
+    description?: string;
+    ownerName?: string;
+    ownerUsername?: string;
+    meta: Record<string, unknown>;
+  };
   page: { _id: string; title: string; slug: string; layout: { sections: unknown[] } };
-  /** All published pages in this portfolio with normalized slugs for navigation */
   allPages: PublicPageNavEntry[];
 }
 
 export interface PublicPostResponse {
-  portfolio: { title: string; slug: string; description?: string; ownerName?: string; meta: Record<string, any> };
-  post: { title: string; slug: string; customFieldsData: Record<string, any>; coverImage?: string; tags?: string[]; createdAt?: string; readingTime?: number; viewCount?: number };
+  portfolio: {
+    title: string;
+    slug: string;
+    description?: string;
+    ownerName?: string;
+    ownerUsername?: string;
+    meta: Record<string, any>;
+  };
+  post: {
+    title: string;
+    slug: string;
+    customFieldsData: Record<string, any>;
+    coverImage?: string;
+    tags?: string[];
+    createdAt?: string;
+    readingTime?: number;
+    viewCount?: number;
+  };
   postType: { customFieldsSchema: any[] };
   allPages: PublicPageNavEntry[];
+}
+
+export interface UserPublicProfile {
+  username: string;
+  fullName?: string | null;
+  age?: number | null;
+  email: string;
+  avatar?: string | null;
+  background?: string | null;
+  slogan?: string | null;
+  occupation?: string | null;
+  interests?: string[];
+  portfolios: {
+    _id: string;
+    title: string;
+    slug: string;
+    description: string;
+    meta: any;
+    categories: string[];
+    pageCount: number;
+  }[];
 }
 
 /** Mirror the backend normalizeSlug utility on the frontend */
@@ -81,20 +128,20 @@ export function normalizeSlug(slug: string): string {
 export const publicService = {
   /**
    * List all published portfolios with optional search + pagination.
-   * Pass excludeOwnerId to hide the current user's own portfolios.
+   * Pass excludeUsername to hide the current user's own portfolios.
    */
   listAll: async (
     query?: string,
     page = 1,
     limit = 12,
-    excludeOwnerId?: string,
+    excludeUsername?: string,
     category?: string,
   ): Promise<PaginatedResult<PublicPortfolioCard>> => {
     const params = new URLSearchParams();
     if (query && query.trim()) params.set('q', query.trim());
     params.set('page', String(page));
     params.set('limit', String(limit));
-    if (excludeOwnerId) params.set('excludeOwnerId', excludeOwnerId);
+    if (excludeUsername) params.set('excludeUsername', excludeUsername);
     if (category && category !== 'all') params.set('category', category);
     const res = await api.get<PaginatedResult<PublicPortfolioCard>>(
       `/public?${params.toString()}`,
@@ -102,30 +149,43 @@ export const publicService = {
     return res.data;
   },
 
-  /** Get hub page for a portfolio (meta + page list with urlSlugs) */
-  getPortfolio: async (portfolioSlug: string): Promise<PublicPortfolioHub> => {
-    const res = await api.get<PublicPortfolioHub>(`/public/${portfolioSlug}`);
+  /** Get user's public profile + portfolios */
+  getUserProfile: async (username: string): Promise<UserPublicProfile> => {
+    const res = await api.get<UserPublicProfile>(`/public/user/${username}`);
     return res.data;
   },
 
-  /** Get full layout + navigation for a specific page (uses urlSlug in URL) */
+  /** Get hub page for a portfolio (meta + page list with urlSlugs) */
+  getPortfolio: async (
+    username: string,
+    portfolioSlug: string,
+  ): Promise<PublicPortfolioHub> => {
+    const res = await api.get<PublicPortfolioHub>(
+      `/public/user/${username}/${portfolioSlug}`,
+    );
+    return res.data;
+  },
+
+  /** Get full layout + navigation for a specific page */
   getPage: async (
+    username: string,
     portfolioSlug: string,
     pageUrlSlug: string,
   ): Promise<PublicPageResponse> => {
     const res = await api.get<PublicPageResponse>(
-      `/public/${portfolioSlug}/${pageUrlSlug}`,
+      `/public/user/${username}/${portfolioSlug}/${pageUrlSlug}`,
     );
     return res.data;
   },
 
   /** Get a public post */
   getPost: async (
+    username: string,
     portfolioSlug: string,
     postSlug: string,
   ): Promise<PublicPostResponse> => {
     const res = await api.get<PublicPostResponse>(
-      `/public/${portfolioSlug}/posts/${postSlug}`,
+      `/public/user/${username}/${portfolioSlug}/post/${postSlug}`,
     );
     return res.data;
   },

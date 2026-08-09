@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMediaStore } from '../../store/mediaStore';
+import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import type { MediaItem } from '../../core/types/media.types';
 import {
@@ -132,6 +133,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFiles, isUploading }) => {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export const MediaGalleryPage: React.FC = () => {
+  const { user } = useAuthStore();
   const {
     items,
     folders,
@@ -199,7 +201,7 @@ export const MediaGalleryPage: React.FC = () => {
       >
         <div className="flex items-center gap-3">
           <Link
-            to="/dashboard"
+            to={`/${user?.username}/dashboard`}
             className="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
           >
             <ChevronLeft size={16} />

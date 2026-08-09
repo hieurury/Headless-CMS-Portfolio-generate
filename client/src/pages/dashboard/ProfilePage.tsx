@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { useUIStore } from '../../store/uiStore';
 import { postService, type Post } from '../../services/post.service';
 import { mediaService } from '../../services/media.service';
 import { authService } from '../../services/auth.service';
+import { publicService, type UserPublicProfile } from '../../services/public.service';
 import { UserNavMenu } from '../../components/common/UserNavMenu';
 import {
   Globe,
@@ -62,7 +63,17 @@ const normalizeVietnamese = (str: string) => {
 };
 
 export const ProfilePage: React.FC = () => {
-  const { user, updateProfile } = useAuthStore();
+  const { user: authUser, updateProfile, isAuthenticated } = useAuthStore();
+  const { username } = useParams<{ username: string }>();
+  
+  const isOwner = isAuthenticated && authUser?.username === username;
+  
+  const [publicUser, setPublicUser] = useState<UserPublicProfile | null>(null);
+  const [isLoadingPublic, setIsLoadingPublic] = useState(false);
+  const [publicError, setPublicError] = useState<string | null>(null);
+  
+  const user = isOwner ? authUser : publicUser;
+
   const { portfolios, fetchAll: fetchPortfolios, isLoading: loadingPortfolios } = usePortfolioStore();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
 
@@ -77,7 +88,7 @@ export const ProfilePage: React.FC = () => {
   const [isUploadingBg, setIsUploadingBg] = useState(false);
 
   // Inline editing states
-  const [editingField, setEditingField] = useState<'name' | 'slogan' | 'occupation' | 'age' | null>(null);
+  const [editingField, setEditingField] = useState<'fullName' | 'slogan' | 'occupation' | 'age' | null>(null);
   const [tempValue, setTempValue] = useState<string>('');
   const [isSavingField, setIsSavingField] = useState(false);
 
@@ -89,8 +100,20 @@ export const ProfilePage: React.FC = () => {
   const categoryPopoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchPortfolios();
-  }, [fetchPortfolios]);
+    if (!username) return;
+    if (!isOwner) {
+      setIsLoadingPublic(true);
+      publicService
+        .getUserProfile(username)
+        .then((data) => setPublicUser(data))
+        .catch(() => setPublicError('Người dùng không tồn tại hoặc chưa xuất bản.'))
+        .finally(() => setIsLoadingPublic(false));
+    }
+  }, [username, isOwner]);
+
+  useEffect(() => {
+    if (isOwner) fetchPortfolios();
+  }, [fetchPortfolios, isOwner]);
 
   // Load categories from database
   useEffect(() => {
@@ -112,6 +135,7 @@ export const ProfilePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!isOwner) return;
     const fetchUserPosts = async () => {
       setLoadingPosts(true);
       try {
@@ -124,7 +148,7 @@ export const ProfilePage: React.FC = () => {
       }
     };
     fetchUserPosts();
-  }, []);
+  }, [isOwner]);
 
   // Click outside category popover
   useEffect(() => {
@@ -145,12 +169,14 @@ export const ProfilePage: React.FC = () => {
   }, [isCategoryPopoverOpen]);
 
   const publishedPortfolios = useMemo(() => {
+    if (!isOwner && publicUser) return publicUser.portfolios;
     return portfolios.filter((p) => p.isPublished);
-  }, [portfolios]);
+  }, [portfolios, isOwner, publicUser]);
 
   const publishedPosts = useMemo(() => {
+    if (!isOwner) return []; // In the original public view, posts weren't shown directly on profile. Let's just return empty for now.
     return posts.filter((p) => p.status === 'published');
-  }, [posts]);
+  }, [posts, isOwner]);
 
   // Top 3 default suggested categories
   const sampleSuggestedCategories = useMemo(() => {
@@ -200,22 +226,23 @@ export const ProfilePage: React.FC = () => {
 
   // ─── Inline Edit Handlers ──────────────────────────────────────────────────
 
-  const startEdit = (field: 'name' | 'slogan' | 'occupation' | 'age') => {
+  const startEdit = (field: 'fullName' | 'slogan' | 'occupation' | 'age') => {
+    if (!isOwner) return;
     setEditingField(field);
-    if (field === 'name') setTempValue(user?.name || '');
+    if (field === 'fullName') setTempValue(user?.fullName || '');
     else if (field === 'slogan') setTempValue(user?.slogan || '');
     else if (field === 'occupation') setTempValue(user?.occupation || '');
     else if (field === 'age') setTempValue(user?.age ? String(user.age) : '');
   };
 
-  const saveField = async (field: 'name' | 'slogan' | 'occupation' | 'age') => {
+  const saveField = async (field: 'fullName' | 'slogan' | 'occupation' | 'age') => {
     if (isSavingField) return;
     const trimmed = tempValue.trim();
     setIsSavingField(true);
     try {
-      if (field === 'name') {
-        if (trimmed && trimmed !== user?.name) {
-          await updateProfile({ name: trimmed });
+      if (field === 'fullName') {
+        if (trimmed && trimmed !== user?.fullName) {
+          await updateProfile({ fullName: trimmed });
         }
       } else if (field === 'slogan') {
         if (trimmed !== (user?.slogan || '')) {
@@ -241,7 +268,7 @@ export const ProfilePage: React.FC = () => {
 
   const handleKeyDown = (
     e: React.KeyboardEvent,
-    field: 'name' | 'slogan' | 'occupation' | 'age'
+    field: 'fullName' | 'slogan' | 'occupation' | 'age'
   ) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -292,6 +319,31 @@ export const ProfilePage: React.FC = () => {
       console.error('Failed to remove category', err);
     }
   };
+
+  if (isLoadingPublic) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
+        <Loader2 size={36} className="animate-spin text-[var(--color-text-muted)]" />
+      </div>
+    );
+  }
+
+  if (!isOwner && publicError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-[var(--color-text)] mb-3">Người dùng không tìm thấy</h1>
+          <p className="text-[var(--color-text-muted)] text-sm mb-6">{publicError}</p>
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold hover:opacity-85 transition-opacity shadow-sm"
+          >
+            ← Khám phá
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>
@@ -402,25 +454,27 @@ export const ProfilePage: React.FC = () => {
             )}
 
             {/* Button Upload Cover Image */}
-            <button
-              onClick={() => bgInputRef.current?.click()}
-              disabled={isUploadingBg}
-              className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded bg-black/60 hover:bg-black/85 text-white backdrop-blur-md transition-colors duration-150 cursor-pointer shadow-md"
-              style={{ border: 'none' }}
-              title="Đổi ảnh bìa"
-            >
-              {isUploadingBg ? (
-                <>
-                  <Loader2 size={13} className="animate-spin" />
-                  <span>Đang tải lên...</span>
-                </>
-              ) : (
-                <>
-                  <Camera size={13} />
-                  <span>Đổi ảnh bìa</span>
-                </>
-              )}
-            </button>
+            {isOwner && (
+              <button
+                onClick={() => bgInputRef.current?.click()}
+                disabled={isUploadingBg}
+                className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded bg-black/60 hover:bg-black/85 text-white backdrop-blur-md transition-colors duration-150 cursor-pointer shadow-md"
+                style={{ border: 'none' }}
+                title="Đổi ảnh bìa"
+              >
+                {isUploadingBg ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Đang tải lên...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera size={13} />
+                    <span>Đổi ảnh bìa</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Profile Header & Info Area */}
@@ -460,38 +514,40 @@ export const ProfilePage: React.FC = () => {
                     ) : user?.avatar ? (
                       <img
                         src={user.avatar}
-                        alt={user.name}
+                        alt={user.fullName ?? user.username}
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      (user?.name || 'U').charAt(0).toUpperCase()
+                      (user?.fullName || user?.username || 'U').charAt(0).toUpperCase()
                     )}
                   </div>
 
                   {/* Hover Overlay Button to Upload Avatar */}
-                  <button
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    className="absolute inset-0 rounded-full flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-150 text-white cursor-pointer"
-                    title="Nhấp để tải ảnh đại diện mới"
-                  >
-                    <Camera size={22} />
-                    <span style={{ fontSize: 10, fontWeight: 600, marginTop: 2 }}>Đổi ảnh</span>
-                  </button>
+                  {isOwner && (
+                    <button
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      className="absolute inset-0 rounded-full flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-150 text-white cursor-pointer"
+                      title="Nhấp để tải ảnh đại diện mới"
+                    >
+                      <Camera size={22} />
+                      <span style={{ fontSize: 10, fontWeight: 600, marginTop: 2 }}>Đổi ảnh</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Name (Inline Editable) & Email */}
                 <div className="pt-3">
                   <div className="flex items-center gap-3">
-                    {editingField === 'name' ? (
+                    {editingField === 'fullName' ? (
                       <div className="flex items-center gap-1.5">
                         <input
                           autoFocus
                           type="text"
                           value={tempValue}
                           onChange={(e) => setTempValue(e.target.value)}
-                          onBlur={() => saveField('name')}
-                          onKeyDown={(e) => handleKeyDown(e, 'name')}
+                          onBlur={() => saveField('fullName')}
+                          onKeyDown={(e) => handleKeyDown(e, 'fullName')}
                           disabled={isSavingField}
                           className="px-2.5 py-1 text-xl font-bold rounded"
                           style={{
@@ -504,7 +560,7 @@ export const ProfilePage: React.FC = () => {
                           }}
                         />
                         <button
-                          onClick={() => saveField('name')}
+                          onClick={() => saveField('fullName')}
                           className="p-1.5 rounded bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-opacity"
                           style={{ border: 'none', cursor: 'pointer' }}
                           title="Lưu tên"
@@ -522,9 +578,9 @@ export const ProfilePage: React.FC = () => {
                       </div>
                     ) : (
                       <div
-                        onClick={() => startEdit('name')}
-                        className="group/name flex items-center gap-2 cursor-pointer py-0.5 px-1.5 rounded hover:bg-[var(--color-surface-2)] transition-colors duration-150"
-                        title="Nhấp để chỉnh sửa họ tên"
+                        onClick={() => startEdit('fullName')}
+                        className={`group/name flex items-center gap-2 py-0.5 px-1.5 rounded transition-colors duration-150 ${isOwner ? 'cursor-pointer hover:bg-[var(--color-surface-2)]' : ''}`}
+                        title={isOwner ? "Nhấp để chỉnh sửa họ tên" : ""}
                       >
                         <h1
                           style={{
@@ -535,17 +591,19 @@ export const ProfilePage: React.FC = () => {
                             margin: 0,
                           }}
                         >
-                          {user?.name || 'Chưa đặt tên'}
+                          {user?.username}{user?.fullName ? ` (${user.fullName})` : ''}
                         </h1>
-                        <Edit3
-                          size={15}
-                          className="opacity-0 group-hover/name:opacity-100 transition-opacity"
-                          style={{ color: 'var(--color-text-muted)' }}
-                        />
+                        {isOwner && (
+                          <Edit3
+                            size={15}
+                            className="opacity-0 group-hover/name:opacity-100 transition-opacity"
+                            style={{ color: 'var(--color-text-muted)' }}
+                          />
+                        )}
                       </div>
                     )}
 
-                    {user?.isEmailVerified && (
+                    {user && 'isEmailVerified' in user && user.isEmailVerified && (
                       <span
                         title="Tài khoản đã xác thực"
                         style={{
@@ -616,8 +674,8 @@ export const ProfilePage: React.FC = () => {
               ) : (
                 <div
                   onClick={() => startEdit('slogan')}
-                  className="group/slogan inline-flex items-center gap-2 cursor-pointer py-1 px-2 rounded hover:bg-[var(--color-surface-2)] transition-colors duration-150"
-                  title="Nhấp để chỉnh sửa slogan"
+                  className={`group/slogan inline-flex items-center gap-2 py-1 px-2 rounded transition-colors duration-150 ${isOwner ? 'cursor-pointer hover:bg-[var(--color-surface-2)]' : ''}`}
+                  title={isOwner ? "Nhấp để chỉnh sửa slogan" : ""}
                 >
                   {user?.slogan ? (
                     <p
@@ -643,11 +701,13 @@ export const ProfilePage: React.FC = () => {
                       + Thêm câu slogan của bạn...
                     </p>
                   )}
-                  <Edit3
-                    size={14}
-                    className="opacity-0 group-hover/slogan:opacity-100 transition-opacity flex-shrink-0"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  />
+                  {isOwner && (
+                    <Edit3
+                      size={14}
+                      className="opacity-0 group-hover/slogan:opacity-100 transition-opacity flex-shrink-0"
+                      style={{ color: 'var(--color-text-muted)' }}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -685,14 +745,16 @@ export const ProfilePage: React.FC = () => {
                       }}
                     >
                       <span>#{tag}</span>
-                      <button
-                        onClick={(e) => handleRemoveInterest(tag, e)}
-                        className="opacity-40 hover:opacity-100 hover:text-red-400 transition-opacity p-0.5 rounded"
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                        title={`Bỏ danh mục ${tag}`}
-                      >
-                        <X size={12} />
-                      </button>
+                      {isOwner && (
+                        <button
+                          onClick={(e) => handleRemoveInterest(tag, e)}
+                          className="opacity-40 hover:opacity-100 hover:text-red-400 transition-opacity p-0.5 rounded"
+                          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          title={`Bỏ danh mục ${tag}`}
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
                     </span>
                   ))
                 ) : (
@@ -702,9 +764,10 @@ export const ProfilePage: React.FC = () => {
                 )}
 
                 {/* Button Open Category Popover */}
-                <div className="relative" ref={categoryPopoverRef}>
-                  <button
-                    onClick={() => {
+                {isOwner && (
+                  <div className="relative" ref={categoryPopoverRef}>
+                    <button
+                      onClick={() => {
                       setIsCategoryPopoverOpen(!isCategoryPopoverOpen);
                       setCategorySearchQuery('');
                     }}
@@ -892,10 +955,11 @@ export const ProfilePage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              )}
             </div>
+          </div>
 
-            {/* Additional Metadata / Badges (Occupation, Age, Stats) */}
+          {/* Additional Metadata / Badges (Occupation, Age, Stats) */}
             <div className="flex flex-wrap items-center gap-4 text-xs pt-2" style={{ color: 'var(--color-text-muted)' }}>
               {/* Occupation Inline Edit */}
               {editingField === 'occupation' ? (
@@ -921,16 +985,18 @@ export const ProfilePage: React.FC = () => {
               ) : (
                 <div
                   onClick={() => startEdit('occupation')}
-                  className="group/occ flex items-center gap-1.5 cursor-pointer py-1 px-2 rounded hover:bg-[var(--color-surface-2)] transition-colors duration-150"
-                  title="Nhấp để chỉnh sửa nghề nghiệp"
+                  className={`group/occ flex items-center gap-1.5 py-1 px-2 rounded transition-colors duration-150 ${isOwner ? 'cursor-pointer hover:bg-[var(--color-surface-2)]' : ''}`}
+                  title={isOwner ? "Nhấp để chỉnh sửa nghề nghiệp" : ""}
                 >
                   <Briefcase size={14} />
                   <span>{user?.occupation || 'Thêm nghề nghiệp'}</span>
-                  <Edit3
-                    size={12}
-                    className="opacity-0 group-hover/occ:opacity-100 transition-opacity"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  />
+                  {isOwner && (
+                    <Edit3
+                      size={12}
+                      className="opacity-0 group-hover/occ:opacity-100 transition-opacity"
+                      style={{ color: 'var(--color-text-muted)' }}
+                    />
+                  )}
                 </div>
               )}
 
@@ -960,16 +1026,18 @@ export const ProfilePage: React.FC = () => {
               ) : (
                 <div
                   onClick={() => startEdit('age')}
-                  className="group/age flex items-center gap-1.5 cursor-pointer py-1 px-2 rounded hover:bg-[var(--color-surface-2)] transition-colors duration-150"
-                  title="Nhấp để chỉnh sửa tuổi"
+                  className={`group/age flex items-center gap-1.5 py-1 px-2 rounded transition-colors duration-150 ${isOwner ? 'cursor-pointer hover:bg-[var(--color-surface-2)]' : ''}`}
+                  title={isOwner ? "Nhấp để chỉnh sửa tuổi" : ""}
                 >
                   <Calendar size={14} />
                   <span>{user?.age ? `${user.age} tuổi` : 'Thêm tuổi'}</span>
-                  <Edit3
-                    size={12}
-                    className="opacity-0 group-hover/age:opacity-100 transition-opacity"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  />
+                  {isOwner && (
+                    <Edit3
+                      size={12}
+                      className="opacity-0 group-hover/age:opacity-100 transition-opacity"
+                      style={{ color: 'var(--color-text-muted)' }}
+                    />
+                  )}
                 </div>
               )}
 
@@ -1098,7 +1166,7 @@ export const ProfilePage: React.FC = () => {
                           {item.title}
                         </h4>
                         <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: 0 }}>
-                          /p/{item.slug}
+                          /{user?.username}/{item.slug}
                         </p>
                       </div>
                       <span
@@ -1129,7 +1197,7 @@ export const ProfilePage: React.FC = () => {
 
                     <div className="flex items-center justify-between pt-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                       <span>
-                        {Array.isArray(item.pages) ? item.pages.length : 0} trang con
+                        {'pageCount' in item ? item.pageCount : ((item as any).pages?.length || 0)} trang con
                       </span>
                       <div className="flex items-center gap-3">
                         <Link
@@ -1140,7 +1208,7 @@ export const ProfilePage: React.FC = () => {
                           Quản lý
                         </Link>
                         <a
-                          href={`/p/${item.slug}`}
+                          href={`/${user?.username ?? ''}/${item.slug}`}
                           target="_blank"
                           rel="noreferrer"
                           className="flex items-center gap-1 hover:underline"

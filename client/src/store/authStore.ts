@@ -11,16 +11,17 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  /** userId stored when registration/login requires OTP verification */
-  pendingUserId: string | null;
+  /** accountId stored when registration/login requires OTP verification */
+  pendingAccountId: string | null;
 
   // ─── Actions ────────────────────────────────────────────────────────────────
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, username: string) => Promise<void>;
   verifyOtp: (code: string) => Promise<void>;
   resendOtp: () => Promise<void>;
   updateProfile: (data: {
-    name?: string;
+    username?: string;
+    fullName?: string;
     avatar?: string;
     background?: string;
     age?: number;
@@ -29,11 +30,11 @@ interface AuthState {
     interests?: string[];
   }) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
-  verifyResetOtp: (email: string, code: string) => Promise<string>; // returns resetToken
+  verifyResetOtp: (email: string, code: string) => Promise<string>;
   resetPassword: (resetToken: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  setPendingUserId: (id: string | null) => void;
+  setPendingAccountId: (id: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -44,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
-      pendingUserId: null,
+      pendingAccountId: null,
 
       // ─── Login ──────────────────────────────────────────────────────────────
 
@@ -53,16 +54,15 @@ export const useAuthStore = create<AuthState>()(
         try {
           const result = await authService.login({ email, password });
 
-          // Unverified account — store userId and let UI redirect to OTP step
+          // Unverified account — store accountId and let UI redirect to OTP step
           if ('requiresVerification' in result) {
             set({
-              pendingUserId: result.userId,
+              pendingAccountId: result.accountId,
               isLoading: false,
             });
-            // Throw a special error so the caller knows to redirect
             throw Object.assign(new Error('REQUIRES_VERIFICATION'), {
               requiresVerification: true,
-              userId: result.userId,
+              accountId: result.accountId,
             });
           }
 
@@ -93,11 +93,11 @@ export const useAuthStore = create<AuthState>()(
 
       // ─── Register ───────────────────────────────────────────────────────────
 
-      register: async (email, password) => {
+      register: async (email, password, username) => {
         set({ isLoading: true, error: null });
         try {
-          const { userId } = await authService.register({ email, password });
-          set({ pendingUserId: userId, isLoading: false });
+          const { accountId } = await authService.register({ email, password, username });
+          set({ pendingAccountId: accountId, isLoading: false });
         } catch (err: unknown) {
           const message =
             (err as { response?: { data?: { message?: string } } })?.response
@@ -113,12 +113,12 @@ export const useAuthStore = create<AuthState>()(
       // ─── Verify OTP ─────────────────────────────────────────────────────────
 
       verifyOtp: async (code) => {
-        const userId = get().pendingUserId;
-        if (!userId) throw new Error('No pending user to verify');
+        const accountId = get().pendingAccountId;
+        if (!accountId) throw new Error('No pending account to verify');
         set({ isLoading: true, error: null });
         try {
           const { user, accessToken, refreshToken } = await authService.verifyOtp({
-            userId,
+            userId: accountId, // backend VerifyOtpDto still uses userId field name
             code,
           });
           localStorage.setItem('cms_token', accessToken);
@@ -127,7 +127,7 @@ export const useAuthStore = create<AuthState>()(
             user,
             token: accessToken,
             isAuthenticated: true,
-            pendingUserId: null,
+            pendingAccountId: null,
             isLoading: false,
           });
         } catch (err: unknown) {
@@ -145,10 +145,10 @@ export const useAuthStore = create<AuthState>()(
       // ─── Resend OTP ─────────────────────────────────────────────────────────
 
       resendOtp: async () => {
-        const userId = get().pendingUserId;
-        if (!userId) return;
+        const accountId = get().pendingAccountId;
+        if (!accountId) return;
         try {
-          await authService.resendOtp({ userId });
+          await authService.resendOtp({ userId: accountId });
         } catch {
           // Silently ignore resend errors
         }
@@ -253,12 +253,12 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           token: null,
           isAuthenticated: false,
-          pendingUserId: null,
+          pendingAccountId: null,
         });
       },
 
       clearError: () => set({ error: null }),
-      setPendingUserId: (id) => set({ pendingUserId: id }),
+      setPendingAccountId: (id) => set({ pendingAccountId: id }),
     }),
     {
       name: 'cms-auth',
@@ -266,7 +266,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
-        pendingUserId: state.pendingUserId,
+        pendingAccountId: state.pendingAccountId,
       }),
     },
   ),

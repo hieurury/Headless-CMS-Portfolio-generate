@@ -10,7 +10,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export const Footer: React.FC = () => {
   const { language } = useUIStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const tr = t(language);
   const footerRef = useRef<HTMLElement>(null);
 
@@ -98,7 +98,7 @@ export const Footer: React.FC = () => {
             {language === 'vi' ? 'Showcase cộng đồng' : 'Community Showcase'}
           </Link>
           {isAuthenticated ? (
-            <Link to="/dashboard" className="home-footer__link" id="footer-dashboard">
+            <Link to={`/${user?.username}/dashboard`} className="home-footer__link" id="footer-dashboard">
               Dashboard
             </Link>
           ) : (

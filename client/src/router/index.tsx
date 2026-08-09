@@ -5,6 +5,7 @@ import {
   Navigate,
   Outlet,
   useLocation,
+  useParams,
 } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LoginPage } from '../pages/auth/LoginPage';
@@ -21,10 +22,25 @@ import { PostPreviewPage } from '../pages/renderer/PostPreviewPage';
 import { PageEditorPage } from '../pages/editor/PageEditorPage';
 import { PublicPortfolioPage } from '../pages/public/PublicPortfolioPage';
 import { PublicPortfolioHubPage } from '../pages/public/PublicPortfolioHubPage';
+
 import { PublicPostPage } from '../pages/public/PublicPostPage';
 import { ExplorePage } from '../pages/explore/ExplorePage';
 import { HomePage } from '../pages/home/HomePage';
 import { NotFoundPage } from '../pages/error/NotFoundPage';
+
+// ─── Static path segments that must NOT be caught by /:username ───────────────
+// These are reserved paths that take priority over dynamic username routes.
+const RESERVED_PATHS = new Set([
+  'login',
+  'register',
+  'forgot-password',
+  'explore',
+  'dashboard',
+  'preview',
+  'preview-post',
+  'sitemap.xml',
+  'robots.txt',
+]);
 
 // ─── Route Guards ──────────────────────────────────────────────────────────
 
@@ -35,18 +51,31 @@ const ProtectedRoute: React.FC = () => {
 };
 
 const PublicRoute: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const location = useLocation();
-  // Allow accessing /register if user is in the registration flow completing Step 3
   if (isAuthenticated && location.pathname !== '/register') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={`/${user?.username}/dashboard`} replace />;
   }
+  return <Outlet />;
+};
+
+const StrictDashboardGuard: React.FC = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  const { username } = useParams();
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
+  if (user?.username !== username) {
+    return <Navigate to={`/${user?.username}/dashboard`} replace />;
+  }
+  
   return <Outlet />;
 };
 
 // ─── Router ────────────────────────────────────────────────────────────────
 
 const router = createBrowserRouter([
+  // ── Home ─────────────────────────────────────────────────────────
   {
     path: '/',
     element: <HomePage />,
@@ -62,51 +91,59 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ── Public routes (no auth required) ────────────────────────────
+  // ── Explore (no auth required) ───────────────────────────────────
   {
     path: '/explore',
     element: <ExplorePage />,
   },
-  {
-    path: '/p/:portfolioSlug',
-    element: <PublicPortfolioHubPage />,
-  },
-  {
-    path: '/p/:portfolioSlug/post/:postSlug',
-    element: <PublicPostPage />,
-  },
-  {
-    path: '/p/:portfolioSlug/:pageSlug',
-    element: <PublicPortfolioPage />,
-  },
 
   // ── Protected Dashboard + Editor ─────────────────────────────────
   {
-    element: <ProtectedRoute />,
+    element: <StrictDashboardGuard />,
     children: [
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/dashboard/profile', element: <ProfilePage /> },
-      { path: '/profile', element: <Navigate to="/dashboard/profile" replace /> },
+      { path: '/:username/dashboard', element: <DashboardPage /> },
       {
-        path: '/dashboard/portfolios/:portfolioId',
+        path: '/:username/dashboard/portfolios/:portfolioId',
         element: <PortfolioDetailPage />,
       },
       {
-        path: '/dashboard/portfolios/:portfolioId/pages/:pageId/edit',
+        path: '/:username/dashboard/portfolios/:portfolioId/pages/:pageId/edit',
         element: <PageEditorPage />,
       },
       {
-        path: '/dashboard/portfolios/:portfolioId/posts/new',
+        path: '/:username/dashboard/portfolios/:portfolioId/posts/new',
         element: <CreatePostPage />,
       },
       {
-        path: '/dashboard/portfolios/:portfolioId/posts/:postId/edit',
+        path: '/:username/dashboard/portfolios/:portfolioId/posts/:postId/edit',
         element: <EditPostPage />,
       },
-      { path: '/dashboard/media', element: <MediaGalleryPage /> },
+      { path: '/:username/dashboard/media', element: <MediaGalleryPage /> },
       { path: '/preview/:portfolioId/:pageId', element: <PortfolioPreviewPage /> },
       { path: '/preview-post/:portfolioId/:postId', element: <PostPreviewPage /> },
     ],
+  },
+
+  // ── Public user profile routes (:username/*) ──────────────────────
+  // IMPORTANT: These MUST come AFTER all static routes above.
+  // /:username is a catch-all dynamic segment; reserved paths above take priority
+  // because they are defined first in this array and react-router matches
+  // more specific (static) paths before dynamic ones at the same level.
+  {
+    path: '/:username/profile',
+    element: <ProfilePage />,
+  },
+  {
+    path: '/explore/:username/portfolio/:portfolioSlug',
+    element: <PublicPortfolioHubPage />,
+  },
+  {
+    path: '/explore/:username/portfolio/:portfolioSlug/post/:postSlug',
+    element: <PublicPostPage />,
+  },
+  {
+    path: '/explore/:username/portfolio/:portfolioSlug/:pageSlug',
+    element: <PublicPortfolioPage />,
   },
 
   // ── 404 ──────────────────────────────────────────────────────────

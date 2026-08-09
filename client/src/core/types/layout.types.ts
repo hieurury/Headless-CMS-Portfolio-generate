@@ -219,8 +219,9 @@ export interface Page {
 
 export interface User {
   _id: string;
-  email: string;
-  name: string;
+  email: string;          // public per product requirements
+  username: string;       // unique URL identifier
+  fullName?: string | null; // optional display name
   isEmailVerified: boolean;
   isActive: boolean;
   avatar?: string;
@@ -229,7 +230,7 @@ export interface User {
   slogan?: string;
   occupation?: string;
   interests?: string[];
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface AuthResponse {
@@ -240,12 +241,12 @@ export interface AuthResponse {
 
 /** Returned by register endpoint before email verification */
 export interface RegisterResponse {
-  userId: string;
+  accountId: string;
   message: string;
 }
 
 /** Returned by login when account is unverified */
 export interface UnverifiedLoginResponse {
   requiresVerification: true;
-  userId: string;
+  accountId: string;
 }

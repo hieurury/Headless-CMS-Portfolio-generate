@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePageStore } from '../../store/pageStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
+import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { t } from '../../i18n';
 import { EditorProvider } from '../../core/context/EditorContext';
@@ -106,6 +107,7 @@ export const PageEditorPage: React.FC = () => {
 
   const { current: page, fetchOne, update, isLoading } = usePageStore();
   const { current: portfolio, fetchOne: fetchPortfolio } = usePortfolioStore();
+  const { user } = useAuthStore();
 
   // ── Draft ──────────────────────────────────────────────────────────
   // Selected section id (works at any depth)
@@ -1480,7 +1482,7 @@ export const PageEditorPage: React.FC = () => {
               style={{ height: HEADER_H }}
             >
               <button
-                onClick={() => navigate(`/dashboard/portfolios/${portfolioId}`)}
+                onClick={() => navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}`)}
                 className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
               >
                 <ArrowLeft size={16} />

@@ -14,7 +14,8 @@ import MDEditor from '@uiw/react-md-editor';
  * Renders a post using the portfolio's theme.
  */
 export const PublicPostPage: React.FC = () => {
-  const { portfolioSlug, postSlug } = useParams<{
+  const { username, portfolioSlug, postSlug } = useParams<{
+    username: string;
     portfolioSlug: string;
     postSlug: string;
   }>();
@@ -25,11 +26,11 @@ export const PublicPostPage: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      if (!portfolioSlug || !postSlug) return;
+      if (!username || !portfolioSlug || !postSlug) return;
       setIsLoading(true);
       setError(null);
       try {
-        const result = await publicService.getPost(portfolioSlug, postSlug);
+        const result = await publicService.getPost(username, portfolioSlug, postSlug);
         setData(result);
       } catch (err: unknown) {
         setError(t('publicHub.postNotAvailableDesc'));
@@ -39,7 +40,7 @@ export const PublicPostPage: React.FC = () => {
 
     };
     void load();
-  }, [portfolioSlug, postSlug]);
+  }, [username, portfolioSlug, postSlug]);
 
   if (isLoading) {
     return (
@@ -63,7 +64,7 @@ export const PublicPostPage: React.FC = () => {
             {error ?? t('publicHub.postNotAvailableDesc')}
           </p>
           <Link
-            to={`/p/${portfolioSlug}`}
+            to={`/${username}/${portfolioSlug}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold hover:opacity-85 transition-opacity shadow-sm"
           >
             ← {t('publicHub.backToHub')}
@@ -99,7 +100,7 @@ export const PublicPostPage: React.FC = () => {
       <nav className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-12 flex items-center gap-4 overflow-x-auto scrollbar-hide">
           <Link
-            to={`/p/${portfolioSlug}`}
+            to={`/${username}/${portfolioSlug}`}
             className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-1.5 rounded-sm hover:bg-[var(--color-surface-2)] transition-all shrink-0 font-medium"
           >
             <LayoutGrid size={12} />

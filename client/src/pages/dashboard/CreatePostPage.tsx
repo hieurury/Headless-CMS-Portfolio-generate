@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { usePostStore } from "../../store/postStore";
+import { useAuthStore } from "../../store/authStore";
 import type { PostType } from "../../services/post.service";
 import { uploadService } from "../../services/post.service";
 import MyEditor from "../editor/components/BlockNote";
@@ -128,6 +129,7 @@ export const CreatePostPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const postTypeId = searchParams.get("postTypeId") ?? "";
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { createPost, fetchPostTypeById, currentPostType } = usePostStore();
   const [title, setTitle] = useState("");
   const [coverImage, setCoverImage] = useState("");
@@ -160,7 +162,7 @@ export const CreatePostPage: React.FC = () => {
         publishedAt: status === "scheduled" && publishedAt ? publishedAt : undefined,
       };
       await createPost(payload);
-      navigate(`/dashboard/portfolios/${portfolioId}`);
+      navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || "Failed to create post";
       setError(Array.isArray(msg) ? msg[0] : msg);
@@ -172,7 +174,7 @@ export const CreatePostPage: React.FC = () => {
       <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
         <div className="container-max mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm">
-            <button onClick={() => navigate(`/dashboard/portfolios/${portfolioId}`)} className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
+            <button onClick={() => navigate(`/${user?.username}/dashboard/portfolios/${portfolioId}`)} className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
               <ArrowLeft size={15} /> Back
             </button>
             <ChevronRight size={13} className="text-[var(--color-border)]" />

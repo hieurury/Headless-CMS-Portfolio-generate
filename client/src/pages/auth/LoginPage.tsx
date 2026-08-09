@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
-import { t } from '../../i18n';
+import { t, translateError } from '../../i18n';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 
@@ -34,7 +34,7 @@ const labelStyle: React.CSSProperties = {
 export const LoginPage: React.FC = () => {
   const { language } = useUIStore();
   const lang = t(language).auth;
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
@@ -51,8 +51,9 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     clearError();
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      await login(identifier, password);
+      const user = useAuthStore.getState().user;
+      navigate(`/${user?.username}/dashboard`);
     } catch (err: unknown) {
       // Unverified account — redirect to step 2 of registration
       if ((err as any)?.requiresVerification) {
@@ -130,7 +131,7 @@ export const LoginPage: React.FC = () => {
                 background: 'var(--color-error)',
               }}
             />
-            <span style={{ fontWeight: 500 }}>{error}</span>
+            <span style={{ fontWeight: 500 }}>{translateError(error, language)}</span>
           </div>
         </div>
       )}
@@ -173,13 +174,15 @@ export const LoginPage: React.FC = () => {
           >
             {/* Email */}
             <div>
-              <label style={labelStyle}>{lang.emailLabel}</label>
+              <label style={labelStyle}>
+                Email hoặc Username <span style={{ color: 'var(--color-error)', marginLeft: 2 }}>*</span>
+              </label>
               <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={lang.emailPlaceholder}
+                id="login-identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="you@example.com hoặc johndoe"
                 required
                 style={inputStyle}
                 onFocus={(e) =>
@@ -202,7 +205,7 @@ export const LoginPage: React.FC = () => {
                 }}
               >
                 <label style={{ ...labelStyle, marginBottom: 0 }}>
-                  {lang.passwordLabel}
+                  {lang.passwordLabel} <span style={{ color: 'var(--color-error)', marginLeft: 2 }}>*</span>
                 </label>
                 <Link
                   to="/forgot-password"

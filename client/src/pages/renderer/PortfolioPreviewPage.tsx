@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePageStore } from '../../store/pageStore';
+import { useAuthStore } from '../../store/authStore';
 import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { ArrowLeft, Loader2, Code2 } from 'lucide-react';
 
@@ -15,6 +16,7 @@ import { ArrowLeft, Loader2, Code2 } from 'lucide-react';
  */
 export const PortfolioPreviewPage: React.FC = () => {
   const { portfolioId, pageId } = useParams<{ portfolioId: string; pageId: string }>();
+  const { user } = useAuthStore();
   const { current: page, fetchOne, isLoading, error } = usePageStore();
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export const PortfolioPreviewPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error ?? 'Page not found'}</p>
-          <Link to="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
+          <Link to={`/${user?.username}/dashboard`} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
             ← Back to dashboard
           </Link>
         </div>
@@ -53,7 +55,7 @@ export const PortfolioPreviewPage: React.FC = () => {
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <div className="flex items-center gap-3 px-5 py-3 rounded-2xl glass border border-white/10 shadow-xl backdrop-blur-lg">
           <Link
-            to={`/dashboard/portfolios/${portfolioId}`}
+            to={`/${user?.username}/dashboard/portfolios/${portfolioId}`}
             className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft size={14} /> Back

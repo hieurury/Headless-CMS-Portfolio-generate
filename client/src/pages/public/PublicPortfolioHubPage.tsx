@@ -22,7 +22,7 @@ const ICONS = [
 ];
 
 export const PublicPortfolioHubPage: React.FC = () => {
-  const { portfolioSlug } = useParams<{ portfolioSlug: string }>();
+  const { username, portfolioSlug } = useParams<{ username: string; portfolioSlug: string }>();
   const [data, setData] = useState<PublicPortfolioHub | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +33,10 @@ export const PublicPortfolioHubPage: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      if (!portfolioSlug) return;
+      if (!username || !portfolioSlug) return;
       setIsLoading(true);
       try {
-        const result = await publicService.getPortfolio(portfolioSlug);
+        const result = await publicService.getPortfolio(username, portfolioSlug);
         setData(result);
       } catch {
         setError('This portfolio is not available or has not been published.');
@@ -45,7 +45,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
       }
     };
     void load();
-  }, [portfolioSlug]);
+  }, [username, portfolioSlug]);
 
   if (isLoading) {
     return (
@@ -111,6 +111,17 @@ export const PublicPortfolioHubPage: React.FC = () => {
               <span className="font-bold hidden sm:block">{t('explore.explore')}</span>
             </Link>
             <span className="text-[var(--color-border)]">/</span>
+            {username && (
+              <>
+                <Link
+                  to={`/${username}`}
+                  className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-sm font-mono transition-colors"
+                >
+                  {data?.username ?? username}
+                </Link>
+                <span className="text-[var(--color-border)]">/</span>
+              </>
+            )}
             <span className="text-[var(--color-text)] text-sm font-semibold">{data.title}</span>
             <div className="ml-3 flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[var(--color-surface-2)] text-xs font-medium text-[var(--color-text-muted)] border border-[var(--color-border)] hidden sm:flex">
               <Globe size={12} /> {language === 'en' ? 'Published' : 'Đã xuất bản'}
@@ -224,7 +235,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
                   return (
                   <Link
                     key={page.urlSlug}
-                    to={`/p/${portfolioSlug}/${page.urlSlug}`}
+                    to={`/${username}/${portfolioSlug}/${page.urlSlug}`}
                     id={`hub-page-link-${page.urlSlug}`}
                     className="group flex items-center justify-between p-4 sm:p-5 rounded-sm border-0 bg-[var(--color-surface)] shadow-sm hover:shadow-md transition-all duration-300"
                   >
@@ -262,7 +273,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
                 {data.posts.map((post) => (
                   <Link
                     key={post.slug}
-                    to={`/p/${portfolioSlug}/post/${post.slug}`}
+                    to={`/${username}/${portfolioSlug}/post/${post.slug}`}
                     className="group flex flex-col p-4 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm hover:shadow-md transition-all duration-300 min-h-[160px]"
                   >
                     {post.coverImage && (

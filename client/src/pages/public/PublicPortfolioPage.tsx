@@ -15,7 +15,8 @@ import { useI18n } from '../../hooks/useI18n';
  * Renders the JSON layout with a top page-navigation bar.
  */
 export const PublicPortfolioPage: React.FC = () => {
-  const { portfolioSlug, pageSlug } = useParams<{
+  const { username, portfolioSlug, pageSlug } = useParams<{
+    username: string;
     portfolioSlug: string;
     pageSlug: string;
   }>();
@@ -26,20 +27,19 @@ export const PublicPortfolioPage: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      if (!portfolioSlug || !pageSlug) return;
+      if (!username || !portfolioSlug || !pageSlug) return;
       setIsLoading(true);
-      setError(null);
       try {
-        const result = await publicService.getPage(portfolioSlug, pageSlug);
+        const result = await publicService.getPage(username, portfolioSlug, pageSlug);
         setData(result);
-      } catch (err: unknown) {
-        setError(t('publicHub.notAvailableDesc'));
+      } catch {
+        setError('This page is not available or has not been published.');
       } finally {
         setIsLoading(false);
       }
     };
     void load();
-  }, [portfolioSlug, pageSlug]);
+  }, [username, portfolioSlug, pageSlug]);
 
   if (isLoading) {
     return (
@@ -101,7 +101,7 @@ export const PublicPortfolioPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 h-12 flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {/* Back to portfolio hub */}
           <Link
-            to={`/p/${portfolioSlug}`}
+            to={`/${username}/${portfolioSlug}`}
             className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-1.5 rounded-sm hover:bg-[var(--color-surface-2)] transition-all shrink-0 font-medium"
           >
             <LayoutGrid size={12} />
@@ -116,7 +116,7 @@ export const PublicPortfolioPage: React.FC = () => {
                 {data.allPages.map((p) => (
                   <NavLink
                     key={p.urlSlug}
-                    to={`/p/${portfolioSlug}/${p.urlSlug}`}
+                    to={`/${username}/${portfolioSlug}/${p.urlSlug}`}
                     className={({ isActive }) =>
                       `shrink-0 px-3 py-1.5 rounded-sm text-xs font-medium transition-all ${
                         isActive

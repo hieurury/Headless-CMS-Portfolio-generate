@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { Eye, EyeOff, Loader2, ChevronRight } from 'lucide-react';
+import { authService } from '../../services/auth.service';
+import { Eye, EyeOff, Loader2, ChevronRight, Check, X, AtSign } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';
+
+import { useUIStore } from '../../store/uiStore';
+import { translateError } from '../../i18n';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const STEPS = ['Tạo tài khoản', 'Xác thực email', 'Thông tin cá nhân'];
 const OTP_RESEND_DELAY = 60;
+const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{2,29}$/;
+const SITE_URL = window.location.origin;
 
 const INTERESTS = [
   'Marketing',
@@ -52,89 +58,195 @@ const ErrorToast: React.FC<{ message: string }> = ({ message }) => (
         backdropFilter: 'blur(8px)',
       }}
     >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: 'var(--color-error)',
-        }}
-      />
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-error)' }} />
       <span style={{ fontWeight: 500 }}>{message}</span>
     </div>
   </div>
 );
 
-// ─── Step 1: Account creation ─────────────────────────────────────────────────
+// ─── Shared input style helper ────────────────────────────────────────────────
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  background: 'var(--color-surface-2)',
+  color: 'var(--color-text)',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  fontSize: 14,
+  outline: 'none',
+  boxShadow: 'var(--shadow-sm)',
+  transition: 'box-shadow 0.2s',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.5px',
+  textTransform: 'uppercase',
+  color: 'var(--color-text-muted)',
+  marginBottom: 6,
+};
+
+// ─── Step 1: Account creation (email + password + username) ───────────────────
 
 const Step1: React.FC<{
-  onNext: (email: string, password: string) => Promise<void>;
+  onNext: (email: string, password: string, username: string) => Promise<void>;
   isLoading: boolean;
 }> = ({ onNext, isLoading }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [showPass, setShowPass] = useState(false);
+
+  // Username availability state
+  const [usernameStatus, setUsernameStatus] = useState<
+    'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+  >('idle');
+  const [usernameMessage, setUsernameMessage] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUsernameChange = (val: string) => {
+    // Force lowercase + strip invalid chars on the fly
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    setUsername(cleaned);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!cleaned) {
+      setUsernameStatus('idle');
+      setUsernameMessage('');
+      return;
+    }
+
+    if (!USERNAME_REGEX.test(cleaned)) {
+      setUsernameStatus('invalid');
+      setUsernameMessage('3–30 ký tự, bắt đầu bằng chữ/số, chỉ dùng a-z, 0-9, - hoặc _');
+      return;
+    }
+
+    setUsernameStatus('checking');
+    setUsernameMessage('');
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result = await authService.checkUsername(cleaned);
+        if (result.available) {
+          setUsernameStatus('available');
+          setUsernameMessage('');
+        } else {
+          setUsernameStatus('taken');
+          setUsernameMessage(result.reason ?? 'Username đã được sử dụng');
+        }
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onNext(email, password);
+    if (usernameStatus !== 'available') return;
+    await onNext(email, password, username);
   };
+
+  const getUsernameBorderColor = () => {
+    if (usernameStatus === 'taken' || usernameStatus === 'invalid') return '0 0 0 2px var(--color-error)';
+    return 'var(--shadow-sm)';
+  };
+
+  const getUsernameStatusIcon = () => {
+    if (usernameStatus === 'checking') return <Loader2 size={14} className="animate-spin" style={{ color: 'var(--color-text-muted)' }} />;
+    if (usernameStatus === 'available') return <Check size={14} style={{ color: '#22c55e' }} />;
+    if (usernameStatus === 'taken' || usernameStatus === 'invalid') return <X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} title={usernameMessage} />;
+    return null;
+  };
+
+  const isSubmitDisabled = isLoading || usernameStatus !== 'available';
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPasswordValid = password.length >= 6;
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Username */}
       <div>
-        <label
-          style={{
-            display: 'block',
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase',
-            color: 'var(--color-text-muted)',
-            marginBottom: 6,
-          }}
-        >
-          Email
+        <label style={labelStyle}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            Tên đăng nhập
+            <span style={{ color: 'var(--color-error)', marginLeft: 2 }}>*</span>
+          </span>
         </label>
-        <input
-          id="register-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          required
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            background: 'var(--color-surface-2)',
-            color: 'var(--color-text)',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            fontSize: 14,
-            outline: 'none',
-            boxShadow: 'var(--shadow-sm)',
-            transition: 'box-shadow 0.2s',
-          }}
-          onFocus={(e) =>
-            (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)')
-          }
-          onBlur={(e) => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
-        />
+        <div style={{ position: 'relative' }}>
+          <input
+            id="register-username"
+            type="text"
+            value={username}
+            onChange={(e) => handleUsernameChange(e.target.value)}
+            placeholder="johndoe"
+            required
+            maxLength={30}
+            style={{
+              ...inputStyle,
+              paddingRight: 38,
+              boxShadow: username ? getUsernameBorderColor() : 'var(--shadow-sm)',
+            }}
+            autoComplete="username"
+          />
+          {username && (
+            <div style={{
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              {getUsernameStatusIcon()}
+            </div>
+          )}
+        </div>
+
+
+
       </div>
 
+      {/* Email */}
       <div>
-        <label
-          style={{
-            display: 'block',
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase',
-            color: 'var(--color-text-muted)',
-            marginBottom: 6,
-          }}
-        >
-          Mật khẩu
+        <label style={labelStyle}>
+          Email <span style={{ color: 'var(--color-error)', marginLeft: 2 }}>*</span>
+        </label>
+        <div style={{ position: 'relative' }}>
+          <input
+            id="register-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            style={{ ...inputStyle, paddingRight: 38 }}
+            onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)')}
+            onBlur={(e) => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
+          />
+          {isEmailValid && (
+            <div style={{
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              <Check size={14} style={{ color: '#22c55e' }} />
+            </div>
+          )}
+          {email && !isEmailValid && (
+            <div style={{
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              <X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} title="Email không hợp lệ" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Password */}
+      <div>
+        <label style={labelStyle}>
+          Mật khẩu <span style={{ color: 'var(--color-error)', marginLeft: 2 }}>*</span>
         </label>
         <div style={{ position: 'relative' }}>
           <input
@@ -145,37 +257,33 @@ const Step1: React.FC<{
             placeholder="Tối thiểu 6 ký tự"
             required
             minLength={6}
-            style={{
-              width: '100%',
-              padding: '10px 42px 10px 14px',
-              background: 'var(--color-surface-2)',
-              color: 'var(--color-text)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 14,
-              outline: 'none',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'box-shadow 0.2s',
-            }}
-            onFocus={(e) =>
-              (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)')
-            }
+            style={{ ...inputStyle, paddingRight: 64 }}
+            onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)')}
             onBlur={(e) => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
           />
+          {isPasswordValid && (
+            <div style={{
+              position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              <Check size={14} style={{ color: '#22c55e' }} />
+            </div>
+          )}
+          {password && !isPasswordValid && (
+            <div style={{
+              position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              <X size={14} style={{ color: 'var(--color-error)', cursor: 'help' }} title="Mật khẩu phải từ 6 ký tự trở lên" />
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setShowPass((v) => !v)}
             style={{
-              position: 'absolute',
-              right: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              color: 'var(--color-text-muted)',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'flex',
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', color: 'var(--color-text-muted)',
+              cursor: 'pointer', padding: 0, display: 'flex',
             }}
           >
             {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -183,47 +291,32 @@ const Step1: React.FC<{
         </div>
       </div>
 
+      {/* Submit */}
       <button
         id="register-submit"
         type="submit"
-        disabled={isLoading}
+        disabled={isSubmitDisabled}
         style={{
-          width: '100%',
-          padding: '11px',
-          background: 'var(--color-text)',
-          color: 'var(--color-bg)',
-          border: 'none',
-          borderRadius: 'var(--radius-md)',
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: isLoading ? 'not-allowed' : 'pointer',
-          opacity: isLoading ? 0.6 : 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          boxShadow: 'var(--shadow-sm)',
-          transition: 'opacity 0.2s',
-          marginTop: 4,
+          width: '100%', padding: '11px',
+          background: 'var(--color-text)', color: 'var(--color-bg)',
+          border: 'none', borderRadius: 'var(--radius-md)',
+          fontSize: 14, fontWeight: 600,
+          cursor: isSubmitDisabled ? 'not-allowed' : 'pointer',
+          opacity: isSubmitDisabled ? 0.5 : 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          boxShadow: 'var(--shadow-sm)', transition: 'opacity 0.2s', marginTop: 4,
         }}
       >
         {isLoading ? (
-          <>
-            <Loader2 size={16} className="animate-spin" /> Đang xử lý...
-          </>
+          <><Loader2 size={16} className="animate-spin" /> Đang xử lý...</>
         ) : (
-          <>
-            Tiếp theo <ChevronRight size={16} />
-          </>
+          <>Tiếp theo <ChevronRight size={16} /></>
         )}
       </button>
 
       <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--color-text-muted)' }}>
         Đã có tài khoản?{' '}
-        <Link
-          to="/login"
-          style={{ color: 'var(--color-text)', fontWeight: 500, textDecoration: 'underline' }}
-        >
+        <Link to="/login" style={{ color: 'var(--color-text)', fontWeight: 500, textDecoration: 'underline' }}>
           Đăng nhập
         </Link>
       </p>
@@ -248,10 +341,7 @@ const Step2: React.FC<{
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       setResendCountdown((v) => {
-        if (v <= 1) {
-          clearInterval(intervalRef.current!);
-          return 0;
-        }
+        if (v <= 1) { clearInterval(intervalRef.current!); return 0; }
         return v - 1;
       });
     }, 1000);
@@ -266,10 +356,7 @@ const Step2: React.FC<{
     clearError();
     intervalRef.current = setInterval(() => {
       setResendCountdown((v) => {
-        if (v <= 1) {
-          clearInterval(intervalRef.current!);
-          return 0;
-        }
+        if (v <= 1) { clearInterval(intervalRef.current!); return 0; }
         return v - 1;
       });
     }, 1000);
@@ -277,10 +364,7 @@ const Step2: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.length < 6) {
-      setLocalError('Vui lòng nhập đủ 6 chữ số.');
-      return;
-    }
+    if (otp.length < 6) { setLocalError('Vui lòng nhập đủ 6 chữ số.'); return; }
     setLocalError(null);
     await onVerify(otp);
   };
@@ -297,11 +381,7 @@ const Step2: React.FC<{
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <OtpInput
           value={otp}
-          onChange={(val) => {
-            setOtp(val);
-            if (localError) setLocalError(null);
-            if (error) clearError();
-          }}
+          onChange={(val) => { setOtp(val); if (localError) setLocalError(null); if (error) clearError(); }}
           disabled={isLoading}
           error={displayError ?? undefined}
         />
@@ -312,31 +392,17 @@ const Step2: React.FC<{
         type="submit"
         disabled={isLoading || otp.length < 6}
         style={{
-          width: '100%',
-          padding: '11px',
-          background: 'var(--color-text)',
-          color: 'var(--color-bg)',
-          border: 'none',
-          borderRadius: 'var(--radius-md)',
-          fontSize: 14,
-          fontWeight: 600,
+          width: '100%', padding: '11px',
+          background: 'var(--color-text)', color: 'var(--color-bg)',
+          border: 'none', borderRadius: 'var(--radius-md)',
+          fontSize: 14, fontWeight: 600,
           cursor: isLoading || otp.length < 6 ? 'not-allowed' : 'pointer',
           opacity: isLoading || otp.length < 6 ? 0.5 : 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          boxShadow: 'var(--shadow-sm)',
-          transition: 'opacity 0.2s',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          boxShadow: 'var(--shadow-sm)', transition: 'opacity 0.2s',
         }}
       >
-        {isLoading ? (
-          <>
-            <Loader2 size={16} className="animate-spin" /> Đang xác thực...
-          </>
-        ) : (
-          'Xác thực'
-        )}
+        {isLoading ? <><Loader2 size={16} className="animate-spin" /> Đang xác thực...</> : 'Xác thực'}
       </button>
 
       <div style={{ textAlign: 'center' }}>
@@ -345,41 +411,33 @@ const Step2: React.FC<{
           onClick={handleResend}
           disabled={resendCountdown > 0}
           style={{
-            background: 'none',
-            border: 'none',
-            fontSize: 13,
-            color:
-              resendCountdown > 0
-                ? 'var(--color-text-faint)'
-                : 'var(--color-text-muted)',
+            background: 'none', border: 'none', fontSize: 13,
+            color: resendCountdown > 0 ? 'var(--color-text-faint)' : 'var(--color-text-muted)',
             cursor: resendCountdown > 0 ? 'default' : 'pointer',
             textDecoration: resendCountdown === 0 ? 'underline' : 'none',
             transition: 'color 0.2s',
           }}
         >
-          {resendCountdown > 0
-            ? `Gửi lại sau ${resendCountdown}s`
-            : 'Gửi lại mã xác thực'}
+          {resendCountdown > 0 ? `Gửi lại sau ${resendCountdown}s` : 'Gửi lại mã xác thực'}
         </button>
       </div>
     </form>
   );
 };
 
-// ─── Step 3: Profile ──────────────────────────────────────────────────────────
+// ─── Step 3: Profile (fullName optional + other info) ─────────────────────────
 
 const Step3: React.FC<{
   onSubmit: (data: {
-    name?: string;
+    fullName?: string;
     age?: number;
     slogan?: string;
     occupation?: string;
     interests?: string[];
   }) => Promise<void>;
-  onSkip: () => void;
   isLoading: boolean;
-}> = ({ onSubmit, onSkip, isLoading }) => {
-  const [name, setName] = useState('');
+}> = ({ onSubmit, isLoading }) => {
+  const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [slogan, setSlogan] = useState('');
   const [occupation, setOccupation] = useState('');
@@ -394,68 +452,50 @@ const Step3: React.FC<{
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload: Parameters<typeof onSubmit>[0] = {};
-    if (name.trim()) payload.name = name.trim();
+    if (fullName.trim()) payload.fullName = fullName.trim();
     if (age) payload.age = Number(age);
     if (slogan.trim()) payload.slogan = slogan.trim();
     if (occupation.trim()) payload.occupation = occupation.trim();
     if (selectedInterests.length) payload.interests = selectedInterests;
-
-    if (Object.keys(payload).length > 0) {
-      await onSubmit(payload);
-    } else {
-      onSkip();
-    }
+    await onSubmit(payload);
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '9px 12px',
-    background: 'var(--color-surface-2)',
-    color: 'var(--color-text)',
-    border: 'none',
-    borderRadius: 'var(--radius-md)',
-    fontSize: 13,
-    outline: 'none',
-    boxShadow: 'var(--shadow-sm)',
-    transition: 'box-shadow 0.2s',
+  const stepInputStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 12px',
+    background: 'var(--color-surface-2)', color: 'var(--color-text)',
+    border: 'none', borderRadius: 'var(--radius-md)', fontSize: 13, outline: 'none',
+    boxShadow: 'var(--shadow-sm)', transition: 'box-shadow 0.2s',
   };
 
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-    color: 'var(--color-text-muted)',
-    marginBottom: 5,
+  const stepLabelStyle: React.CSSProperties = {
+    display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.5px',
+    textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: 5,
   };
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)';
-  };
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-  };
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) =>
+    (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-text)');
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) =>
+    (e.currentTarget.style.boxShadow = 'var(--shadow-sm)');
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Name + Age row */}
+      {/* fullName + Age */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
         <div>
-          <label style={labelStyle}>Họ và tên</label>
+          <label style={stepLabelStyle}>Họ và tên</label>
           <input
-            id="profile-name"
+            id="profile-fullname"
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
             placeholder="Nguyễn Văn A"
-            style={inputStyle}
+            style={stepInputStyle}
             onFocus={handleFocus}
             onBlur={handleBlur}
           />
         </div>
         <div style={{ width: 72 }}>
-          <label style={labelStyle}>Tuổi</label>
+          <label style={stepLabelStyle}>Tuổi</label>
           <input
             id="profile-age"
             type="number"
@@ -464,7 +504,7 @@ const Step3: React.FC<{
             placeholder="25"
             min={13}
             max={120}
-            style={inputStyle}
+            style={stepInputStyle}
             onFocus={handleFocus}
             onBlur={handleBlur}
           />
@@ -473,14 +513,14 @@ const Step3: React.FC<{
 
       {/* Occupation */}
       <div>
-        <label style={labelStyle}>Nghề nghiệp</label>
+        <label style={stepLabelStyle}>Nghề nghiệp</label>
         <input
           id="profile-occupation"
           type="text"
           value={occupation}
           onChange={(e) => setOccupation(e.target.value)}
           placeholder="Frontend Developer, Designer..."
-          style={inputStyle}
+          style={stepInputStyle}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />
@@ -488,7 +528,7 @@ const Step3: React.FC<{
 
       {/* Slogan */}
       <div>
-        <label style={labelStyle}>Slogan</label>
+        <label style={stepLabelStyle}>Slogan</label>
         <input
           id="profile-slogan"
           type="text"
@@ -496,7 +536,7 @@ const Step3: React.FC<{
           onChange={(e) => setSlogan(e.target.value)}
           placeholder="Câu slogan của bạn..."
           maxLength={160}
-          style={inputStyle}
+          style={stepInputStyle}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />
@@ -504,7 +544,7 @@ const Step3: React.FC<{
 
       {/* Interests */}
       <div>
-        <label style={{ ...labelStyle, marginBottom: 8 }}>Danh mục quan tâm</label>
+        <label style={{ ...stepLabelStyle, marginBottom: 8 }}>Danh mục quan tâm</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {INTERESTS.map((item) => {
             const selected = selectedInterests.includes(item);
@@ -514,15 +554,9 @@ const Step3: React.FC<{
                 type="button"
                 onClick={() => toggleInterest(item)}
                 style={{
-                  padding: '5px 11px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  background: selected
-                    ? 'var(--color-text)'
-                    : 'var(--color-surface-2)',
+                  padding: '5px 11px', borderRadius: 'var(--radius-sm)', border: 'none',
+                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  background: selected ? 'var(--color-text)' : 'var(--color-surface-2)',
                   color: selected ? 'var(--color-bg)' : 'var(--color-text-muted)',
                   boxShadow: selected ? 'var(--shadow-sm)' : 'none',
                   transition: 'all 0.15s',
@@ -535,56 +569,32 @@ const Step3: React.FC<{
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Submit */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
         <button
           id="profile-submit"
           type="submit"
           disabled={isLoading}
           style={{
-            width: '100%',
-            padding: '11px',
-            background: 'var(--color-text)',
-            color: 'var(--color-bg)',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            fontSize: 14,
-            fontWeight: 600,
+            width: '100%', padding: '11px',
+            background: 'var(--color-text)', color: 'var(--color-bg)',
+            border: 'none', borderRadius: 'var(--radius-md)',
+            fontSize: 14, fontWeight: 600,
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.6 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             boxShadow: 'var(--shadow-sm)',
           }}
         >
           {isLoading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" /> Đang lưu...
-            </>
+            <><Loader2 size={16} className="animate-spin" /> Đang lưu...</>
           ) : (
-            <>
-              Tiếp tục <ChevronRight size={16} />
-            </>
+            <>Hoàn tất <Check size={16} /></>
           )}
         </button>
-
-        <button
-          type="button"
-          onClick={onSkip}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: 13,
-            color: 'var(--color-text-muted)',
-            cursor: 'pointer',
-            textAlign: 'center',
-            textDecoration: 'underline',
-          }}
-        >
-          Bỏ qua, cập nhật sau
-        </button>
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-text-faint)', margin: 0 }}>
+          Tất cả thông tin có thể cập nhật sau trong phần cài đặt
+        </p>
       </div>
     </form>
   );
@@ -595,6 +605,7 @@ const Step3: React.FC<{
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { language } = useUIStore();
   const {
     register,
     verifyOtp,
@@ -606,23 +617,18 @@ export const RegisterPage: React.FC = () => {
     clearError,
   } = useAuthStore();
 
-  // If URL has ?step=2 (from login redirect for unverified users)
   const initialStep = searchParams.get('step') === '2' ? 1 : 0;
   const [step, setStep] = useState(initialStep);
 
-  // If user is already authenticated and visits /register directly at step 0, redirect to dashboard
   useEffect(() => {
     if (isAuthenticated && step === 0 && !searchParams.get('step')) {
-      navigate('/dashboard', { replace: true });
+      const user = useAuthStore.getState().user;
+      navigate(`/${user?.username}/dashboard`, { replace: true });
     }
   }, [isAuthenticated, step, searchParams, navigate]);
 
-  // Auto-clear error on step change
-  useEffect(() => {
-    clearError();
-  }, [step, clearError]);
+  useEffect(() => { clearError(); }, [step, clearError]);
 
-  // Auto-dismiss error toast
   useEffect(() => {
     if (!error) return;
     const t = setTimeout(clearError, 4000);
@@ -632,8 +638,8 @@ export const RegisterPage: React.FC = () => {
   // ─── Step handlers ──────────────────────────────────────────────────────────
 
   const handleStep1 = useCallback(
-    async (email: string, password: string) => {
-      await register(email, password);
+    async (email: string, password: string, username: string) => {
+      await register(email, password, username);
       setStep(1);
     },
     [register],
@@ -650,16 +656,15 @@ export const RegisterPage: React.FC = () => {
   const handleProfile = useCallback(
     async (data: Parameters<typeof updateProfile>[0]) => {
       await updateProfile(data);
-      navigate('/dashboard');
+      const user = useAuthStore.getState().user;
+      navigate(`/${user?.username}/dashboard`);
     },
     [updateProfile, navigate],
   );
 
-  const handleSkip = () => navigate('/dashboard');
-
   const stepTitles = ['Tạo tài khoản', 'Xác thực email', 'Thông tin cá nhân'];
   const stepSubtitles = [
-    'Nhập email và mật khẩu để bắt đầu',
+    'Nhập email, mật khẩu và username của bạn',
     'Nhập mã 6 chữ số từ email của bạn',
     'Tùy chọn — có thể cập nhật sau',
   ];
@@ -667,15 +672,10 @@ export const RegisterPage: React.FC = () => {
   return (
     <div
       style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '80px 16px 24px',
-        background: 'var(--color-bg)',
-        position: 'relative',
-        overflow: 'hidden',
+        minHeight: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '80px 16px 24px', background: 'var(--color-bg)',
+        position: 'relative', overflow: 'hidden',
       }}
     >
       <AuthNavbar />
@@ -683,27 +683,16 @@ export const RegisterPage: React.FC = () => {
       {/* Ambient glow */}
       <div
         style={{
-          position: 'absolute',
-          top: '30%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'var(--color-surface-2)',
-          filter: 'blur(100px)',
-          opacity: 0.4,
+          position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)',
+          width: 400, height: 400, borderRadius: '50%',
+          background: 'var(--color-surface-2)', filter: 'blur(100px)', opacity: 0.4,
           pointerEvents: 'none',
         }}
       />
 
-      {/* Error Toast */}
-      {error && <ErrorToast message={error} />}
+      {error && <ErrorToast message={translateError(error, language)} />}
 
-      <div
-        style={{ width: '100%', maxWidth: 440, position: 'relative' }}
-        className="animate-slide-up"
-      >
+      <div style={{ width: '100%', maxWidth: 440, position: 'relative' }} className="animate-slide-up">
         {/* Progress */}
         <div style={{ marginBottom: 28 }}>
           <StepProgress steps={STEPS} currentStep={step} />
@@ -712,21 +701,16 @@ export const RegisterPage: React.FC = () => {
         {/* Card */}
         <div
           style={{
-            background: 'var(--color-surface)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '28px 28px 24px',
-            boxShadow: 'var(--shadow-xl)',
+            background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)',
+            padding: '28px 28px 24px', boxShadow: 'var(--shadow-xl)',
           }}
         >
           {/* Header */}
           <div style={{ marginBottom: 20 }}>
             <h1
               style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: 'var(--color-text)',
-                margin: '0 0 4px',
-                letterSpacing: '-0.3px',
+                fontSize: 18, fontWeight: 700, color: 'var(--color-text)',
+                margin: '0 0 4px', letterSpacing: '-0.3px',
               }}
             >
               {stepTitles[step]}
@@ -737,31 +721,22 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           {/* Divider */}
-          <div
-            style={{
-              height: 1,
-              background: 'var(--color-border)',
-              marginBottom: 20,
-            }}
-          />
+          <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 20 }} />
 
           {/* Step Content */}
-          {step === 0 && (
-            <Step1 onNext={handleStep1} isLoading={isLoading} />
-          )}
+          {step === 0 && <Step1 onNext={handleStep1} isLoading={isLoading} />}
           {step === 1 && (
             <Step2
               onVerify={handleVerify}
               onResend={resendOtp}
               isLoading={isLoading}
-              error={error}
+              error={error ? translateError(error, language) : null}
               clearError={clearError}
             />
           )}
           {step === 2 && (
             <Step3
               onSubmit={handleProfile}
-              onSkip={handleSkip}
               isLoading={isLoading}
             />
           )}

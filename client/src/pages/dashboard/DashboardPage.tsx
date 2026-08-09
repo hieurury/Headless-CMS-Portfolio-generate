@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { useUIStore } from '../../store/uiStore';
+import { useAuthStore } from '../../store/authStore';
 import { UserNavMenu } from '../../components/common/UserNavMenu';
 import { CategoryPicker } from '../../components/common/CategoryPicker';
 import { t } from '../../i18n';
@@ -55,6 +56,7 @@ export const DashboardPage: React.FC = () => {
   } = usePortfolioStore();
 
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
 
   // Active Tab: 'portfolios' or 'presentations'
@@ -77,8 +79,9 @@ export const DashboardPage: React.FC = () => {
   const lang = t(language).dashboard;
 
   const handleCopyLink = (slug: string, id: string) => {
-    const url = `${window.location.origin}/p/${slug}`;
-    void navigator.clipboard.writeText(url).then(() => {
+    const username = user?.username ?? '';
+    const url = `${window.location.origin}/${username}/${slug}`;
+    navigator.clipboard.writeText(url).then(() => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     });
@@ -109,7 +112,7 @@ export const DashboardPage: React.FC = () => {
       });
       setShowCreate(false);
       setForm({ title: '', slug: '', description: '', icon: 'Folder', categories: ['technology'] });
-      navigate(`/dashboard/portfolios/${p._id}`);
+      navigate(`/${user?.username}/dashboard/portfolios/${p._id}`);
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
       setCreateError(Array.isArray(msg) ? msg[0] : msg);
@@ -145,7 +148,7 @@ export const DashboardPage: React.FC = () => {
                 {lang.community}
               </Link>
               <Link
-                to="/dashboard/media"
+                to={`/${user?.username}/dashboard/media`}
                 className="home-navbar__link flex items-center gap-1.5"
               >
                 <ImageIcon size={14} />
@@ -395,7 +398,7 @@ export const DashboardPage: React.FC = () => {
                       {/* Bottom Action Row: Uniform 4 slots across all cards */}
                       <div className="flex items-center gap-1.5 sm:gap-2 mt-4 pt-3.5 border-t border-[var(--color-border)]">
                         <Link
-                          to={`/dashboard/portfolios/${p._id}`}
+                          to={`/${user?.username}/dashboard/portfolios/${p._id}`}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded text-xs font-semibold text-[var(--color-text)] border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] transition-colors shadow-sm"
                         >
                           <ExternalLink size={13} /> {lang.manage}
@@ -404,7 +407,7 @@ export const DashboardPage: React.FC = () => {
                         {/* View public portfolio button */}
                         {p.isPublished ? (
                           <Link
-                            to={`/p/${p.slug}`}
+                            to={`/${user?.username ?? ''}/${p.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-2 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors border border-[var(--color-border)] shrink-0"

@@ -23,7 +23,7 @@ const clearAuthAndRedirect = () => {
     !window.location.pathname.startsWith('/register') &&
     !window.location.pathname.startsWith('/forgot-password') &&
     !window.location.pathname.startsWith('/reset-password') &&
-    !window.location.pathname.startsWith('/p/')
+    !window.location.pathname.startsWith('/explore')
   ) {
     window.location.href = '/login';
   }

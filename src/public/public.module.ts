@@ -9,9 +9,11 @@ import {
 import { Page, PageSchema } from '../pages/schemas/page.schema';
 import { Post, PostSchema } from '../posts/schemas/post.schema';
 import { Posttype, PosttypeSchema } from '../posttype/schema/posttype.schema';
+import { AccountsModule } from '../accounts/accounts.module';
 
 @Module({
   imports: [
+    AccountsModule,
     MongooseModule.forFeature([
       { name: Portfolio.name, schema: PortfolioSchema },
       { name: Page.name, schema: PageSchema },
