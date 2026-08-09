@@ -37,22 +37,38 @@ import { NotFoundPage } from '../pages/error/NotFoundPage';
 
 
 const PublicRoute: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const location = useLocation();
-  if (isAuthenticated && location.pathname !== '/register') {
-    return <Navigate to={`/${user?.username}/dashboard`} replace />;
+
+  React.useEffect(() => {
+    if (isAuthenticated && (!user || !user.username)) {
+      logout();
+    }
+  }, [isAuthenticated, user, logout]);
+
+  if (isAuthenticated && user?.username && location.pathname !== '/register') {
+    return <Navigate to={`/${user.username}/dashboard`} replace />;
   }
   return <Outlet />;
 };
 
 const StrictDashboardGuard: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const { username } = useParams();
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  React.useEffect(() => {
+    if (isAuthenticated && (!user || !user.username)) {
+      logout();
+      useAuthStore.setState({ error: 'Phiên đăng nhập không hợp lệ hoặc dữ liệu cũ. Vui lòng đăng nhập lại.' });
+    }
+  }, [isAuthenticated, user, logout]);
+
+  if (!isAuthenticated || !user || !user.username) {
+    return <Navigate to="/login" replace />;
+  }
   
-  if (user?.username !== username) {
-    return <Navigate to={`/${user?.username}/dashboard`} replace />;
+  if (user.username !== username) {
+    return <Navigate to={`/${user.username}/dashboard`} replace />;
   }
   
   return <Outlet />;

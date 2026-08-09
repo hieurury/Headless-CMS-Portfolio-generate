@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { t, translateError } from '../../i18n';
@@ -39,6 +39,7 @@ export const LoginPage: React.FC = () => {
   const [showPass, setShowPass] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Auto-dismiss error toast
   useEffect(() => {
@@ -46,6 +47,15 @@ export const LoginPage: React.FC = () => {
     const timer = setTimeout(clearError, 4000);
     return () => clearTimeout(timer);
   }, [error, clearError]);
+
+  // Handle URL errors
+  useEffect(() => {
+    if (searchParams.get('error') === 'invalid_session') {
+      useAuthStore.setState({ error: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.' });
+      searchParams.delete('error');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
