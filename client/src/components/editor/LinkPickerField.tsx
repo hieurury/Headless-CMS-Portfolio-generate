@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Link, Globe, FileText, Hash, ChevronDown, Check, X, Loader2 } from 'lucide-react';
+import { Globe, FileText, Hash, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { usePageStore } from '../../store/pageStore';
-import type { Page } from '../../core/types/layout.types';
+import type { Page, LayoutSection } from '../../core/types/layout.types';
 import { useUIStore } from '../../store/uiStore';
 import { pageService } from '../../services/page.service';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { useEditorContext } from '../../core/context/EditorContext';
 
 type LinkType = 'url' | 'page' | 'inner';
 
@@ -22,8 +21,6 @@ export interface LinkPickerFieldProps {
   pages?: Page[];
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function detectType(val: string): LinkType {
   if (!val) return 'url';
   if (val.startsWith('#')) return 'inner';
@@ -31,55 +28,27 @@ function detectType(val: string): LinkType {
   return 'url';
 }
 
-function scanInnerAnchors(): InnerAnchor[] {
-  const container =
-    document.querySelector('.editor-preview-container') ||
-    document.querySelector('[data-editor-canvas]') ||
-    document.body;
-
-  const elements = container.querySelectorAll('[id]');
+function getAnchorsFromSections(sections: LayoutSection[]): InnerAnchor[] {
   const anchors: InnerAnchor[] = [];
-  const seen = new Set<string>();
-
-  elements.forEach((el) => {
-    const id = el.id;
-    if (!id || seen.has(id)) return;
-    if (id.startsWith('editor-') || id.startsWith('__') || id.startsWith('react-')) return;
-    seen.add(id);
-    const tag = el.tagName.toLowerCase();
-    anchors.push({ id, label: `${tag}#${id}` });
-  });
-
+  function traverse(list: LayoutSection[]) {
+    for (const sec of list) {
+      if (sec.name) {
+        anchors.push({ id: sec.name, label: sec.type });
+      }
+      if (sec.children && sec.children.length > 0) {
+        traverse(sec.children);
+      }
+    }
+  }
+  traverse(sections);
   return anchors;
 }
 
-const TABS: {
-  key: LinkType;
-  icon: React.FC<{ size?: number; className?: string }>;
-  en: string;
-  vi: string;
-}[] = [
-  {
-    key: 'url',
-    icon: Globe,
-    en: 'URL',
-    vi: 'URL',
-  },
-  {
-    key: 'page',
-    icon: FileText,
-    en: 'Page',
-    vi: 'Trang',
-  },
-  {
-    key: 'inner',
-    icon: Hash,
-    en: 'Inner',
-    vi: 'Trong trang',
-  },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
+const TYPE_CONFIG = {
+  url: { icon: Globe, en: 'URL', vi: 'URL' },
+  page: { icon: FileText, en: 'Page', vi: 'Trang' },
+  inner: { icon: Hash, en: 'Inner', vi: 'Trong' },
+};
 
 export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
   value,
@@ -90,42 +59,38 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 }) => {
   const { language } = useUIStore();
   const isVi = language === 'vi';
-
-  const [open, setOpen] = useState(false);
+  
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
+  
   const [activeTab, setActiveTab] = useState<LinkType>(() => detectType(value));
   const [inputVal, setInputVal] = useState(value ?? '');
-  const [urlInput, setUrlInput] = useState('');
-  const [innerManual, setInnerManual] = useState('');
+  
   const [pages, setPages] = useState<Page[]>(pagesProp ?? []);
   const [pagesLoading, setPagesLoading] = useState(false);
-  const [innerAnchors, setInnerAnchors] = useState<InnerAnchor[]>([]);
-
-  const popoverRef = useRef<HTMLDivElement>(null);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
   const storePages = usePageStore((s) => s.pages);
-  const currentLinkType = detectType(inputVal);
+  const editorCtx = useEditorContext();
+  const sections = editorCtx?.sections || [];
 
-  // Sync when external value changes
+  const innerAnchors = getAnchorsFromSections(sections);
+
   useEffect(() => {
     setInputVal(value ?? '');
-    const type = detectType(value ?? '');
-    if (type === 'url') setUrlInput(value ?? '');
-    if (type === 'inner') setInnerManual((value ?? '').slice(1));
+    setActiveTab(detectType(value ?? ''));
   }, [value]);
 
-  // Close on outside click
   useEffect(() => {
-    if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setTypeOpen(false);
+        setListOpen(false);
       }
     };
-    const timer = setTimeout(() => document.addEventListener('mousedown', handler), 50);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handler);
-    };
-  }, [open]);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const loadPages = useCallback(async () => {
     if (pagesProp && pagesProp.length > 0) { setPages(pagesProp); return; }
@@ -139,152 +104,114 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
     finally { setPagesLoading(false); }
   }, [pagesProp, portfolioId, storePages]);
 
-  const handleOpen = () => {
-    const type = detectType(inputVal);
+  const handleTypeSelect = (type: LinkType) => {
     setActiveTab(type);
-    if (type === 'url') setUrlInput(inputVal);
-    if (type === 'inner') setInnerManual(inputVal.startsWith('#') ? inputVal.slice(1) : '');
-    setOpen(true);
+    setTypeOpen(false);
+    
     if (type === 'page') loadPages();
-    if (type === 'inner') setInnerAnchors(scanInnerAnchors());
+    
+    // Auto open list when switching type if it's page or inner
+    if (type === 'page' || type === 'inner') {
+      setListOpen(true);
+    } else {
+      setListOpen(false);
+    }
   };
+  
+  const commit = useCallback((val: string) => {
+    setInputVal(val);
+    onChange(val);
+  }, [onChange]);
 
-  const handleTabChange = (tab: LinkType) => {
-    setActiveTab(tab);
-    if (tab === 'page') loadPages();
-    if (tab === 'inner') setInnerAnchors(scanInnerAnchors());
-  };
-
-  const commit = useCallback(
-    (val: string) => {
-      setInputVal(val);
-      onChange(val);
-    },
-    [onChange],
-  );
-
-  // Type label for the button badge
-  const typeBadge =
-    currentLinkType === 'url'
-      ? 'URL'
-      : currentLinkType === 'page'
-        ? isVi ? 'Trang' : 'Page'
-        : isVi ? 'Trong' : 'Inner';
+  const activeConfig = TYPE_CONFIG[activeTab];
+  const ActiveIcon = activeConfig.icon;
 
   return (
-    <div className="relative w-full">
-      {/* ── Input Row ─────────────────────────────────────────────────── */}
-      <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-text-muted)] transition-colors h-9">
-        <div className="pl-3 pr-1.5 flex items-center shrink-0 text-[var(--color-text-faint)]">
-          <Link size={13} />
-        </div>
+    <div className="relative w-full" ref={containerRef}>
+      <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-hover)] transition-colors h-9">
+        
+        {/* Type Selector Button */}
+        <button
+          type="button"
+          onClick={() => {
+            setTypeOpen(!typeOpen);
+            setListOpen(false);
+          }}
+          className="h-full px-2.5 border-r border-[var(--color-border)] text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-3)] transition-colors flex items-center gap-1.5 shrink-0"
+        >
+          <ActiveIcon size={12} />
+          <span className="text-[11px] font-medium tracking-wide">
+            {isVi ? activeConfig.vi : activeConfig.en}
+          </span>
+          <ChevronDown size={11} className="opacity-50" />
+        </button>
 
+        {/* Text Input */}
         <input
           type="text"
           value={inputVal}
-          placeholder={
-            placeholder ??
-            (isVi ? '#id, /trang hoặc https://...' : '#id, /page or https://...')
-          }
-          onClick={handleOpen}
+          placeholder={placeholder ?? (isVi ? 'Nhập liên kết...' : 'Type link...')}
+          onClick={() => {
+            if (activeTab === 'page' || activeTab === 'inner') {
+              setListOpen(true);
+              setTypeOpen(false);
+              if (activeTab === 'page') loadPages();
+            }
+          }}
           onChange={(e) => {
             const v = e.target.value;
             setInputVal(v);
             onChange(v);
           }}
-          className="flex-1 bg-transparent text-sm text-[var(--color-text)] focus:outline-none min-w-0 py-1 cursor-text"
+          onKeyDown={(e) => {
+             if (e.key === 'Enter') {
+               setListOpen(false);
+             }
+          }}
+          className="flex-1 bg-transparent px-3 text-sm text-[var(--color-text)] focus:outline-none min-w-0"
         />
-
-        {/* Options button */}
-        <button
-          type="button"
-          onClick={handleOpen}
-          title={isVi ? 'Chọn loại liên kết' : 'Pick link type'}
-          className="h-full px-2.5 border-l border-[var(--color-border)] text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-3,var(--color-surface-2))] transition-colors flex items-center gap-1 shrink-0"
-        >
-          <span className="text-[10px] font-bold uppercase tracking-wide leading-none">
-            {typeBadge}
-          </span>
-          <ChevronDown size={11} />
-        </button>
       </div>
 
-      {/* ── Popover ────────────────────────────────────────────────────── */}
-      {open && (
-        <div
-          ref={popoverRef}
-          className="absolute z-[300] bottom-full mb-1 left-0 w-[280px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden flex flex-col animate-slide-up"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-2 border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
-            <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest pl-1">
-              {isVi ? 'Loại liên kết' : 'Link Type'}
-            </span>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-border)] transition-all"
-            >
-              <X size={12} />
-            </button>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex border-b border-[var(--color-border)]">
-            {TABS.map(({ key, icon: Icon, en, vi }) => (
+      {/* Popover 1: Type Picker */}
+      {typeOpen && (
+        <div className="absolute z-[300] bottom-full mb-1 left-0 w-[140px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden py-1 animate-slide-up">
+          {(Object.keys(TYPE_CONFIG) as LinkType[]).map((key) => {
+            const cfg = TYPE_CONFIG[key as LinkType];
+            const Icon = cfg.icon;
+            const isActive = activeTab === key;
+            return (
               <button
                 key={key}
                 type="button"
-                onClick={() => handleTabChange(key)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-semibold border-b-2 transition-all ${
-                  activeTab === key
-                    ? 'border-[var(--color-text)] text-[var(--color-text)]'
-                    : 'border-transparent text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
+                onClick={() => handleTypeSelect(key as LinkType)}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${
+                  isActive
+                    ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
+                    : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                 }`}
               >
-                <Icon size={12} />
-                {isVi ? vi : en}
+                <Icon size={13} className={isActive ? '' : 'opacity-70'} />
+                <span className="font-medium">{isVi ? cfg.vi : cfg.en}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+      )}
 
-          {/* Tab Body */}
-          <div className="p-2 max-h-[240px] overflow-y-auto">
-            {/* ── URL ─────────────────────────────────────────────── */}
-            {activeTab === 'url' && (
-              <div className="flex items-center gap-2">
-                <input
-                  autoFocus
-                  type="url"
-                  value={urlInput}
-                  placeholder="https://"
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { commit(urlInput); setOpen(false); }
-                  }}
-                  className="flex-1 px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text-muted)] transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => { commit(urlInput); setOpen(false); }}
-                  className="px-3 py-2 rounded-md bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-bold hover:opacity-85 transition-opacity shrink-0 flex items-center gap-1"
-                >
-                  <Check size={12} />
-                  {isVi ? 'Dùng' : 'Use'}
-                </button>
-              </div>
-            )}
-
-            {/* ── Page ─────────────────────────────────────────────── */}
+      {/* Popover 2: List Picker */}
+      {listOpen && (activeTab === 'page' || activeTab === 'inner') && (
+        <div className="absolute z-[300] bottom-full mb-1 right-0 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden animate-slide-up flex flex-col max-h-[220px]">
+          <div className="overflow-y-auto p-1.5 space-y-0.5">
+            
             {activeTab === 'page' && (
               <>
                 {pagesLoading ? (
-                  <div className="flex justify-center py-5">
-                    <Loader2 size={18} className="animate-spin text-[var(--color-text-faint)]" />
+                  <div className="flex justify-center py-4">
+                    <Loader2 size={16} className="animate-spin text-[var(--color-text-faint)]" />
                   </div>
                 ) : pages.length === 0 ? (
-                  <p className="text-center text-[11px] text-[var(--color-text-faint)] py-5">
-                    {isVi ? 'Không tìm thấy trang nào' : 'No pages found'}
+                  <p className="text-center text-[11px] text-[var(--color-text-faint)] py-4">
+                    {isVi ? 'Trống' : 'Empty'}
                   </p>
                 ) : (
                   pages.map((pg) => {
@@ -294,18 +221,18 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                       <button
                         key={pg._id}
                         type="button"
-                        onClick={() => { commit(slug); setOpen(false); }}
-                        className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm transition-all ${
+                        onClick={() => { commit(slug); setListOpen(false); }}
+                        className={`w-full flex items-center justify-between gap-3 px-2 py-2 rounded-md text-sm transition-all ${
                           isActive
                             ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
                             : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
                           <FileText size={13} className="shrink-0 opacity-70" />
                           <div className="text-left min-w-0">
                             <p className="font-semibold truncate">{pg.title}</p>
-                            <p className={`text-[10px] font-mono truncate mt-0.5 ${isActive ? 'opacity-60' : 'text-[var(--color-text-faint)]'}`}>
+                            <p className={`text-[10px] font-mono truncate mt-0.5 ${isActive ? 'opacity-70' : 'text-[var(--color-text-faint)]'}`}>
                               {slug}
                             </p>
                           </div>
@@ -318,78 +245,44 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
               </>
             )}
 
-            {/* ── Inner ────────────────────────────────────────────── */}
             {activeTab === 'inner' && (
-              <div className="space-y-1">
-                {/* Manual input */}
-                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[var(--color-border)]">
-                  <span className="text-[var(--color-text-faint)] font-mono text-sm shrink-0 pl-1">#</span>
-                  <input
-                    autoFocus
-                    type="text"
-                    value={innerManual}
-                    placeholder={isVi ? 'Nhập id...' : 'Type id...'}
-                    onChange={(e) => setInnerManual(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && innerManual) {
-                        commit(`#${innerManual}`);
-                        setOpen(false);
-                      }
-                    }}
-                    className="flex-1 px-2 py-1.5 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm focus:outline-none focus:border-[var(--color-text-muted)] transition-colors"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { if (innerManual) { commit(`#${innerManual}`); setOpen(false); } }}
-                    disabled={!innerManual}
-                    className="px-2.5 py-1.5 rounded-md bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-bold hover:opacity-85 transition-opacity disabled:opacity-30"
-                  >
-                    <Check size={12} />
-                  </button>
-                </div>
-
-                {/* Detected anchors */}
-                {innerAnchors.length > 0 && (
-                  <>
-                    {innerAnchors.map((anchor) => {
-                      const val = `#${anchor.id}`;
-                      const isActive = inputVal === val;
-                      return (
-                        <button
-                          key={anchor.id}
-                          type="button"
-                          onClick={() => { commit(val); setOpen(false); }}
-                          className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-all ${
-                            isActive
-                              ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
-                              : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Hash size={12} className="shrink-0 opacity-60" />
-                            <div className="text-left min-w-0">
-                              <p className="font-mono font-bold">{val}</p>
-                              <p className={`text-[10px] truncate mt-0.5 ${isActive ? 'opacity-60' : 'text-[var(--color-text-faint)]'}`}>
-                                {anchor.label}
-                              </p>
-                            </div>
-                          </div>
-                          {isActive && <Check size={13} className="shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
-
-                {innerAnchors.length === 0 && (
-                  <p className="text-[11px] text-[var(--color-text-faint)] text-center py-2">
-                    {isVi
-                      ? 'Không tìm thấy phần tử nào có ID trên canvas.'
-                      : 'No elements with IDs detected on the canvas.'}
+              <>
+                {innerAnchors.length === 0 ? (
+                  <p className="text-center text-[11px] text-[var(--color-text-faint)] py-4">
+                    {isVi ? 'Không có phần tử nào được gắn tên (neo).' : 'No named anchors found.'}
                   </p>
+                ) : (
+                  innerAnchors.map((anchor) => {
+                    const val = `#${anchor.id}`;
+                    const isActive = inputVal === val;
+                    return (
+                      <button
+                        key={anchor.id}
+                        type="button"
+                        onClick={() => { commit(val); setListOpen(false); }}
+                        className={`w-full flex items-center justify-between gap-3 px-2 py-2 rounded-md text-sm transition-all ${
+                          isActive
+                            ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
+                            : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Hash size={13} className="shrink-0 opacity-70" />
+                          <div className="text-left min-w-0">
+                            <p className="font-mono font-bold">{val}</p>
+                            <p className={`text-[10px] uppercase tracking-wider mt-0.5 ${isActive ? 'opacity-70' : 'text-[var(--color-text-faint)]'}`}>
+                              {anchor.label}
+                            </p>
+                          </div>
+                        </div>
+                        {isActive && <Check size={13} className="shrink-0" />}
+                      </button>
+                    );
+                  })
                 )}
-              </div>
+              </>
             )}
+            
           </div>
         </div>
       )}
