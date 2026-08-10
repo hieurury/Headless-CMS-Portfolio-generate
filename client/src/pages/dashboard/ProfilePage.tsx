@@ -374,7 +374,7 @@ export const ProfilePage: React.FC = () => {
         <div className="home-navbar__inner container-max px-6">
           <div className="flex items-center gap-4">
             <Link
-              to="/dashboard"
+              to={isAuthenticated ? `/${authUser?.username}/dashboard` : '/login'}
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
             >
               <ArrowLeft size={16} />
@@ -396,7 +396,7 @@ export const ProfilePage: React.FC = () => {
               <Link to="/explore" className="home-navbar__link">
                 Community
               </Link>
-              <Link to="/dashboard/media" className="home-navbar__link flex items-center gap-1.5">
+              <Link to={isAuthenticated ? `/${authUser?.username}/dashboard/media` : '/login'} className="home-navbar__link flex items-center gap-1.5">
                 <ImageIcon size={14} />
                 Media
               </Link>
@@ -1137,7 +1137,7 @@ export const ProfilePage: React.FC = () => {
                   Hãy vào Dashboard và bật chế độ xuất bản (Publish) cho Portfolio của bạn để hiển thị tại đây.
                 </p>
                 <Link
-                  to="/dashboard"
+                  to={isAuthenticated ? `/${authUser?.username}/dashboard` : '/login'}
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded"
                   style={{
                     background: 'var(--color-text)',
@@ -1206,13 +1206,15 @@ export const ProfilePage: React.FC = () => {
                         {'pageCount' in item ? item.pageCount : ((item as any).pages?.length || 0)} trang con
                       </span>
                       <div className="flex items-center gap-3">
-                        <Link
-                          to={`/dashboard/portfolios/${item._id}`}
-                          className="hover:underline"
-                          style={{ color: 'var(--color-text)' }}
-                        >
-                          Quản lý
-                        </Link>
+                        {isOwner && (
+                          <Link
+                            to={`/${authUser?.username}/dashboard/portfolios/${item._id}`}
+                            className="hover:underline"
+                            style={{ color: 'var(--color-text)' }}
+                          >
+                            Quản lý
+                          </Link>
+                        )}
                         <a
                           href={`/${user?.username ?? ''}/${item.slug}`}
                           target="_blank"
@@ -1256,7 +1258,7 @@ export const ProfilePage: React.FC = () => {
                   Xuất bản bài viết trong các Portfolio để bài viết hiển thị trên trang hồ sơ cá nhân của bạn.
                 </p>
                 <Link
-                  to="/dashboard"
+                  to={isAuthenticated ? `/${authUser?.username}/dashboard` : '/login'}
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded"
                   style={{
                     background: 'var(--color-text)',
