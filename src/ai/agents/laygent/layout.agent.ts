@@ -1,6 +1,8 @@
-import { BaseAgent } from '../base.agent';
+import { BaseAgent, ChatMessage } from '../base.agent';
 import { layoutSystemPrompt } from './system-prompt';
 import { agentRegistry } from '../registry/agent.registry';
+import { RootLayoutSchema } from './layout.schema';
+import { SystemMessage, HumanMessage } from '@langchain/core/messages';
 
 /**
  * LayoutArchitectAgent — Chuyên gia thiết kế cấu trúc layout Portfolio.
@@ -21,6 +23,21 @@ export class LayoutArchitectAgent extends BaseAgent {
 
   get tools(): any[] {
     return []; // Không cần tool ngoài — chỉ dùng LLM thuần
+  }
+
+  override async run(prompt: string, history: ChatMessage[] = []): Promise<any> {
+    const model = this.getModelInstance().withStructuredOutput(RootLayoutSchema);
+
+    const messages = [
+      new SystemMessage(this.systemPrompt),
+      ...history.map((m) =>
+        m.role === 'user' ? new HumanMessage(m.content) : new SystemMessage(m.content)
+      ),
+      new HumanMessage(prompt),
+    ];
+
+    const result = await model.invoke(messages);
+    return result; // result is automatically parsed and matches RootLayoutSchema
   }
 }
 

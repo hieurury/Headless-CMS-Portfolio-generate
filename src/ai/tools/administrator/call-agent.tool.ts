@@ -1,6 +1,9 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
+import { Logger } from '@nestjs/common';
 import { agentRegistry } from '../../agents/registry/agent.registry';
+
+const logger = new Logger('CallAgentTool');
 
 /**
  * call_agent — Tool để Administrator giao nhiệm vụ cho một Sub-Agent cụ thể.
@@ -30,18 +33,29 @@ export const callAgentTool = tool(
     try {
       const result = await agent.run(fullPrompt, []);
 
-      // Lấy nội dung text từ message cuối cùng
-      const lastMsg = result.messages
-        ? result.messages[result.messages.length - 1]
-        : result;
+      // withStructuredOutput returns a plain JS object directly.
+      // Fallback: handle string / messages array for non-structured agents.
+      if (result && typeof result === 'object' && !Array.isArray(result) && !result.messages) {
+        return JSON.stringify(result);
+      }
 
-      const textContent =
-        typeof lastMsg.content === 'string'
-          ? lastMsg.content
-          : JSON.stringify(lastMsg.content);
+      // Classic LangChain messages array
+      if (result?.messages && Array.isArray(result.messages)) {
+        const lastMsg = result.messages[result.messages.length - 1];
+        const textContent =
+          typeof lastMsg.content === 'string'
+            ? lastMsg.content
+            : JSON.stringify(lastMsg.content);
+        return textContent;
+      }
 
-      return textContent;
+      return JSON.stringify(result);
     } catch (err: any) {
+      // Surface the exact error so we can see it in NestJS logs.
+      logger.error(`[call_agent] Agent "${agentName}" threw an error:`);
+      logger.error(`  Message : ${err?.message}`);
+      logger.error(`  Status  : ${err?.status ?? err?.statusCode ?? 'N/A'}`);
+      logger.error(`  Details : ${JSON.stringify(err?.error ?? err?.response ?? {})}`);
       return JSON.stringify({ error: `Agent "${agentName}" gặp lỗi: ${err?.message}` });
     }
   },
@@ -61,5 +75,6 @@ export const callAgentTool = tool(
         .optional()
         .describe('Ngữ cảnh bổ sung từ Administrator (VD: kết quả agent khác, tông màu cụ thể...)'),
     }),
+    returnDirect: true,
   },
 );

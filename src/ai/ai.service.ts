@@ -797,14 +797,19 @@ export class AiService {
       // Gọi AdministratorAgent — nó tự quyết định dùng layout_architect hay copywriter
       const result = await administratorAgent.run(prompt, []);
 
-      // Lấy nội dung text từ message cuối cùng của Agent
-      const lastMsg = result.messages
-        ? result.messages[result.messages.length - 1]
-        : result;
-      let text =
-        typeof lastMsg.content === 'string'
-          ? lastMsg.content
-          : JSON.stringify(lastMsg.content);
+      let text = '';
+      if (typeof result === 'string') {
+        text = result;
+      } else if (result?.output && typeof result.output === 'string') {
+        text = result.output;
+      } else if (result?.messages && Array.isArray(result.messages)) {
+        const lastMsg = result.messages[result.messages.length - 1];
+        text = typeof lastMsg.content === 'string' ? lastMsg.content : JSON.stringify(lastMsg.content);
+      } else if (result?.content) {
+        text = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+      } else {
+        text = JSON.stringify(result);
+      }
 
       // Strip markdown fences nếu model lỡ bọc output trong ```json ... ```
       text = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
