@@ -47,11 +47,6 @@ const Label: React.FC<{ children: React.ReactNode; description?: string }> = ({
     <label className="text-xs font-medium text-[var(--color-text)]">
       {children}
     </label>
-    {description && (
-      <p className="text-xs text-[var(--color-text-faint)] mt-0.5">
-        {description}
-      </p>
-    )}
   </div>
 );
 
@@ -1024,11 +1019,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             <p className="text-sm font-semibold text-[var(--color-text)]">
               {entry?.displayName ?? sectionType}
             </p>
-            {entry?.description && (
-              <p className="text-xs text-[var(--color-text-faint)] mt-0.5 leading-snug">
-                {entry.description}
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -1053,18 +1043,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           className="w-full px-3 py-2 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors font-mono"
         />
-        {/* <p className="text-xs text-[var(--color-text-faint)]">
-          Navbar links can use{' '}
-          <code className="text-[var(--color-text)] font-semibold">
-            #{sectionName || 'name'}
-          </code>{' '}
-          to scroll to this section
-        </p> */}
-        <p className="text-xs text-[var(--color-text-faint)]">
-          {language === 'en'
-            ? `Navbar links can use #${sectionName || 'name'} to scroll to this section`
-            : `Liên kết thanh điều hướng có thể sử dụng #${sectionName || 'name'} để cuộn đến phần này`}
-        </p>
       </div>
 
       {/* Form / JSON tabs */}

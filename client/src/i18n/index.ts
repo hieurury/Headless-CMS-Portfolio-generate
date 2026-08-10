@@ -418,7 +418,7 @@ export const translations = {
         alignment: 'Alignment',
         alignmentX: 'Horizontal Align (X)',
         alignmentY: 'Vertical Align (Y)',
-        anchorName: 'Section Anchor Name',
+        anchorName: 'Anchor',
       },
       navBarWrapper: {
         textColor: 'Text Color',
@@ -981,7 +981,7 @@ export const translations = {
         alignment: 'Căn chỉnh',
         alignmentX: 'Căn ngang (X)',
         alignmentY: 'Căn dọc (Y)',
-        anchorName: 'Tên Neo vị trí (Anchor)',
+        anchorName: 'Neo vị trí',
       },
       navBarWrapper: {
         textColor: 'Màu chữ',
