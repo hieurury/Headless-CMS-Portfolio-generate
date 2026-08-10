@@ -1010,7 +1010,7 @@ export const translations = {
       },
       link: {
         linkText: 'Chữ hiển thị liên kết',
-        url: 'Đường dẫn / Neo trang',
+        url: 'Liên kết',
         openInNewTab: 'Mở trong tab mới',
         underline: 'Gạch chân',
         hoverColor: 'Màu sắc khi di chuột (Hover)',
@@ -1022,7 +1022,7 @@ export const translations = {
         buttonText: 'Chữ trên nút bấm',
         label: 'Nhãn nút bấm',
         icon: 'Biểu tượng (Emoji)',
-        url: 'Đường dẫn / Neo trang',
+        url: 'Liên kết',
         variant: 'Kiểu dáng nút',
         size: 'Kích thước nút',
         shape: 'Hình dáng nút',

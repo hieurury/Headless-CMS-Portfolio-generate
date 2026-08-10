@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Globe, FileText, Hash, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { usePageStore } from '../../store/pageStore';
 import type { Page, LayoutSection } from '../../core/types/layout.types';
@@ -154,6 +154,13 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
     onChange(val);
   }, [onChange]);
 
+  const displayValue = useMemo(() => {
+    if (!inputVal) return '';
+    if (activeTab === 'page' && inputVal.startsWith('/')) return inputVal.substring(1);
+    if (activeTab === 'inner' && inputVal.startsWith('#')) return inputVal.substring(1);
+    return inputVal;
+  }, [inputVal, activeTab]);
+
   const activeConfig = TYPE_CONFIG[activeTab];
   const ActiveIcon = activeConfig.icon;
 
@@ -171,7 +178,8 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
         {/* Text Input */}
         <input
           type="text"
-          value={inputVal}
+          value={displayValue}
+          readOnly={activeTab === 'page' || activeTab === 'inner'}
           placeholder={placeholder ?? (isVi ? 'Nhập liên kết...' : 'Type link...')}
           onClick={() => {
             if (activeTab === 'page' || activeTab === 'inner') {
@@ -181,6 +189,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
             }
           }}
           onChange={(e) => {
+            if (activeTab !== 'url') return;
             const v = e.target.value;
             setInputVal(v);
             onChange(v);
@@ -190,7 +199,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                setListOpen(false);
              }
           }}
-          className="flex-1 bg-transparent px-1.5 text-sm text-[var(--color-text)] focus:outline-none min-w-0"
+          className={`flex-1 bg-transparent px-1.5 text-sm text-[var(--color-text)] focus:outline-none min-w-0 ${activeTab !== 'url' ? 'cursor-pointer' : ''}`}
         />
 
         {/* Type Selector Button */}
