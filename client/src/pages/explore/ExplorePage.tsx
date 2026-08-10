@@ -290,7 +290,7 @@ export const ExplorePage: React.FC = () => {
             {portfolios.map((p) => (
               <Link
                 key={p._id}
-                to={`/p/${p.slug}`}
+                to={`/${p.ownerUsername}/${p.slug}`}
                 id={`portfolio-card-${p.slug}`}
                 className="group flex flex-col rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden min-h-[180px]"
               >

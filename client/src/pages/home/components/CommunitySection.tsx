@@ -32,6 +32,7 @@ interface CommunityItem {
   creator: string;
   siteName: string;
   slug: string;
+  ownerUsername: string;
   description: string;
   categories: string[];
   pageCount: number;
@@ -94,7 +95,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ item, visitLabel, languag
           })}
         </div>
         <Link
-          to={`/p/${item.slug}`}
+          to={`/${item.ownerUsername}/${item.slug}`}
           className="community-card__link"
           aria-label={`Visit ${item.siteName}`}
         >
@@ -132,6 +133,7 @@ export const CommunitySection: React.FC = () => {
               creator: p.ownerName || (language === 'vi' ? 'Tác giả' : 'Creator'),
               siteName: p.title,
               slug: p.slug,
+              ownerUsername: p.ownerUsername,
               description: p.description || '',
               categories,
               pageCount: p.pageCount || 0,

@@ -135,16 +135,20 @@ const router = createBrowserRouter([
     path: '/:username/profile',
     element: <ProfilePage />,
   },
+  // ── Public Portfolio routes ───────────────────────────────────────
+  // URL format: /:username/:portfolioSlug[/:pageSlug | /post/:postSlug]
+  // NOTE: /post/:postSlug MUST be declared before /:pageSlug to avoid
+  //       "post" being treated as a pageSlug.
   {
-    path: '/explore/:username/portfolio/:portfolioSlug',
+    path: '/:username/:portfolioSlug',
     element: <PublicPortfolioHubPage />,
   },
   {
-    path: '/explore/:username/portfolio/:portfolioSlug/post/:postSlug',
+    path: '/:username/:portfolioSlug/post/:postSlug',
     element: <PublicPostPage />,
   },
   {
-    path: '/explore/:username/portfolio/:portfolioSlug/:pageSlug',
+    path: '/:username/:portfolioSlug/:pageSlug',
     element: <PublicPortfolioPage />,
   },
 
