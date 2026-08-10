@@ -418,7 +418,7 @@ export const translations = {
         alignment: 'Alignment',
         alignmentX: 'Horizontal Align (X)',
         alignmentY: 'Vertical Align (Y)',
-        anchorName: 'Section Anchor Name',
+        anchorName: 'Anchor',
       },
       navBarWrapper: {
         textColor: 'Text Color',
@@ -981,7 +981,7 @@ export const translations = {
         alignment: 'Căn chỉnh',
         alignmentX: 'Căn ngang (X)',
         alignmentY: 'Căn dọc (Y)',
-        anchorName: 'Tên Neo vị trí (Anchor)',
+        anchorName: 'Neo vị trí',
       },
       navBarWrapper: {
         textColor: 'Màu chữ',
@@ -1010,7 +1010,7 @@ export const translations = {
       },
       link: {
         linkText: 'Chữ hiển thị liên kết',
-        url: 'Đường dẫn / Neo trang',
+        url: 'Liên kết',
         openInNewTab: 'Mở trong tab mới',
         underline: 'Gạch chân',
         hoverColor: 'Màu sắc khi di chuột (Hover)',
@@ -1022,7 +1022,7 @@ export const translations = {
         buttonText: 'Chữ trên nút bấm',
         label: 'Nhãn nút bấm',
         icon: 'Biểu tượng (Emoji)',
-        url: 'Đường dẫn / Neo trang',
+        url: 'Liên kết',
         variant: 'Kiểu dáng nút',
         size: 'Kích thước nút',
         shape: 'Hình dáng nút',

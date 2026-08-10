@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Plus,
   Trash2,
@@ -16,6 +17,7 @@ import * as LucideIcons from 'lucide-react';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import type { FieldSchema } from '../../../core/types/registry.types';
 import { ImageUploadField } from '../../../components/editor/ImageUploadField';
+import { LinkPickerField } from '../../../components/editor/LinkPickerField';
 import { localizeSchema } from '../../../core/utils/schemaTranslator';
 import { useUIStore } from '../../../store/uiStore';
 import { usePageStore } from '../../../store/pageStore';
@@ -45,11 +47,6 @@ const Label: React.FC<{ children: React.ReactNode; description?: string }> = ({
     <label className="text-xs font-medium text-[var(--color-text)]">
       {children}
     </label>
-    {description && (
-      <p className="text-xs text-[var(--color-text-faint)] mt-0.5">
-        {description}
-      </p>
-    )}
   </div>
 );
 
@@ -464,6 +461,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   const tr = t(language).editor.smartPropEditor;
   const [expanded, setExpanded] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
+  // Needed for LinkPickerField (must be at top level, not inside if blocks)
+  const { portfolioId } = useParams<{ portfolioId: string }>();
+  const storePages = usePageStore((s) => s.pages);
 
   const handleChange = useCallback(
     (v: unknown) => onChange(fieldKey, v),
@@ -625,7 +625,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     );
   }
 
-  // LINK
+  // LINK — smart picker with URL / Page / Inner tabs
   if (schema.type === 'link') {
     return (
       <div>
@@ -635,15 +635,13 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
             {schema.label}
           </span>
         </Label>
-        <Input
-          type="text"
+        <LinkPickerField
           value={(value as string) ?? ''}
+          onChange={handleChange}
           placeholder={schema.placeholder ?? tr.linkPlaceholder}
-          onChange={(e) => handleChange(e.target.value)}
+          portfolioId={portfolioId}
+          pages={storePages}
         />
-        <p className="text-xs text-[var(--color-text-faint)] mt-1">
-          {tr.linkHint}
-        </p>
       </div>
     );
   }
@@ -1021,11 +1019,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
             <p className="text-sm font-semibold text-[var(--color-text)]">
               {entry?.displayName ?? sectionType}
             </p>
-            {entry?.description && (
-              <p className="text-xs text-[var(--color-text-faint)] mt-0.5 leading-snug">
-                {entry.description}
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -1050,18 +1043,6 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           className="w-full px-3 py-2 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors font-mono"
         />
-        {/* <p className="text-xs text-[var(--color-text-faint)]">
-          Navbar links can use{' '}
-          <code className="text-[var(--color-text)] font-semibold">
-            #{sectionName || 'name'}
-          </code>{' '}
-          to scroll to this section
-        </p> */}
-        <p className="text-xs text-[var(--color-text-faint)]">
-          {language === 'en'
-            ? `Navbar links can use #${sectionName || 'name'} to scroll to this section`
-            : `Liên kết thanh điều hướng có thể sử dụng #${sectionName || 'name'} để cuộn đến phần này`}
-        </p>
       </div>
 
       {/* Form / JSON tabs */}
