@@ -58,32 +58,24 @@ const TABS: {
   icon: React.FC<{ size?: number; className?: string }>;
   en: string;
   vi: string;
-  descEn: string;
-  descVi: string;
 }[] = [
   {
     key: 'url',
     icon: Globe,
     en: 'URL',
     vi: 'URL',
-    descEn: 'Link to an external website. Paste the full address (e.g. https://google.com)',
-    descVi: 'Liên kết ra ngoài. Dán địa chỉ đầy đủ (vd: https://google.com)',
   },
   {
     key: 'page',
     icon: FileText,
     en: 'Page',
     vi: 'Trang',
-    descEn: 'Navigate to another page in this portfolio',
-    descVi: 'Điều hướng đến trang khác trong portfolio này',
   },
   {
     key: 'inner',
     icon: Hash,
     en: 'Inner',
     vi: 'Trong trang',
-    descEn: 'Scroll to a section on the current page using its ID (e.g. #contact)',
-    descVi: 'Cuộn đến phần tử trong trang dùng ID của nó (vd: #contact)',
   },
 ];
 
@@ -194,12 +186,13 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
             placeholder ??
             (isVi ? '#id, /trang hoặc https://...' : '#id, /page or https://...')
           }
+          onClick={handleOpen}
           onChange={(e) => {
             const v = e.target.value;
             setInputVal(v);
             onChange(v);
           }}
-          className="flex-1 bg-transparent text-sm text-[var(--color-text)] focus:outline-none min-w-0 py-1"
+          className="flex-1 bg-transparent text-sm text-[var(--color-text)] focus:outline-none min-w-0 py-1 cursor-text"
         />
 
         {/* Options button */}
@@ -220,29 +213,24 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
       {open && (
         <div
           ref={popoverRef}
-          className="absolute z-[300] top-full mt-1.5 left-0 w-[280px] rounded-lg shadow-2xl shadow-black/60 overflow-hidden animate-slide-up"
-          style={{
-            background: 'rgba(10,10,22,0.97)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            backdropFilter: 'blur(20px)',
-          }}
+          className="absolute z-[300] bottom-full mb-1 left-0 w-[280px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden flex flex-col animate-slide-up"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
-            <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">
+          <div className="flex items-center justify-between p-2 border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
+            <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest pl-1">
               {isVi ? 'Loại liên kết' : 'Link Type'}
             </span>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="p-0.5 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] transition-all"
+              className="p-1 rounded text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-border)] transition-all"
             >
               <X size={12} />
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-white/8">
+          <div className="flex border-b border-[var(--color-border)]">
             {TABS.map(({ key, icon: Icon, en, vi }) => (
               <button
                 key={key}
@@ -251,7 +239,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-semibold border-b-2 transition-all ${
                   activeTab === key
                     ? 'border-[var(--color-text)] text-[var(--color-text)]'
-                    : 'border-transparent text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)]'
+                    : 'border-transparent text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
                 }`}
               >
                 <Icon size={12} />
@@ -260,18 +248,8 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
             ))}
           </div>
 
-          {/* Tab description */}
-          {(() => {
-            const tab = TABS.find((t) => t.key === activeTab)!;
-            return (
-              <p className="px-3 pt-2.5 pb-1 text-[11px] text-[var(--color-text-faint)] leading-relaxed">
-                {isVi ? tab.descVi : tab.descEn}
-              </p>
-            );
-          })()}
-
           {/* Tab Body */}
-          <div className="px-3 pb-3 pt-2 max-h-[240px] overflow-y-auto space-y-1.5">
+          <div className="p-2 max-h-[240px] overflow-y-auto">
             {/* ── URL ─────────────────────────────────────────────── */}
             {activeTab === 'url' && (
               <div className="flex items-center gap-2">
@@ -284,7 +262,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') { commit(urlInput); setOpen(false); }
                   }}
-                  className="flex-1 px-3 py-2 rounded-md bg-[rgba(255,255,255,0.06)] border border-white/10 text-[var(--color-text)] text-sm placeholder-[var(--color-text-faint)] focus:outline-none focus:border-white/20 transition-colors"
+                  className="flex-1 px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm placeholder-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-text-muted)] transition-colors"
                 />
                 <button
                   type="button"
@@ -317,10 +295,10 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                         key={pg._id}
                         type="button"
                         onClick={() => { commit(slug); setOpen(false); }}
-                        className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-sm transition-all ${
+                        className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm transition-all ${
                           isActive
                             ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
-                            : 'text-[var(--color-text)] hover:bg-white/6'
+                            : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -342,15 +320,15 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 
             {/* ── Inner ────────────────────────────────────────────── */}
             {activeTab === 'inner' && (
-              <>
+              <div className="space-y-1">
                 {/* Manual input */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[var(--color-text-faint)] font-mono text-sm shrink-0">#</span>
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[var(--color-border)]">
+                  <span className="text-[var(--color-text-faint)] font-mono text-sm shrink-0 pl-1">#</span>
                   <input
                     autoFocus
                     type="text"
                     value={innerManual}
-                    placeholder={isVi ? 'nhập id...' : 'type id...'}
+                    placeholder={isVi ? 'Nhập id...' : 'Type id...'}
                     onChange={(e) => setInnerManual(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && innerManual) {
@@ -358,7 +336,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                         setOpen(false);
                       }
                     }}
-                    className="flex-1 px-2 py-1.5 rounded-md bg-[rgba(255,255,255,0.06)] border border-white/10 text-[var(--color-text)] text-sm focus:outline-none focus:border-white/20 transition-colors"
+                    className="flex-1 px-2 py-1.5 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm focus:outline-none focus:border-[var(--color-text-muted)] transition-colors"
                   />
                   <button
                     type="button"
@@ -373,9 +351,6 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                 {/* Detected anchors */}
                 {innerAnchors.length > 0 && (
                   <>
-                    <p className="text-[10px] text-[var(--color-text-faint)] uppercase tracking-wider font-bold pb-1 border-t border-white/6 pt-1.5">
-                      {isVi ? 'Phần tử phát hiện được' : 'Detected elements'}
-                    </p>
                     {innerAnchors.map((anchor) => {
                       const val = `#${anchor.id}`;
                       const isActive = inputVal === val;
@@ -387,7 +362,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                           className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-all ${
                             isActive
                               ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
-                              : 'text-[var(--color-text)] hover:bg-white/6'
+                              : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
@@ -413,7 +388,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                       : 'No elements with IDs detected on the canvas.'}
                   </p>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
