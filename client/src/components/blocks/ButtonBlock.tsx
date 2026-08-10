@@ -93,15 +93,15 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   const isAnchor = href?.startsWith('#');
   const isPageLink = href?.startsWith('/') && !href.startsWith('//');
 
+  const { isEditorMode, previewMode } = useEditorContext();
+  const { username, portfolioSlug } = useParams<{ username: string; portfolioSlug: string }>();
+  const navigate = useNavigate();
+
   let finalHref = href;
   if (isPageLink && username && portfolioSlug) {
     const pageSlug = href === '/' ? '' : href;
     finalHref = `/${username}/${portfolioSlug}${pageSlug}`;
   }
-
-  const { isEditorMode, previewMode } = useEditorContext();
-  const { username, portfolioSlug } = useParams<{ username: string; portfolioSlug: string }>();
-  const navigate = useNavigate();
 
   const handleClick = (e: React.MouseEvent) => {
     if (isEditorMode) {

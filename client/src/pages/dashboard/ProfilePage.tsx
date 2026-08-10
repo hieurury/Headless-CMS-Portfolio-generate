@@ -79,7 +79,7 @@ export const ProfilePage: React.FC = () => {
   useSeo({
     title: `${pageTitle} — Profile | Ruryfo CMS`,
     description: user?.slogan || `Xem profile của ${pageTitle} trên Ruryfo CMS.`,
-    ogImage: user?.avatar,
+    ogImage: user?.avatar || undefined,
     type: 'profile',
     jsonLd,
   });

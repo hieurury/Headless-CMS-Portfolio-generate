@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/auth.service';
-import { Eye, EyeOff, Check, Loader2, ChevronLeft, ChevronRight, Mail, X, Tag, Search, Sparkles, Plus } from 'lucide-react';
+import { Eye, EyeOff, Check, Loader2, ChevronRight, X, Tag, Search, Sparkles, Plus } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';

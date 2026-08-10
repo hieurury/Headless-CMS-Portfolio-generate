@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   X,
-  Link,
   Image as ImageIcon,
   ChevronDown,
   ExternalLink,

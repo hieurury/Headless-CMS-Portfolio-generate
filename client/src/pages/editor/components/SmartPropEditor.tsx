@@ -41,7 +41,6 @@ function set(
 
 const Label: React.FC<{ children: React.ReactNode; description?: string }> = ({
   children,
-  description,
 }) => (
   <div className="mb-1.5">
     <label className="text-xs font-medium text-[var(--color-text)]">

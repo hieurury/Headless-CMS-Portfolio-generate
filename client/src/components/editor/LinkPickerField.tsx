@@ -53,7 +53,6 @@ const TYPE_CONFIG = {
 export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
   value,
   onChange,
-  placeholder,
   portfolioId,
   pages: pagesProp,
 }) => {
@@ -168,7 +167,6 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
   }, [inputVal, activeTab]);
 
   const activeConfig = TYPE_CONFIG[activeTab];
-  const ActiveIcon = activeConfig.icon;
 
   const getPlaceholder = () => {
     if (activeTab === 'page') return isVi ? 'Chọn trang...' : 'Select page...';
