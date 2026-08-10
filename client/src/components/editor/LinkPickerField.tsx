@@ -156,8 +156,14 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 
   const displayValue = useMemo(() => {
     if (!inputVal) return '';
-    if (activeTab === 'page' && inputVal.startsWith('/')) return inputVal.substring(1);
-    if (activeTab === 'inner' && inputVal.startsWith('#')) return inputVal.substring(1);
+    if (activeTab === 'page' && inputVal.startsWith('/')) {
+      const v = inputVal.substring(1);
+      return v === '' ? 'home' : v;
+    }
+    if (activeTab === 'inner' && inputVal.startsWith('#')) {
+      const v = inputVal.substring(1);
+      return v === '' ? 'home' : v;
+    }
     return inputVal;
   }, [inputVal, activeTab]);
 
@@ -230,7 +236,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 
       {/* Popover 1: Type Picker */}
       {typeOpen && (
-        <div className="absolute z-[300] top-full mt-1 right-0 w-[140px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden py-1 animate-slide-down">
+        <div className="absolute z-[300] bottom-full mb-1 right-0 w-[140px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden py-1 animate-slide-up">
           {(Object.keys(TYPE_CONFIG) as LinkType[]).map((key) => {
             const cfg = TYPE_CONFIG[key as LinkType];
             const Icon = cfg.icon;
@@ -256,7 +262,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 
       {/* Popover 2: List Picker */}
       {listOpen && (activeTab === 'page' || activeTab === 'inner') && (
-        <div className="absolute z-[300] top-full mt-1 right-0 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden animate-slide-down flex flex-col max-h-[220px]">
+        <div className="absolute z-[300] bottom-full mb-1 right-0 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden animate-slide-up flex flex-col max-h-[220px]">
           <div className="overflow-y-auto p-1.5 space-y-0.5">
             
             {activeTab === 'page' && (
