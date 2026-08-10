@@ -30,6 +30,7 @@ export class AdministratorAgent {
       model: process.env.ADMIN_GEMINI_MODEL || process.env.GEMINI_MODEL || this.model,
       apiKey: process.env.GEMINI_API_KEY,
       temperature: 0.3,
+      json: true
     });
   }
 
