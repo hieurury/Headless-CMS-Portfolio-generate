@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   X,
   Link,
@@ -9,6 +10,8 @@ import {
 import type { FieldSchema } from '../../../core/types/registry.types';
 import { useUIStore } from '../../../store/uiStore';
 import { t } from '../../../i18n';
+import { LinkPickerField } from '../../../components/editor/LinkPickerField';
+import { usePageStore } from '../../../store/pageStore';
 
 interface InlineFieldEditorProps {
   /** The field schema to determine what editor widget to show */
@@ -50,6 +53,8 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const [localValue, setLocalValue] = useState<unknown>(value);
   const [imgError, setImgError] = useState(false);
+  const { portfolioId } = useParams<{ portfolioId: string }>();
+  const storePages = usePageStore((s) => s.pages);
 
   // Position the panel near the clicked element
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -171,24 +176,13 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
     if (schema.type === 'link') {
       return (
         <div className="space-y-1.5">
-          <div className="relative">
-            <Link
-              size={12}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
-            />
-            <input
-              autoFocus
-              type="text"
-              value={(localValue as string) ?? ''}
-              placeholder={schema.placeholder ?? tr.linkPlaceholder}
-              onChange={(e) => handleChange(e.target.value)}
-              onBlur={commitAndClose}
-              className={INPUT_CLS + ' pl-8'}
-            />
-          </div>
-          <p className="text-[11px] text-[var(--color-text-faint)]">
-            {tr.linkHint}
-          </p>
+          <LinkPickerField
+            value={(localValue as string) ?? ''}
+            onChange={(v) => { setLocalValue(v); onChange(v); }}
+            placeholder={schema.placeholder ?? tr.linkPlaceholder}
+            portfolioId={portfolioId}
+            pages={storePages}
+          />
         </div>
       );
     }
