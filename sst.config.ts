@@ -40,7 +40,10 @@ export default $config({
             { name: "CLOUDINARY_API_SECRET", value: process.env.CLOUDINARY_API_SECRET },
             { name: "GEMINI_API_KEY", value: process.env.GEMINI_API_KEY },
             { name: "GEMINI_MODEL", value: process.env.GEMINI_MODEL || process.env.AI_MODEL || "gemini-3.5-flash-lite" },
-            { name: "SUB_GEMINI_MODEL", value: process.env.SUB_GEMINI_MODEL || "gemini-3.1-flash-lite" }
+            { name: "SUB_GEMINI_MODEL", value: process.env.SUB_GEMINI_MODEL || "gemini-3.1-flash-lite" },
+            { name: "GMAIL_USER", value: process.env.GMAIL_USER },
+            { name: "GMAIL_APP_PASSWORD", value: process.env.GMAIL_APP_PASSWORD },
+            { name: "MAIL_FROM_NAME", value: process.env.MAIL_FROM_NAME }
           ],
         }],
       },
