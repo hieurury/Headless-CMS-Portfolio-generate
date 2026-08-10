@@ -503,30 +503,36 @@ export class PublicService {
   > {
     const data: { urlPath: string; lastmod: Date; isPage: boolean }[] = [];
 
-    // All published portfolios and their pages
+    // 1. Add all users to sitemap
+    const allProfiles = await this.profileModel.find().lean().exec();
+    const addedUsernames = new Set<string>();
+
+    for (const profile of allProfiles) {
+      if (profile.username && !addedUsernames.has(profile.username)) {
+        data.push({
+          urlPath: `/${profile.username}`,
+          lastmod: (profile as any).updatedAt as Date || new Date(),
+          isPage: true,
+        });
+        addedUsernames.add(profile.username);
+      }
+    }
+
+    // 2. Add published portfolios and their pages/posts
     const portfolios = await this.portfolioModel
       .find({ isPublished: true })
-      .populate('owner')
       .lean()
       .exec();
 
-    const addedUsernames = new Set<string>();
+    // Cache profiles by accountId to avoid N+1 queries
+    const profileMap = new Map(allProfiles.map(p => [p.accountId.toString(), p]));
 
     for (const p of portfolios) {
       if (!p.owner) continue;
-      // Get the profile to know the username
-      const ownerProfile = await this.profileModel.findOne({ accountId: (p.owner as any)._id }).lean().exec();
+      
+      const ownerProfile = profileMap.get(p.owner.toString());
       const username = ownerProfile?.username;
       if (!username) continue;
-
-      if (!addedUsernames.has(username)) {
-        data.push({
-          urlPath: `/${username}`,
-          lastmod: ((ownerProfile as any).updatedAt as Date) || new Date(),
-          isPage: true,
-        });
-        addedUsernames.add(username);
-      }
 
       // The hub page (listing posts/pages for this portfolio)
       data.push({
