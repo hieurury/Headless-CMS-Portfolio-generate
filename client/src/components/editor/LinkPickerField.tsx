@@ -92,29 +92,60 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const loadPages = useCallback(async () => {
-    if (pagesProp && pagesProp.length > 0) { setPages(pagesProp); return; }
-    if (storePages.length > 0) { setPages(storePages); return; }
-    if (!portfolioId) return;
+  const loadPages = useCallback(async (): Promise<Page[]> => {
+    if (pagesProp && pagesProp.length > 0) { setPages(pagesProp); return pagesProp; }
+    if (storePages.length > 0) { setPages(storePages); return storePages; }
+    if (!portfolioId) return [];
     setPagesLoading(true);
     try {
       const fetched = await pageService.getAll(portfolioId);
       setPages(fetched);
-    } catch { /* silent */ }
+      return fetched;
+    } catch { return []; }
     finally { setPagesLoading(false); }
   }, [pagesProp, portfolioId, storePages]);
 
-  const handleTypeSelect = (type: LinkType) => {
+  const handleTypeSelect = async (type: LinkType) => {
     setActiveTab(type);
     setTypeOpen(false);
     
-    if (type === 'page') loadPages();
+    let loadedPages = pages;
+    if (type === 'page') {
+      loadedPages = await loadPages();
+    }
     
     // Auto open list when switching type if it's page or inner
     if (type === 'page' || type === 'inner') {
       setListOpen(true);
     } else {
       setListOpen(false);
+    }
+
+    // Auto-select first item if current value is invalid for the new type
+    if (type === 'inner') {
+      if (innerAnchors.length > 0) {
+        const isCurrentValid = innerAnchors.some((a) => `#${a.id}` === inputVal);
+        if (!isCurrentValid) commit(`#${innerAnchors[0].id}`);
+      } else {
+        commit('');
+      }
+    } else if (type === 'page') {
+      if (loadedPages.length > 0) {
+        const isCurrentValid = loadedPages.some((p) => {
+          const slug = p.slug.startsWith('/') ? p.slug : `/${p.slug}`;
+          return slug === inputVal;
+        });
+        if (!isCurrentValid) {
+          const firstSlug = loadedPages[0].slug.startsWith('/') ? loadedPages[0].slug : `/${loadedPages[0].slug}`;
+          commit(firstSlug);
+        }
+      } else {
+        commit('');
+      }
+    } else if (type === 'url') {
+      if (inputVal.startsWith('/') || inputVal.startsWith('#')) {
+        commit('');
+      }
     }
   };
   
@@ -130,21 +161,12 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
     <div className="relative w-full" ref={containerRef}>
       <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-hover)] transition-colors h-9">
         
-        {/* Type Selector Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setTypeOpen(!typeOpen);
-            setListOpen(false);
-          }}
-          className="h-full px-2.5 border-r border-[var(--color-border)] text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-3)] transition-colors flex items-center gap-1.5 shrink-0"
-        >
-          <ActiveIcon size={12} />
-          <span className="text-[11px] font-medium tracking-wide">
-            {isVi ? activeConfig.vi : activeConfig.en}
-          </span>
-          <ChevronDown size={11} className="opacity-50" />
-        </button>
+        {/* Link Icon */}
+        <div className="pl-3 pr-1.5 flex items-center shrink-0 text-[var(--color-text-faint)]">
+          <Globe size={13} className={activeTab === 'url' ? 'block' : 'hidden'} />
+          <FileText size={13} className={activeTab === 'page' ? 'block' : 'hidden'} />
+          <Hash size={13} className={activeTab === 'inner' ? 'block' : 'hidden'} />
+        </div>
 
         {/* Text Input */}
         <input
@@ -168,8 +190,23 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                setListOpen(false);
              }
           }}
-          className="flex-1 bg-transparent px-3 text-sm text-[var(--color-text)] focus:outline-none min-w-0"
+          className="flex-1 bg-transparent px-1.5 text-sm text-[var(--color-text)] focus:outline-none min-w-0"
         />
+
+        {/* Type Selector Button */}
+        <button
+          type="button"
+          onClick={() => {
+            setTypeOpen(!typeOpen);
+            setListOpen(false);
+          }}
+          className="h-full px-2.5 border-l border-[var(--color-border)] text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-3)] transition-colors flex items-center gap-1.5 shrink-0"
+        >
+          <span className="text-[11px] font-medium tracking-wide">
+            {isVi ? activeConfig.vi : activeConfig.en}
+          </span>
+          <ChevronDown size={11} className="opacity-50" />
+        </button>
       </div>
 
       {/* Popover 1: Type Picker */}
