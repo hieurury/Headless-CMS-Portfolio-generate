@@ -164,6 +164,12 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
   const activeConfig = TYPE_CONFIG[activeTab];
   const ActiveIcon = activeConfig.icon;
 
+  const getPlaceholder = () => {
+    if (activeTab === 'page') return isVi ? 'Chọn trang...' : 'Select page...';
+    if (activeTab === 'inner') return isVi ? 'Chọn neo...' : 'Select anchor...';
+    return isVi ? 'Nhập URL...' : 'Enter URL...';
+  };
+
   return (
     <div className="relative w-full" ref={containerRef}>
       <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-hover)] transition-colors h-9">
@@ -175,12 +181,9 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
           <Hash size={13} className={activeTab === 'inner' ? 'block' : 'hidden'} />
         </div>
 
-        {/* Text Input */}
-        <input
-          type="text"
-          value={displayValue}
-          readOnly={activeTab === 'page' || activeTab === 'inner'}
-          placeholder={placeholder ?? (isVi ? 'Nhập liên kết...' : 'Type link...')}
+        {/* Text Input Wrapper */}
+        <div 
+          className="flex-1 relative flex items-center min-w-0"
           onClick={() => {
             if (activeTab === 'page' || activeTab === 'inner') {
               setListOpen(true);
@@ -188,19 +191,26 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
               if (activeTab === 'page') loadPages();
             }
           }}
-          onChange={(e) => {
-            if (activeTab !== 'url') return;
-            const v = e.target.value;
-            setInputVal(v);
-            onChange(v);
-          }}
-          onKeyDown={(e) => {
-             if (e.key === 'Enter') {
-               setListOpen(false);
-             }
-          }}
-          className={`flex-1 bg-transparent px-1.5 text-sm text-[var(--color-text)] focus:outline-none min-w-0 ${activeTab !== 'url' ? 'cursor-pointer' : ''}`}
-        />
+        >
+          <input
+            type="text"
+            value={displayValue}
+            readOnly={activeTab === 'page' || activeTab === 'inner'}
+            placeholder={getPlaceholder()}
+            onChange={(e) => {
+              if (activeTab !== 'url') return;
+              const v = e.target.value;
+              setInputVal(v);
+              onChange(v);
+            }}
+            onKeyDown={(e) => {
+               if (e.key === 'Enter') {
+                 setListOpen(false);
+               }
+            }}
+            className={`w-full bg-transparent px-1.5 text-sm text-[var(--color-text)] focus:outline-none min-w-0 ${activeTab !== 'url' ? 'cursor-pointer pointer-events-none' : ''}`}
+          />
+        </div>
 
         {/* Type Selector Button */}
         <button
@@ -220,7 +230,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 
       {/* Popover 1: Type Picker */}
       {typeOpen && (
-        <div className="absolute z-[300] bottom-full mb-1 left-0 w-[140px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden py-1 animate-slide-up">
+        <div className="absolute z-[300] top-full mt-1 right-0 w-[140px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden py-1 animate-slide-down">
           {(Object.keys(TYPE_CONFIG) as LinkType[]).map((key) => {
             const cfg = TYPE_CONFIG[key as LinkType];
             const Icon = cfg.icon;
@@ -246,7 +256,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 
       {/* Popover 2: List Picker */}
       {listOpen && (activeTab === 'page' || activeTab === 'inner') && (
-        <div className="absolute z-[300] bottom-full mb-1 right-0 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden animate-slide-up flex flex-col max-h-[220px]">
+        <div className="absolute z-[300] top-full mt-1 right-0 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden animate-slide-down flex flex-col max-h-[220px]">
           <div className="overflow-y-auto p-1.5 space-y-0.5">
             
             {activeTab === 'page' && (
