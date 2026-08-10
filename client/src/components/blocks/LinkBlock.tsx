@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink, ArrowRight } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEditorContext } from '../../core/context/EditorContext';
 
 // ─── Shared position maps ─────────────────────────────────────────────────────
@@ -74,21 +75,40 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
   padding,
 }) => {
   const { isEditorMode, previewMode } = useEditorContext();
-
-
+  const { username, portfolioSlug } = useParams<{ username: string; portfolioSlug: string }>();
+  const navigate = useNavigate();
 
   const variantClass = VARIANT_STYLES[variant] ?? VARIANT_STYLES.nav;
   const sizeClass    = SIZE_STYLES[size]        ?? SIZE_STYLES.base;
 
   const isExternalHref = external || href?.startsWith('http');
   const isAnchor       = href?.startsWith('#');
+  const isPageLink     = href?.startsWith('/') && !href.startsWith('//');
+
+  let finalHref = href;
+  if (isPageLink && username && portfolioSlug) {
+    const pageSlug = href === '/' ? '' : href;
+    finalHref = `/${username}/${portfolioSlug}${pageSlug}`;
+  }
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isEditorMode && !previewMode) return;
+    if (isEditorMode) {
+      e.preventDefault();
+      if (!previewMode) return;
+      if (isAnchor && href) {
+        const target = document.getElementById(href.slice(1));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+
     if (isAnchor && href) {
       e.preventDefault();
       const target = document.getElementById(href.slice(1));
       if (target) target.scrollIntoView({ behavior: 'smooth' });
+    } else if (isPageLink && username && portfolioSlug && !isExternalHref) {
+      e.preventDefault();
+      navigate(finalHref);
     }
   };
 
@@ -108,7 +128,7 @@ export const LinkBlock: React.FC<LinkBlockProps> = ({
       }}
     >
       <a
-        href={href}
+        href={finalHref}
         data-cms-field="label"
         target={isExternalHref ? '_blank' : undefined}
         rel={isExternalHref ? 'noopener noreferrer' : undefined}

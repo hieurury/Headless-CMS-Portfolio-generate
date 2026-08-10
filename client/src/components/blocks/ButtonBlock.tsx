@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEditorContext } from '../../core/context/EditorContext';
 
 // ─── Shared position maps ─────────────────────────────────────────────────────
@@ -90,15 +91,36 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
   const isIconOnly = shape === 'icon-only';
   const isExternalHref = external || href?.startsWith('http');
   const isAnchor = href?.startsWith('#');
+  const isPageLink = href?.startsWith('/') && !href.startsWith('//');
+
+  let finalHref = href;
+  if (isPageLink && username && portfolioSlug) {
+    const pageSlug = href === '/' ? '' : href;
+    finalHref = `/${username}/${portfolioSlug}${pageSlug}`;
+  }
 
   const { isEditorMode, previewMode } = useEditorContext();
+  const { username, portfolioSlug } = useParams<{ username: string; portfolioSlug: string }>();
+  const navigate = useNavigate();
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isEditorMode && !previewMode) return;
+    if (isEditorMode) {
+      e.preventDefault();
+      if (!previewMode) return;
+      if (isAnchor && href) {
+        const target = document.getElementById(href.slice(1));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+
     if (isAnchor && href) {
       e.preventDefault();
       const target = document.getElementById(href.slice(1));
       if (target) target.scrollIntoView({ behavior: 'smooth' });
+    } else if (isPageLink && username && portfolioSlug && !isExternalHref) {
+      e.preventDefault();
+      navigate(finalHref);
     }
   };
 
@@ -153,7 +175,7 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
     >
       {hasUrl ? (
         <a
-          href={href}
+          href={finalHref}
           data-cms-field="label"
           target={isExternalHref ? '_blank' : undefined}
           rel={isExternalHref ? 'noopener noreferrer' : undefined}
