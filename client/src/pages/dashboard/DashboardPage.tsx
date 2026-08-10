@@ -31,6 +31,7 @@ import {
   Image as ImageIcon,
   Presentation,
 } from 'lucide-react';
+import { useSeo } from '../../hooks/useSeo';
 
 const ICONS = [
   { name: 'Folder', component: Folder },
@@ -58,6 +59,12 @@ export const DashboardPage: React.FC = () => {
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
+
+  useSeo({
+    title: 'Dashboard — Ruryfo CMS',
+    description: 'Quản lý các portfolio cá nhân của bạn trên Ruryfo CMS.',
+    noindex: true,
+  });
 
   // Active Tab: 'portfolios' or 'presentations'
   const [activeTab, setActiveTab] = useState<'portfolios' | 'presentations'>('portfolios');

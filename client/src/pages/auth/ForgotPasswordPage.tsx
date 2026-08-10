@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';
+import { useSeo } from '../../hooks/useSeo';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -388,6 +389,11 @@ export const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const { forgotPassword, verifyResetOtp, resetPassword, isLoading, error, clearError } =
     useAuthStore();
+
+  useSeo({
+    title: 'Ruryfo CMS — Quên mật khẩu',
+    description: 'Lấy lại mật khẩu tài khoản Ruryfo CMS của bạn.',
+  });
 
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');

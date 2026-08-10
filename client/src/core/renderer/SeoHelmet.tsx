@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useI18n } from '../../hooks/useI18n';
 import type { PortfolioMeta } from '../types/layout.types';
 
 interface SeoHelmetProps {
@@ -10,6 +11,8 @@ interface SeoHelmetProps {
 const SITE_URL = 'https://cms.hieurury.id.vn';
 
 export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle, meta }) => {
+  const { language } = useI18n();
+
   useEffect(() => {
     // ── Helper: set/update a <meta> tag ──────────────────────────────
     const setMetaTag = (attr: string, key: string, content: string) => {
@@ -59,8 +62,8 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
     setMetaTag('property', 'og:locale', 'vi_VN');
     setMetaTag('property', 'og:type', meta?.aio ? 'profile' : 'website');
 
-    // OG Image: prefer user-set, then site default (absolute URL)
-    const ogImage = meta?.seo?.ogImage || `${SITE_URL}/og-image.png`;
+    // OG Image: prefer user-set, then author avatar, then site default
+    const ogImage = meta?.seo?.ogImage || (meta?.aio as any)?.avatar || `${SITE_URL}/og-image.png`;
     setMetaTag('property', 'og:image', ogImage);
     setMetaTag('property', 'og:image:width', '1200');
     setMetaTag('property', 'og:image:height', '630');
@@ -98,54 +101,122 @@ export const SeoHelmet: React.FC<SeoHelmetProps> = ({ portfolioTitle, pageTitle,
       document.head.appendChild(jsonLdScript);
     }
 
-    if (meta?.aio) {
-      // Portfolio with author info → ProfilePage schema
-      const { authorName, jobTitle, bio, socialLinks } = meta.aio;
-      const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'ProfilePage',
-        url: canonicalUrl,
-        name: finalTitle,
-        mainEntity: {
-          '@type': 'Person',
-          name: authorName || portfolioTitle,
-          jobTitle: jobTitle || undefined,
-          description: bio || description || undefined,
-          sameAs: socialLinks?.length ? socialLinks : undefined,
-          url: `${SITE_URL}${window.location.pathname}`,
-          knowsAbout: meta?.seo?.keywords?.length ? meta.seo.keywords : undefined,
-          image: meta?.seo?.ogImage || undefined,
-        },
-        isPartOf: {
-          '@type': ['WebSite', 'SoftwareApplication'],
-          '@id': `${SITE_URL}/#website`,
-          name: 'Ruryfo CMS',
-          url: SITE_URL,
-        },
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const isPost = pathParts.includes('post');
+
+    // BreadcrumbList
+    const itemListElement = pathParts.map((part, index) => {
+      const currentPath = '/' + pathParts.slice(0, index + 1).join('/');
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: part, // fallback, ideally we have real names
+        item: `${SITE_URL}${currentPath}`,
       };
-      jsonLdScript.textContent = JSON.stringify(jsonLd);
-    } else {
-      // Generic portfolio without AIO → WebPage schema
-      const jsonLd = {
+    });
+
+    const breadcrumbLd = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement,
+    };
+
+    const mainSchemaLd: any = meta?.aio
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          url: canonicalUrl,
+          name: finalTitle,
+          mainEntity: {
+            '@type': 'Person',
+            name: meta.aio.authorName || portfolioTitle,
+            jobTitle: meta.aio.jobTitle || undefined,
+            description: meta.aio.bio || description || undefined,
+            sameAs: meta.aio.socialLinks?.length ? meta.aio.socialLinks : undefined,
+            url: `${SITE_URL}${window.location.pathname}`,
+            knowsAbout: meta?.seo?.keywords?.length ? meta.seo.keywords : undefined,
+            image: meta?.seo?.ogImage || undefined,
+          },
+          isPartOf: {
+            '@type': ['WebSite', 'SoftwareApplication'],
+            '@id': `${SITE_URL}/#website`,
+            name: 'Ruryfo CMS',
+            url: SITE_URL,
+          },
+        }
+      : {
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          url: canonicalUrl,
+          name: finalTitle,
+          description: description,
+          isPartOf: {
+            '@type': ['WebSite', 'SoftwareApplication'],
+            '@id': `${SITE_URL}/#website`,
+            name: 'Ruryfo CMS',
+            url: SITE_URL,
+          },
+        };
+
+    // If it's a post, we add a BlogPosting schema
+    let blogPostingLd = undefined;
+    if (isPost) {
+      blogPostingLd = {
         '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        url: canonicalUrl,
-        name: finalTitle,
+        '@type': 'BlogPosting',
+        headline: pageTitle,
         description: description,
-        isPartOf: {
-          '@type': ['WebSite', 'SoftwareApplication'],
-          '@id': `${SITE_URL}/#website`,
-          name: 'Ruryfo CMS',
-          url: SITE_URL,
+        image: meta?.seo?.ogImage || `${SITE_URL}/og-image.png`,
+        url: canonicalUrl,
+        author: {
+          '@type': 'Person',
+          name: meta?.aio?.authorName || portfolioTitle,
         },
+        publisher: {
+          '@type': 'Organization',
+          name: 'Ruryfo CMS',
+          logo: {
+            '@type': 'ImageObject',
+            url: `${SITE_URL}/logo.png`,
+          }
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': canonicalUrl,
+        }
       };
-      jsonLdScript.textContent = JSON.stringify(jsonLd);
     }
 
+    // Combine all schemas into an array
+    const jsonLdArray = [mainSchemaLd, breadcrumbLd];
+    if (blogPostingLd) {
+      jsonLdArray.push(blogPostingLd);
+    }
+    jsonLdScript.textContent = JSON.stringify(jsonLdArray);
+
     return () => {
-      // Cleanup omitted for SPA transitions — handled on next mount
+      // Cleanup on unmount - restore default site meta
+      const defaultDesc =
+        language === 'en'
+          ? 'Ruryfo CMS is a Headless CMS platform that helps you build and share your personal portfolio automatically, quickly, and beautifully.'
+          : 'Ruryfo CMS là nền tảng Headless CMS giúp bạn xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng và đẹp mắt.';
+
+      document.title = 'Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động';
+      setMetaTag('name', 'description', defaultDesc);
+      setMetaTag('name', 'robots', 'index, follow');
+      setMetaTag('property', 'og:title', 'Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động');
+      setMetaTag('property', 'og:description', defaultDesc);
+      setMetaTag('property', 'og:type', 'website');
+      setMetaTag('property', 'og:image', `${SITE_URL}/og-image.png`);
+      setMetaTag('name', 'twitter:title', 'Ruryfo CMS — Nền tảng tạo Portfolio cá nhân tự động');
+      setMetaTag('name', 'twitter:description', defaultDesc);
+      setMetaTag('name', 'twitter:image', `${SITE_URL}/og-image.png`);
+
+      if (jsonLdScript) {
+        jsonLdScript.remove();
+      }
     };
-  }, [portfolioTitle, pageTitle, meta]);
+  }, [portfolioTitle, pageTitle, meta, language]);
 
   return null; // This component doesn't render anything visible
 };

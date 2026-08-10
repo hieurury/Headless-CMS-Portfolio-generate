@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -60,6 +60,8 @@ export class PublicService {
     @InjectModel(UserProfile.name)
     private readonly profileModel: Model<UserProfileDocument>,
   ) {}
+
+  private readonly logger = new Logger(PublicService.name);
 
   // ─── Resolve username → accountId ───────────────────────────────────────────
 
@@ -494,49 +496,152 @@ export class PublicService {
     };
   }
 
-  // ─── Sitemap ─────────────────────────────────────────────────────────────────
+  // ─── Sitemap Generator ────────────────────────────────────────────────────────
 
   async getSitemapData(): Promise<
     { urlPath: string; lastmod: Date; isPage: boolean }[]
   > {
+    const data: { urlPath: string; lastmod: Date; isPage: boolean }[] = [];
+
+    // All published portfolios and their pages
     const portfolios = await this.portfolioModel
       .find({ isPublished: true })
-      .select('_id slug owner updatedAt')
+      .populate('owner')
       .lean()
       .exec();
 
-    const result: { urlPath: string; lastmod: Date; isPage: boolean }[] = [];
+    const addedUsernames = new Set<string>();
 
     for (const p of portfolios) {
-      // Lookup owner username
-      const ownerProfile = await this.profileModel
-        .findOne({ accountId: p.owner })
-        .select('username')
-        .lean()
-        .exec();
-      const username = ownerProfile?.username ?? 'unknown';
+      if (!p.owner) continue;
+      // Get the profile to know the username
+      const ownerProfile = await this.profileModel.findOne({ accountId: (p.owner as any)._id }).lean().exec();
+      const username = ownerProfile?.username;
+      if (!username) continue;
 
-      result.push({
+      if (!addedUsernames.has(username)) {
+        data.push({
+          urlPath: `/${username}`,
+          lastmod: ((ownerProfile as any).updatedAt as Date) || new Date(),
+          isPage: true,
+        });
+        addedUsernames.add(username);
+      }
+
+      // The hub page (listing posts/pages for this portfolio)
+      data.push({
         urlPath: `/${username}/${p.slug}`,
-        lastmod: ((p as any).updatedAt as Date) || new Date(),
+        lastmod: ((p as any).updatedAt as Date) || ((p as any).createdAt as Date) || new Date(),
         isPage: false,
       });
 
+      // Pages
       const pages = await this.pageModel
         .find({ portfolio: p._id, isPublished: true })
-        .select('slug updatedAt')
         .lean()
         .exec();
 
       for (const page of pages) {
-        result.push({
+        data.push({
           urlPath: `/${username}/${p.slug}/${normalizeSlug(page.slug)}`,
-          lastmod: ((page as any).updatedAt as Date) || new Date(),
+          lastmod: ((page as any).updatedAt as Date) || ((page as any).createdAt as Date) || new Date(),
           isPage: true,
+        });
+      }
+
+      // Posts
+      const posts = await this.postModel
+        .find({ portfolio: p._id, status: POST_STATUS.PUBLISHED })
+        .lean()
+        .exec();
+
+      for (const post of posts) {
+        data.push({
+          urlPath: `/${username}/${p.slug}/post/${post.slug}`,
+          lastmod: ((post as any).updatedAt as Date) || ((post as any).createdAt as Date) || new Date(),
+          isPage: false,
         });
       }
     }
 
-    return result;
+    return data;
+  }
+
+  // ─── Bot Metadata Resolver (Prerender) ───────────────────────────────────────
+
+  /**
+   * Resolve a URL path into SEO metadata for social bots.
+   * Path examples:
+   * /hieurury
+   * /hieurury/portfolio-slug
+   * /hieurury/portfolio-slug/post/post-slug
+   */
+  async getMetadataByPath(path: string): Promise<any> {
+    const parts = path.split('/').filter(Boolean);
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://cms.hieurury.id.vn').replace(/\/$/, '');
+    
+    if (parts.length === 0) {
+      return {
+        title: 'Ruryfo CMS — Nền tảng tạo Portfolio cá nhân',
+        description: 'Xây dựng và chia sẻ portfolio cá nhân một cách tự động, nhanh chóng.',
+        image: `${frontendUrl}/og-image.png`,
+        url: frontendUrl,
+        type: 'website'
+      };
+    }
+
+    const username = parts[0];
+    
+    // Fallback default meta
+    const defaultMeta = {
+      title: 'Ruryfo CMS',
+      description: 'Headless CMS for Portfolio',
+      image: `${frontendUrl}/og-image.png`,
+      url: `${frontendUrl}${path}`,
+      type: 'website'
+    };
+
+    try {
+      // 1. Profile Page: /:username
+      if (parts.length === 1) {
+        const user = await this.getUserPublicProfile(username);
+        return {
+          title: `${user.fullName || username} (@${username}) — Profile | Ruryfo CMS`,
+          description: user.slogan || `Xem profile của @${username} trên Ruryfo CMS.`,
+          image: user.avatar || defaultMeta.image,
+          url: `${frontendUrl}${path}`,
+          type: 'profile'
+        };
+      }
+
+      const portfolioSlug = parts[1];
+
+      // 2. Post Page: /:username/:portfolioSlug/post/:postSlug
+      if (parts[2] === 'post' && parts.length === 4) {
+        const postSlug = parts[3];
+        const { post, portfolio } = await this.findPublicPost(username, portfolioSlug, postSlug);
+        return {
+          title: `${post.title} — ${portfolio.title}`,
+          description: post.excerpt || `Xem bài viết trên portfolio ${portfolio.title}`,
+          image: post.coverImage || portfolio.meta?.seo?.ogImage || defaultMeta.image,
+          url: `${frontendUrl}${path}`,
+          type: 'article'
+        };
+      }
+
+      // 3. Portfolio Hub/Page: /:username/:portfolioSlug[/something]
+      const portfolio = await this.findPublicPortfolio(username, portfolioSlug);
+      return {
+        title: portfolio.meta?.seo?.title || `${portfolio.title} | ${portfolio.ownerName || username}`,
+        description: portfolio.meta?.seo?.description || portfolio.description || `Portfolio của ${portfolio.ownerName || username}`,
+        image: portfolio.meta?.seo?.ogImage || portfolio.ownerAvatar || defaultMeta.image,
+        url: `${frontendUrl}${path}`,
+        type: 'website'
+      };
+
+    } catch (error) {
+      this.logger.warn(`Failed to resolve metadata for path ${path}: ${error.message}`);
+      return defaultMeta;
+    }
   }
 }

@@ -5,6 +5,7 @@ import { useUIStore } from '../../store/uiStore';
 import { t, translateError } from '../../i18n';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
+import { useSeo } from '../../hooks/useSeo';
 
 // ─── Shared input style (đồng bộ với RegisterPage / ForgotPasswordPage) ───────
 
@@ -40,6 +41,11 @@ export const LoginPage: React.FC = () => {
   const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  useSeo({
+    title: 'Ruryfo CMS — Đăng nhập',
+    description: 'Đăng nhập vào Ruryfo CMS để quản lý và tạo portfolio cá nhân.',
+  });
 
   // Auto-dismiss error toast
   useEffect(() => {

@@ -111,6 +111,18 @@ Sitemap: ${frontendUrl}/sitemap.xml
   }
 
   /**
+   * GET /api/v1/public/meta
+   * Used for social bot prerendering.
+   */
+  @Get('meta')
+  async getMetadata(@Query('path') path: string) {
+    if (!path) {
+      path = '/';
+    }
+    return this.publicService.getMetadataByPath(path);
+  }
+
+  /**
    * GET /api/v1/public/user/:username
    * Returns public profile + list of published portfolios for a user.
    */

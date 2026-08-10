@@ -32,6 +32,7 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
+import { useSeo } from '../../hooks/useSeo';
 
 // Helper to remove Vietnamese diacritics for smart search
 const normalizeVietnamese = (str: string) => {
@@ -57,6 +58,31 @@ export const ProfilePage: React.FC = () => {
 
   const { portfolios, fetchAll: fetchPortfolios, isLoading: loadingPortfolios } = usePortfolioStore();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
+
+  const pageTitle = user?.fullName ? `${user.fullName} (@${username})` : `@${username}`;
+  
+  const jsonLd = useMemo(() => {
+    if (!user) return undefined;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ProfilePage',
+      mainEntity: {
+        '@type': 'Person',
+        name: user.fullName || username,
+        description: user.slogan,
+        image: user.avatar,
+        jobTitle: user.occupation,
+      }
+    };
+  }, [user, username]);
+
+  useSeo({
+    title: `${pageTitle} — Profile | Ruryfo CMS`,
+    description: user?.slogan || `Xem profile của ${pageTitle} trên Ruryfo CMS.`,
+    ogImage: user?.avatar,
+    type: 'profile',
+    jsonLd,
+  });
 
   const [activeTab, setActiveTab] = useState<'websites' | 'posts'>('websites');
   const [posts, setPosts] = useState<Post[]>([]);

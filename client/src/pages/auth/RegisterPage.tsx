@@ -9,6 +9,7 @@ import { OtpInput } from '../../components/auth/OtpInput';
 
 import { useUIStore } from '../../store/uiStore';
 import { translateError } from '../../i18n';
+import { useSeo } from '../../hooks/useSeo';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -773,6 +774,11 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language } = useUIStore();
+
+  useSeo({
+    title: 'Ruryfo CMS — Đăng ký',
+    description: 'Đăng ký tài khoản Ruryfo CMS để bắt đầu tạo portfolio cá nhân của bạn.',
+  });
   const {
     register,
     verifyOtp,
