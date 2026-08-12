@@ -6,6 +6,9 @@ const GAP_MAP: Record<string, string> = {
     md: '24px',
     lg: '40px',
     xl: '64px',
+    '2xl': '96px',
+    '3xl': '128px',
+    '4xl': '160px',
 };
 
 const ALIGN_MAP: Record<string, string> = {
@@ -18,7 +21,7 @@ const ALIGN_MAP: Record<string, string> = {
 export interface RowsBlockProps {
     rows?: number | string;
     rowSpans?: number[];
-    gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+    gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
     alignX?: 'start' | 'center' | 'end' | 'stretch';
     alignY?: 'start' | 'center' | 'end' | 'stretch';
     textColor?: string;

@@ -8,6 +8,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { CSS } from '@dnd-kit/utilities';
+import { useAlertStore } from '../../../store/alertStore';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import { findParent, findSectionById } from '../../../core/utils/layoutUtils';
@@ -183,6 +184,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
   const hasChildren = visibleChildren.length > 0;
   const isSelected = selectedIds.includes(section.id);
   const [expanded, setExpanded] = useState(true);
+  const { showConfirm } = useAlertStore();
   const nodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -223,7 +225,7 @@ const LayerNode: React.FC<LayerNodeProps> = ({
       {/* ── Row ─────────────────────────────────────────────────── */}
       <div
         className={clsx(
-          'group flex items-center gap-1 rounded-md py-1 pr-1 cursor-pointer transition-all duration-150',
+          'group flex items-center gap-1 rounded-sm py-1 pr-1 cursor-pointer transition-all duration-150',
           isSelected
             ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold'
             : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]',
@@ -332,11 +334,11 @@ const LayerNode: React.FC<LayerNodeProps> = ({
           )}
           <button
             title={tr.remove}
-            onClick={() => {
+            onClick={async () => {
               if (
-                confirm(
+                await showConfirm(
                   tr.removeConfirm.replace(
-                    '{name}',
+                    '{type}',
                     entry?.displayName ?? section.type,
                   ),
                 )
@@ -472,7 +474,7 @@ export const LayersPanel: React.FC<{
         </span>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
+          className="flex items-center gap-1 px-2 py-1 rounded-sm bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
         >
           <Plus size={11} /> {tr.add}
         </button>
@@ -480,7 +482,7 @@ export const LayersPanel: React.FC<{
 
       {/* Empty state */}
       {sections.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-md">
+        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-sm">
           <p className="text-xs text-[var(--color-text-faint)]">
             {tr.emptyState}
           </p>

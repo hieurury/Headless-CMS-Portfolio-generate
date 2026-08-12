@@ -15,6 +15,7 @@ import {
   Layers, Tag, AlignLeft, Settings, X, GripVertical,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useAlertStore } from '../../store/alertStore';
 
 const ICONS = [
   { name: 'FileText', component: FileText },
@@ -37,6 +38,7 @@ export const PortfolioDetailPage: React.FC = () => {
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const { user } = useAuthStore();
   const { postTypes, posts, fetchPostTypes, fetchPosts, removePost, createPostType, removePostType } = usePostStore();
+  const { showConfirm } = useAlertStore();
   const [activeTab, setActiveTab] = useState<'pages' | 'posts'>('pages');
   const [showCreate, setShowCreate] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -432,8 +434,8 @@ export const PortfolioDetailPage: React.FC = () => {
 
                       {/* Delete */}
                       <button
-                        onClick={() => {
-                          if (portfolioId && confirm('Delete this page?'))
+                        onClick={async () => {
+                          if (portfolioId && await showConfirm(lang.deletePageConfirm.replace('{name}', page.title)))
                             remove(portfolioId, page._id);
                         }}
                         className="p-2 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
@@ -502,8 +504,8 @@ export const PortfolioDetailPage: React.FC = () => {
                         )}
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete post type "${pt.name}"?`)) {
+                        onClick={async () => {
+                          if (await showConfirm(lang.deletePostTypeConfirm.replace('{name}', pt.name))) {
                             void removePostType(pt._id);
                             if (selectedPostTypeId === pt._id) setSelectedPostTypeId('');
                           }
@@ -610,8 +612,8 @@ export const PortfolioDetailPage: React.FC = () => {
                                 <Pencil size={16} />
                               </button>
                               <button
-                                onClick={() => {
-                                  if (confirm('Delete this post?')) void removePost(post._id);
+                                onClick={async () => {
+                                  if (await showConfirm(lang.deletePostConfirm.replace('{name}', post.title))) void removePost(post._id);
                                 }}
                                 className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                                 title="Delete post"

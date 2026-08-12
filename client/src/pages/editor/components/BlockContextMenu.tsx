@@ -25,7 +25,7 @@ const MenuItem: React.FC<{
 }> = ({ label, icon, onClick, disabled }) => {
   return (
     <div
-      className={`px-3 py-1.5 mx-1.5 rounded-md text-xs font-medium flex items-center gap-2 transition-colors ${disabled ? 'opacity-40 cursor-not-allowed text-[var(--color-text-muted)]' : 'hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer'}`}
+      className={`px-3 py-1.5 mx-1.5 rounded-sm text-xs font-medium flex items-center gap-2 transition-colors ${disabled ? 'opacity-40 cursor-not-allowed text-[var(--color-text-muted)]' : 'hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer'}`}
       onClick={() => {
         if (!disabled && onClick) onClick();
       }}
@@ -159,7 +159,7 @@ export const BlockContextMenu: React.FC<BlockContextMenuProps> = ({ state, onClo
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] flex flex-col rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-xl text-[var(--color-text)] py-1.5"
+      className="fixed z-[9999] flex flex-col rounded-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-xl text-[var(--color-text)] py-1.5"
       style={{ left: x, top: y, width: MENU_WIDTH }}
       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
     >

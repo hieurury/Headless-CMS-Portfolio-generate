@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
 import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';
+import { useAlertStore } from '../../store/alertStore';
 import { useSeo } from '../../hooks/useSeo';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -56,41 +57,6 @@ const btnPrimary = (loading: boolean, disabled?: boolean): React.CSSProperties =
   transition: 'opacity 0.2s',
 });
 
-// ─── Error Toast ──────────────────────────────────────────────────────────────
-
-const ErrorToast: React.FC<{ message: string }> = ({ message }) => (
-  <div
-    style={{
-      position: 'fixed',
-      top: '80px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 50,
-    }}
-    className="animate-fade-in"
-  >
-    <div
-      style={{
-        background: 'var(--color-error-bg)',
-        border: '1px solid var(--color-error-border)',
-        color: 'var(--color-error)',
-        padding: '10px 18px',
-        borderRadius: 'var(--radius-lg)',
-        fontSize: '13px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        boxShadow: 'var(--shadow-md)',
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <span
-        style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-error)' }}
-      />
-      <span style={{ fontWeight: 500 }}>{message}</span>
-    </div>
-  </div>
-);
 
 // ─── Step 1: Email ────────────────────────────────────────────────────────────
 
@@ -389,6 +355,7 @@ export const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const { forgotPassword, verifyResetOtp, resetPassword, isLoading, error, clearError } =
     useAuthStore();
+  const { showAlert } = useAlertStore();
 
   useSeo({
     title: 'Ruryfo CMS — Quên mật khẩu',
@@ -405,9 +372,10 @@ export const ForgotPasswordPage: React.FC = () => {
   // Auto-dismiss error toast
   useEffect(() => {
     if (!error) return;
+    showAlert(error, 'error');
     const t = setTimeout(clearError, 4000);
     return () => clearTimeout(t);
-  }, [error, clearError]);
+  }, [error, clearError, showAlert]);
 
   // ─── Step handlers ──────────────────────────────────────────────────────────
 
@@ -482,8 +450,7 @@ export const ForgotPasswordPage: React.FC = () => {
         }}
       />
 
-      {/* Error Toast */}
-      {error && <ErrorToast message={error} />}
+
 
       <div
         style={{ width: '100%', maxWidth: 440, position: 'relative' }}

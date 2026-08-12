@@ -8,6 +8,7 @@ import { StepProgress } from '../../components/auth/StepProgress';
 import { OtpInput } from '../../components/auth/OtpInput';
 
 import { useUIStore } from '../../store/uiStore';
+import { useAlertStore } from '../../store/alertStore';
 import { translateError } from '../../i18n';
 import { useSeo } from '../../hooks/useSeo';
 
@@ -25,39 +26,7 @@ const normalizeVietnamese = (str: string) => {
     .toLowerCase();
 };
 
-// ─── Error Toast ─────────────────────────────────────────────────────────────
 
-const ErrorToast: React.FC<{ message: string }> = ({ message }) => (
-  <div
-    style={{
-      position: 'fixed',
-      top: '80px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 50,
-    }}
-    className="animate-fade-in"
-  >
-    <div
-      style={{
-        background: 'var(--color-error-bg)',
-        border: '1px solid var(--color-error-border)',
-        color: 'var(--color-error)',
-        padding: '10px 18px',
-        borderRadius: 'var(--radius-lg)',
-        fontSize: '13px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        boxShadow: 'var(--shadow-md)',
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-error)' }} />
-      <span style={{ fontWeight: 500 }}>{message}</span>
-    </div>
-  </div>
-);
 
 // ─── Shared input style helper ────────────────────────────────────────────────
 
@@ -774,6 +743,7 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language } = useUIStore();
+  const { showAlert } = useAlertStore();
 
   useSeo({
     title: 'Ruryfo CMS — Đăng ký',
@@ -800,13 +770,13 @@ export const RegisterPage: React.FC = () => {
     }
   }, [isAuthenticated, step, searchParams, navigate]);
 
-  useEffect(() => { clearError(); }, [step, clearError]);
-
+  // Auto-dismiss error toast
   useEffect(() => {
     if (!error) return;
-    const t = setTimeout(clearError, 4000);
-    return () => clearTimeout(t);
-  }, [error, clearError]);
+    showAlert(translateError(error, language), 'error');
+    const timer = setTimeout(clearError, 4000);
+    return () => clearTimeout(timer);
+  }, [error, language, clearError, showAlert]);
 
   // ─── Step handlers ──────────────────────────────────────────────────────────
 
@@ -863,7 +833,7 @@ export const RegisterPage: React.FC = () => {
         }}
       />
 
-      {error && <ErrorToast message={translateError(error, language)} />}
+
 
       <div style={{ width: '100%', maxWidth: 440, position: 'relative' }} className="animate-slide-up">
         {/* Progress */}

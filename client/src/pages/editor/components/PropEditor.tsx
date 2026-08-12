@@ -79,7 +79,7 @@ export const PropEditor: React.FC<PropEditorProps> = ({
           onKeyDown={handleKeyDown}
           rows={14}
           spellCheck={false}
-          className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none transition-colors"
+          className="w-full px-3 py-3 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none transition-colors"
           style={{
             fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
           }}
@@ -87,7 +87,7 @@ export const PropEditor: React.FC<PropEditorProps> = ({
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-red-500/10 border border-red-500/20">
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-sm bg-red-500/10 border border-red-500/20">
           <AlertCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
           <p className="text-xs text-red-400 font-mono break-all">{error}</p>
         </div>
@@ -95,7 +95,7 @@ export const PropEditor: React.FC<PropEditorProps> = ({
 
       <button
         onClick={handleApply}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-black/10"
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-sm bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-black/10"
       >
         {saved ? (
           <>

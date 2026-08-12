@@ -6,7 +6,7 @@ export interface ColumnsBlockProps {
    *  e.g. [1, 2] → CSS `1fr 2fr` (second column is twice as wide as first).
    *  Falls back to equal widths if not provided or length mismatch. */
   colSpans?: number[];
-  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
   alignX?: 'start' | 'center' | 'end' | 'stretch';
   alignY?: 'start' | 'center' | 'end' | 'stretch';
   children?: React.ReactNode;
@@ -31,6 +31,9 @@ const GAP_MAP: Record<string, string> = {
   md: '1rem',
   lg: '2rem',
   xl: '3rem',
+  '2xl': '4rem',
+  '3xl': '6rem',
+  '4xl': '8rem',
 };
 
 /**

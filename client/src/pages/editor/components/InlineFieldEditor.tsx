@@ -29,11 +29,11 @@ interface InlineFieldEditorProps {
 }
 
 const INPUT_CLS =
-  'w-full px-3 py-2 rounded-md bg-[#0d0d1a] border border-[var(--color-border)] text-[var(--color-text)] text-sm ' +
+  'w-full px-3 py-2 rounded-sm bg-[#0d0d1a] border border-[var(--color-border)] text-[var(--color-text)] text-sm ' +
   'placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors';
 
 const TEXTAREA_CLS =
-  'w-full px-3 py-2 rounded-md bg-[#0d0d1a] border border-[var(--color-border)] text-[var(--color-text)] text-sm ' +
+  'w-full px-3 py-2 rounded-sm bg-[#0d0d1a] border border-[var(--color-border)] text-[var(--color-text)] text-sm ' +
   'placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors resize-none leading-relaxed';
 
 export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
@@ -136,7 +136,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
           </p>
           <button
             onClick={onOpenInPanel}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/20 border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-xs font-medium hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]/30 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-sm bg-[var(--color-accent)] text-[var(--color-bg)]/20 border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-xs font-medium hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)]/30 transition-all"
           >
             <ExternalLink size={12} /> {tr.openInPanel}
           </button>
@@ -209,7 +209,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
             />
           </div>
           {src && !imgError && (
-            <div className="rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] h-24">
+            <div className="rounded-sm overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] h-24">
               <img
                 src={src}
                 alt="preview"
@@ -302,7 +302,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
   return (
     <div
       ref={panelRef}
-      className="absolute z-[200] w-72 rounded-md shadow-2xl shadow-black/60 animate-slide-up"
+      className="absolute z-[200] w-72 rounded-sm shadow-2xl shadow-black/60 animate-slide-up"
       style={{
         top: position.top,
         left: position.left,
@@ -341,7 +341,7 @@ export const InlineFieldEditor: React.FC<InlineFieldEditorProps> = ({
         <div className="px-3 pb-3">
           <button
             onClick={commitAndClose}
-            className="w-full py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-semibold transition-all"
+            className="w-full py-1.5 rounded-sm bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-semibold transition-all"
           >
             {tr.confirm}
           </button>

@@ -75,7 +75,7 @@ export const SectionList: React.FC<SectionListProps> = ({
         </div>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all hover:shadow-md hover:shadow-black/10"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm bg-[var(--color-accent)] text-[var(--color-bg)]/80 hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] text-xs font-medium transition-all hover:shadow-md hover:shadow-black/10"
         >
           <Plus size={13} /> {tr.add}
         </button>
@@ -83,7 +83,7 @@ export const SectionList: React.FC<SectionListProps> = ({
 
       {/* Empty state */}
       {sections.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-md">
+        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-[var(--color-border)] rounded-sm">
           <Layers size={28} className="text-[var(--color-text-faint)] mb-3" />
           <p className="text-sm text-[var(--color-text-faint)]">
             {tr.noSections}

@@ -54,7 +54,7 @@ const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (
 ) => (
   <input
     {...props}
-    className={`w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+    className={`w-full px-3 py-2 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
       placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors ${props.className ?? ''}`}
   />
 );
@@ -64,7 +64,7 @@ const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (
 ) => (
   <textarea
     {...props}
-    className={`w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+    className={`w-full px-3 py-2 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
       placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors resize-none leading-relaxed ${props.className ?? ''}`}
   />
 );
@@ -215,7 +215,7 @@ const IconPicker: React.FC<{
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-12 h-9 flex items-center justify-center shrink-0 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+          className="w-12 h-9 flex items-center justify-center shrink-0 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             hover:border-[var(--color-border-hover)] transition-colors"
         >
           {SelectedIcon ? (
@@ -227,9 +227,9 @@ const IconPicker: React.FC<{
 
         {hasPosition && onPositionChange && (
           <select
-            value={positionValue || 'left'}
+            value={positionValue === 'left' ? 'left' : 'right'}
             onChange={(e) => onPositionChange(e.target.value)}
-            className="flex-1 px-3 py-2 h-9 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+            className="flex-1 px-3 py-2 h-9 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
               focus:outline-none focus:border-[var(--color-border)] transition-colors"
           >
             <option value="left">Left</option>
@@ -239,7 +239,7 @@ const IconPicker: React.FC<{
       </div>
 
       {open && (
-        <div className="absolute z-50 bottom-full mb-1 left-0 w-[260px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden flex flex-col">
+        <div className="absolute z-50 bottom-full mb-1 left-0 w-[260px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-sm shadow-xl overflow-hidden flex flex-col">
           <div className="p-2 border-b border-[var(--color-border)] flex items-center gap-2 bg-[var(--color-surface-2)]">
             <Search
               size={14}
@@ -268,7 +268,7 @@ const IconPicker: React.FC<{
                         setOpen(false);
                       }}
                       title={name}
-                      className={`flex items-center justify-center p-2 rounded-md transition-colors ${
+                      className={`flex items-center justify-center p-2 rounded-sm transition-colors ${
                         isActive
                           ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
                           : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]'
@@ -346,7 +346,7 @@ const ColorPicker: React.FC<{
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-strong)] transition-colors h-9">
+      <div className="flex items-center rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-strong)] transition-colors h-9">
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -384,7 +384,7 @@ const ColorPicker: React.FC<{
       </div>
 
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 w-[200px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl p-2.5 flex flex-col gap-2.5">
+        <div className="absolute z-50 top-full mt-1 left-0 w-[200px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-sm shadow-xl p-2.5 flex flex-col gap-2.5">
           <div className="text-[10px] font-semibold text-[var(--color-text-faint)] uppercase tracking-wider">Màu gợi ý</div>
           <div className="grid grid-cols-5 gap-1.5">
             {finalPredefined.map((c, i) => (
@@ -395,7 +395,7 @@ const ColorPicker: React.FC<{
                   onChange(c);
                   setOpen(false);
                 }}
-                className="w-7 h-7 rounded-md shadow-sm border border-[var(--color-border)] hover:scale-110 transition-transform relative overflow-hidden"
+                className="w-7 h-7 rounded-sm shadow-sm border border-[var(--color-border)] hover:scale-110 transition-transform relative overflow-hidden"
                 title={c}
               >
                 {c === 'transparent' ? (
@@ -411,7 +411,7 @@ const ColorPicker: React.FC<{
               </button>
             ))}
           </div>
-          <div className="relative w-full h-7 rounded-md border border-[var(--color-border)] hover:bg-[var(--color-surface-2)] overflow-hidden transition-colors flex items-center justify-center cursor-pointer group">
+          <div className="relative w-full h-7 rounded-sm border border-[var(--color-border)] hover:bg-[var(--color-surface-2)] overflow-hidden transition-colors flex items-center justify-center cursor-pointer group">
             <span className="text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] transition-colors">Tùy chỉnh...</span>
             <input
               type="color"
@@ -557,7 +557,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         <select
           value={(value as string) ?? schema.options?.[0] ?? ''}
           onChange={(e) => handleChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+          className="w-full px-3 py-2 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             focus:outline-none focus:border-[var(--color-border)] transition-colors"
         >
           {schema.options?.map((opt) => (
@@ -775,7 +775,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-md border border-dashed border-[var(--color-border)]
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-dashed border-[var(--color-border)]
                 text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:border-[var(--color-border)] hover:bg-[var(--color-text)]/5 text-xs transition-all"
             >
               <Plus size={13} />{' '}
@@ -792,7 +792,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     return (
       <div className="space-y-2">
         <Label>{schema.label}</Label>
-        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md">
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-sm">
           <p className="text-xs text-blue-400 font-medium">{tr.tableHint}</p>
         </div>
       </div>
@@ -872,7 +872,7 @@ const ArrayItemCard: React.FC<ArrayItemCardProps> = ({
     : `${itemLabel} ${idx + 1}`;
 
   return (
-    <div className="border border-white/8 rounded-md overflow-hidden bg-white/2">
+    <div className="border border-white/8 rounded-sm overflow-hidden bg-white/2">
       {/* Card header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-white/3">
         <GripVertical size={14} className="text-slate-700 shrink-0" />
@@ -1023,7 +1023,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
       </div>
 
       {/* Section Name (Anchor) */}
-      <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 space-y-1.5">
+      <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 space-y-1.5">
         {/* <label className="text-xs font-medium text-[var(--color-text)] font-semibold flex items-center gap-1.5">
           <span>#</span> Section Anchor Name
         </label> */}
@@ -1039,7 +1039,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
           onChange={(e) =>
             onNameChange(e.target.value.toLowerCase().replace(/\s+/g, '-'))
           }
-          className="w-full px-3 py-2 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
+          className="w-full px-3 py-2 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm
             placeholder-slate-600 focus:outline-none focus:border-[var(--color-border)] transition-colors font-mono"
         />
       </div>
@@ -1074,12 +1074,13 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
               ref={(el) => {
                 fieldRefs.current[key] = el;
               }}
-              className="rounded-md transition-all"
+              className="rounded-sm transition-all"
             >
               <FieldRenderer
                 fieldKey={key}
                 schema={fieldSchema}
                 value={get(props, key)}
+                allProps={props}
                 onChange={handleFieldChange}
                 sectionId={sectionId}
               />
@@ -1090,7 +1091,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
 
       {/* Fallback: no schema — always show JSON */}
       {activeTab === 'form' && !schema && (
-        <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
+        <div className="rounded-sm border border-amber-500/20 bg-amber-500/5 p-3">
           <p className="text-xs text-amber-400 mb-2">
             This component doesn't have a form schema yet. Edit props as JSON:
           </p>
@@ -1105,7 +1106,7 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
                 /* ignore mid-edit */
               }
             }}
-            className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
+            className="w-full px-3 py-3 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
               leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
           />
         </div>
@@ -1122,18 +1123,18 @@ export const SmartPropEditor: React.FC<SmartPropEditorProps> = ({
               setJsonText(e.target.value);
               setJsonError(null);
             }}
-            className="w-full px-3 py-3 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
+            className="w-full px-3 py-3 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] font-mono text-xs
               leading-relaxed focus:outline-none focus:border-[var(--color-border)] resize-none"
             style={{ fontFamily: "'Fira Code', 'Cascadia Code', monospace" }}
           />
           {jsonError && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2 font-mono">
+            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2 font-mono">
               {jsonError}
             </p>
           )}
           <button
             onClick={applyJson}
-            className="w-full py-2.5 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-sm font-semibold
+            className="w-full py-2.5 rounded-sm bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-sm font-semibold
               transition-all hover:shadow-lg hover:shadow-black/10"
           >
             Apply JSON

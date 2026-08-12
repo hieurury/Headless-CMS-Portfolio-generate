@@ -3,6 +3,9 @@ import { Trash2, Plus, Minus, Settings, Copy, Scissors, ClipboardPaste, CopyPlus
 import { componentRegistry } from '../../core/registry/ComponentRegistry';
 import { useEditorContext } from '../../core/context/EditorContext';
 import { findSectionById } from '../../core/utils/layoutUtils';
+import { useAlertStore } from '../../store/alertStore';
+import { useUIStore } from '../../store/uiStore';
+import { t } from '../../i18n';
 
 // ─── FloatingControlPanel ─────────────────────────────────────────────────────
 /**
@@ -23,6 +26,9 @@ const FloatingControlPanel: React.FC = () => {
   const [activeData, setActiveData] = useState<{ section: any; entry: any } | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [hasClipboard, setHasClipboard] = useState(false);
+  const { showConfirm } = useAlertStore();
+  const { language } = useUIStore();
+  const tr = t(language).editor.layersPanel;
 
   useEffect(() => {
     const section = selectedSectionId ? findSectionById(sections, selectedSectionId) : null;
@@ -257,10 +263,10 @@ const FloatingControlPanel: React.FC = () => {
       {/* Delete */}
       <ActionBtn
         icon={<Trash2 size={14} />}
-        label={`Delete ${entry.displayName ?? selectedSection.type}`}
+        label={tr.remove}
         color="red"
-        onClick={() => {
-          if (confirm(`Remove "${entry.displayName ?? selectedSection.type}"?`)) {
+        onClick={async () => {
+          if (await showConfirm(tr.removeConfirm.replace('{type}', entry.displayName ?? selectedSection.type))) {
             onRemoveSection(selectedSection.id);
           }
         }}
@@ -274,7 +280,7 @@ const ActionBtn: React.FC<{
   icon: React.ReactNode;
   label: string;
   color: 'indigo' | 'rose' | 'red' | 'slate';
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
 }> = ({ icon, label, color, onClick }) => {
   const colorMap = {
     indigo: 'hover:bg-[var(--color-text)]/10 hover:text-[var(--color-text)] border-transparent text-[var(--color-text-muted)]',

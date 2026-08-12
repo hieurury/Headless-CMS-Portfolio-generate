@@ -25,7 +25,7 @@ export interface ButtonBlockProps {
   href?: string;
   variant?: 'solid' | 'outline' | 'ghost';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  shape?: 'default' | 'square' | 'icon-only';
+  shape?: 'default' | 'square' | 'pill' | 'icon-only';
 
   alignX?: AlignX;
   alignY?: AlignY;
@@ -44,9 +44,9 @@ export interface ButtonBlockProps {
 // ─── Style Maps ───────────────────────────────────────────────────────────────
 const VARIANT_STYLES: Record<string, string> = {
   solid:
-    'bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 border border-[var(--color-text)]',
+    'bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 border border-[var(--color-text)] shadow-sm hover:shadow-md',
   outline:
-    'bg-transparent border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
+    'bg-transparent border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)] shadow-sm',
   ghost:
     'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] border border-transparent',
 };
@@ -62,6 +62,7 @@ const SIZE_BASE: Record<string, string> = {
 const SHAPE_RADIUS: Record<string, string> = {
   default: 'rounded-sm',
   square: 'rounded-none',
+  pill: 'rounded-full',
   'icon-only': 'rounded-sm aspect-square p-0 flex items-center justify-center',
 };
 
@@ -152,9 +153,12 @@ export const ButtonBlock: React.FC<ButtonBlockProps> = ({
 
   const content = (
     <>
-      {iconPosition === 'left' && iconEl}
-      {!isIconOnly && label}
-      {(iconPosition === 'right' || isIconOnly) && iconEl}
+      {!isIconOnly && <span>{label}</span>}
+      {iconEl && (
+        <span className={iconPosition === 'right' ? 'order-last' : 'order-first'}>
+          {iconEl}
+        </span>
+      )}
     </>
   );
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
+import { useAlertStore } from '../../store/alertStore';
 import { UserNavMenu } from '../../components/common/UserNavMenu';
 import { CategoryPicker } from '../../components/common/CategoryPicker';
 import { t } from '../../i18n';
@@ -58,6 +59,7 @@ export const DashboardPage: React.FC = () => {
 
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const { user } = useAuthStore();
+  const { showConfirm } = useAlertStore();
   const navigate = useNavigate();
 
   useSeo({
@@ -460,8 +462,8 @@ export const DashboardPage: React.FC = () => {
 
                         {/* Delete button */}
                         <button
-                          onClick={() => {
-                            if (confirm('Delete this portfolio?'))
+                          onClick={async () => {
+                            if (await showConfirm(lang.deletePortfolioConfirm.replace('{name}', p.title)))
                               removePortfolio(p._id);
                           }}
                           className="p-2 rounded text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shrink-0"

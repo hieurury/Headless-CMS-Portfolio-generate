@@ -30,6 +30,7 @@ interface HeadingBlockProps {
   backgroundColor?: string;
   color?: string;
   gradient?: boolean;
+  letterSpacing?: 'tighter' | 'tight' | 'normal' | 'wide' | 'wider' | 'widest';
   sectionId?: string;
   /** CSS shorthand string, e.g. "8px 16px" or "4px 8px 12px 0" */
   margin?: string;
@@ -66,6 +67,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   backgroundColor,
   color,
   gradient = false,
+  letterSpacing = 'tight',
   sectionId,
   margin,
   padding,
@@ -75,7 +77,8 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   const Tag = (validLevels.includes(safeLevel) ? safeLevel : 'h2') as React.ElementType;
   const sizeClass = SIZE_MAP[size] ?? 'text-xl';
   const textAlignClass = TEXT_ALIGN_MAP[textAlign] ?? 'text-left';
-  const textClass = gradient ? 'gradient-text' : '';
+  const textClass = gradient ? 'bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-text)] via-[var(--color-text-muted)] to-[var(--color-text-faint)]' : '';
+  const trackingClass = `tracking-${letterSpacing}`;
 
   return (
     <div
@@ -98,7 +101,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
       >
         <Tag
           data-cms-field="text"
-          className={`font-bold leading-tight ${sizeClass} ${textClass} cursor-text`}
+          className={`font-bold leading-tight ${sizeClass} ${trackingClass} ${textClass} cursor-text transition-all`}
           style={(textColor || color) && !gradient ? { color: textColor || color } : undefined}
         >
           {text}

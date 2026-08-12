@@ -7,6 +7,10 @@ export const translations = {
       community: 'Community',
       login: 'Sign In',
     },
+    common: {
+      cancel: 'Cancel',
+      confirm: 'Confirm',
+    },
     auth: {
       loginTitle: 'Welcome back',
       loginSubtitle: 'Sign in to your CMS account',
@@ -108,6 +112,10 @@ export const translations = {
       public: 'Public',
       manage: 'Manage',
       delete: 'Delete portfolio',
+      deletePortfolioConfirm: 'Delete portfolio "{name}"?',
+      deletePageConfirm: 'Delete page "{name}"?',
+      deletePostTypeConfirm: 'Delete post type "{name}"?',
+      deletePostConfirm: 'Delete post "{name}"?',
       pages: 'Pages',
       noPages: 'No pages yet',
       createPage: 'Create Page',
@@ -458,7 +466,7 @@ export const translations = {
       button: {
         buttonText: 'Button Text',
         label: 'Button Label',
-        icon: 'Icon (emoji)',
+        icon: 'Icon',
         url: 'URL / Anchor',
         variant: 'Button Style',
         size: 'Button Size',
@@ -659,6 +667,10 @@ export const translations = {
       privacy: 'Chính sách bảo mật',
       copyright: '© 2026 Ruryfo CMS. Dự án mã nguồn mở phát triển bởi HieuRury.',
     },
+    common: {
+      cancel: 'Hủy',
+      confirm: 'Đồng ý',
+    },
     dashboard: {
       myPortfolios: 'Portfolio của tôi',
       noPortfolios: 'Chưa có portfolio nào',
@@ -670,6 +682,10 @@ export const translations = {
       public: 'Công khai',
       manage: 'Quản lý',
       delete: 'Xóa portfolio',
+      deletePortfolioConfirm: 'Xóa portfolio "{name}"?',
+      deletePageConfirm: 'Xóa trang "{name}"?',
+      deletePostTypeConfirm: 'Xóa loại bài viết "{name}"?',
+      deletePostConfirm: 'Xóa bài viết "{name}"?',
       pages: 'Trang',
       noPages: 'Chưa có trang nào',
       createPage: 'Tạo Trang',
@@ -1021,7 +1037,7 @@ export const translations = {
       button: {
         buttonText: 'Chữ trên nút bấm',
         label: 'Nhãn nút bấm',
-        icon: 'Biểu tượng (Emoji)',
+        icon: 'Biểu tượng',
         url: 'Liên kết',
         variant: 'Kiểu dáng nút',
         size: 'Kích thước nút',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { useAlertStore } from '../../store/alertStore';
 import { t, translateError } from '../../i18n';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { AuthNavbar } from './AuthNavbar';
@@ -39,6 +40,7 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
+  const { showAlert } = useAlertStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -50,9 +52,10 @@ export const LoginPage: React.FC = () => {
   // Auto-dismiss error toast
   useEffect(() => {
     if (!error) return;
+    showAlert(translateError(error, language), 'error');
     const timer = setTimeout(clearError, 4000);
     return () => clearTimeout(timer);
-  }, [error, clearError]);
+  }, [error, language, clearError, showAlert]);
 
   // Handle URL errors
   useEffect(() => {
@@ -112,45 +115,7 @@ export const LoginPage: React.FC = () => {
         }}
       />
 
-      {/* Error Toast */}
-      {error && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 80,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 50,
-          }}
-          className="animate-fade-in"
-        >
-          <div
-            style={{
-              background: 'var(--color-error-bg)',
-              border: '1px solid var(--color-error-border)',
-              color: 'var(--color-error)',
-              padding: '10px 18px',
-              borderRadius: 'var(--radius-lg)',
-              fontSize: 13,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: 'var(--shadow-md)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'var(--color-error)',
-              }}
-            />
-            <span style={{ fontWeight: 500 }}>{translateError(error, language)}</span>
-          </div>
-        </div>
-      )}
+
 
       {/* Card */}
       <div

@@ -116,7 +116,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
         {/* Icon row: small inline badge style */}
         <div className="flex items-center gap-2.5 mb-4">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0"
             style={{
               background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
               border: '1px solid rgba(255,255,255,0.12)',
@@ -151,7 +151,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
               setError(null);
             }}
             className={`
-              flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium
+              flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium
               border transition-all duration-150
               ${color}
             `}
@@ -166,7 +166,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
       <div className="w-full max-w-xl">
         <div
           className={`
-            relative rounded-md border transition-all duration-200
+            relative rounded-sm border transition-all duration-200
             ${
               isReady
                 ? 'border-[var(--color-border-hover)] shadow-md shadow-black/20'
@@ -203,7 +203,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
             <button
               onClick={() => handleGenerate()}
               disabled={isLoading || !isReady}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold
+              className="flex items-center gap-2 px-4 py-1.5 rounded-sm bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold
                 hover:shadow-md hover:shadow-black/30 hover:scale-[1.03] transition-all duration-200
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
@@ -222,13 +222,13 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
 
         {/* Error / success */}
         {error && (
-          <div className="mt-3 flex items-start gap-2 px-4 py-3 rounded-md bg-[var(--color-error-bg)] border border-[var(--color-error-border)]">
+          <div className="mt-3 flex items-start gap-2 px-4 py-3 rounded-sm bg-[var(--color-error-bg)] border border-[var(--color-error-border)]">
             <AlertCircle size={14} className="text-[var(--color-error)] mt-0.5 shrink-0" />
             <p className="text-xs text-[var(--color-error)]">{error}</p>
           </div>
         )}
         {generated !== null && (
-          <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-md bg-[var(--color-success-bg)] border border-[var(--color-success-border)]">
+          <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-sm bg-[var(--color-success-bg)] border border-[var(--color-success-border)]">
             <Zap size={14} className="text-[var(--color-text-muted)] shrink-0" />
             <p className="text-xs text-[var(--color-text-muted)] font-semibold">
               ✓ {generated} sections generated

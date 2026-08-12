@@ -22,7 +22,8 @@ export interface ImageBlockProps {
   alt?: string;
   aspectRatio?: 'auto' | '16/9' | '4/3' | '1/1' | '3/4';
   objectFit?: 'cover' | 'contain' | 'fill';
-  borderRadius?: 'none' | 'sm' | 'md';
+  filter?: 'none' | 'grayscale' | 'sepia' | 'blur';
+  borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'full';
   alignX?: AlignX;
   alignY?: AlignY;
   textColor?: string;
@@ -43,6 +44,15 @@ const RADIUS_MAP: Record<string, string> = {
   none: '',
   sm: 'rounded-sm',
   md: 'rounded-md',
+  lg: 'rounded-lg',
+  full: 'rounded-full',
+};
+
+const FILTER_MAP: Record<string, string> = {
+  none: '',
+  grayscale: 'grayscale hover:grayscale-0 transition-all duration-300',
+  sepia: 'sepia hover:sepia-0 transition-all duration-300',
+  blur: 'blur-sm hover:blur-0 transition-all duration-300',
 };
 
 export const ImageBlock: React.FC<ImageBlockProps> = ({
@@ -50,6 +60,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   alt = 'Image',
   aspectRatio = 'auto',
   objectFit = 'cover',
+  filter = 'none',
   borderRadius = 'md',
   alignX = 'center',
   alignY = 'middle',
@@ -60,6 +71,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   const { isEditorMode, previewMode, pendingUploads, onPropsChange, removePendingUpload } = useEditorContext();
   const radiusClass = RADIUS_MAP[borderRadius] ?? 'rounded-md';
   const ratioStyle = ASPECT_RATIO_MAP[aspectRatio] ?? 'auto';
+  const filterClass = FILTER_MAP[filter] ?? '';
 
   // Find if this block has a pending upload in the global state
   const pendingUpload = pendingUploads.find(p => p.sectionId === sectionId && (p.fieldKey === 'url' || !p.fieldKey));
@@ -130,7 +142,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
           data-cms-field="url"
           src={activeUrl}
           alt={alt}
-          className={`max-w-full ${radiusClass}`}
+          className={`max-w-full ${radiusClass} ${filterClass}`}
           style={{
             aspectRatio: ratioStyle !== 'auto' ? ratioStyle : undefined,
             objectFit,

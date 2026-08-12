@@ -75,7 +75,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
       <div className="space-y-4">
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-[var(--color-error-bg)] border border-[var(--color-error-border)]">
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-sm bg-[var(--color-error-bg)] border border-[var(--color-error-border)]">
             <AlertCircle size={14} className="text-[var(--color-error)] mt-0.5 shrink-0" />
             <p className="text-xs text-[var(--color-error)]">{error}</p>
           </div>
@@ -83,7 +83,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
 
         {/* Success feedback */}
         {lastSectionsCount !== null && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-md bg-[var(--color-success-bg)] border border-[var(--color-success-border)]">
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-sm bg-[var(--color-success-bg)] border border-[var(--color-success-border)]">
             <Zap size={14} className="text-[var(--color-text-muted)] shrink-0" />
             <p className="text-xs text-[var(--color-text-muted)] font-semibold">
               ✓ {lastSectionsCount} sections generated
@@ -94,7 +94,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
         {/* Prompt box */}
         <div
           className={`
-            relative rounded-md border transition-all duration-200
+            relative rounded-sm border transition-all duration-200
             ${
               isReady
                 ? 'border-[var(--color-border-hover)] shadow-md shadow-black/20'
@@ -131,7 +131,7 @@ export const AiGeneratePanel: React.FC<AiGeneratePanelProps> = ({
             <button
               onClick={handleGenerate}
               disabled={isLoading || !isReady}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold
+              className="flex items-center gap-2 px-4 py-1.5 rounded-sm bg-[var(--color-text)] text-[var(--color-bg)] text-sm font-semibold
                 hover:shadow-md hover:shadow-black/30 hover:scale-[1.03] transition-all duration-200
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >

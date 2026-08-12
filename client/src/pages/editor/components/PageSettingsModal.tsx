@@ -69,7 +69,7 @@ const LayoutPreview: React.FC<{
     <button
       onClick={onClick}
       className={clsx(
-        'relative flex-1 flex flex-col items-center gap-3 p-4 rounded-md border-2 transition-all cursor-pointer group',
+        'relative flex-1 flex flex-col items-center gap-3 p-4 rounded-sm border-2 transition-all cursor-pointer group',
         selected
           ? 'border-[var(--color-text)] bg-[var(--color-surface-2)]'
           : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-2)]',
@@ -82,7 +82,7 @@ const LayoutPreview: React.FC<{
       )}
 
       {/* Miniature page preview */}
-      <div className="w-full h-24 rounded-md bg-[var(--color-surface-3)] border border-[var(--color-border)] overflow-hidden relative flex items-center justify-center">
+      <div className="w-full h-24 rounded-sm bg-[var(--color-surface-3)] border border-[var(--color-border)] overflow-hidden relative flex items-center justify-center">
         {type === 'normal' && (
           <div className="w-full h-full p-4 flex flex-col gap-2.5 justify-center">
             <div className="h-1.5 rounded-full bg-[var(--color-text-muted)]/50 w-3/4" />
@@ -125,7 +125,7 @@ const ColorPicker: React.FC<{
       <div className="flex items-center gap-2">
         <button
           onClick={() => inputRef.current?.click()}
-          className="w-9 h-9 rounded-md border-2 border-[var(--color-border)] shadow-sm cursor-pointer flex-shrink-0 transition-transform hover:scale-105"
+          className="w-9 h-9 rounded-sm border-2 border-[var(--color-border)] shadow-sm cursor-pointer flex-shrink-0 transition-transform hover:scale-105"
           style={{ backgroundColor: value }}
           title={value}
         />
@@ -134,7 +134,7 @@ const ColorPicker: React.FC<{
           type="text"
           value={value}
           onChange={(e) => { const v = e.target.value; if (/^#([0-9a-fA-F]{0,6})$/.test(v)) onChange(v); }}
-          className="flex-1 px-2.5 py-1.5 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs text-[var(--color-text)] font-mono focus:outline-none focus:border-[var(--color-border-strong)]"
+          className="flex-1 px-2.5 py-1.5 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs text-[var(--color-text)] font-mono focus:outline-none focus:border-[var(--color-border-strong)]"
           placeholder="#000000"
           maxLength={7}
         />
@@ -167,13 +167,13 @@ const FontSelector: React.FC<{
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen((p) => !p)}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)] hover:border-[var(--color-border-strong)] transition-colors"
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)] hover:border-[var(--color-border-strong)] transition-colors"
         >
           <span style={{ fontFamily: `'${value}', sans-serif` }}>{value}</span>
           <ChevronDown size={13} className={clsx('text-[var(--color-text-muted)] transition-transform', open && 'rotate-180')} />
         </button>
         {open && (
-          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl overflow-hidden max-h-52 overflow-y-auto">
+          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl overflow-hidden max-h-52 overflow-y-auto">
             {AVAILABLE_FONTS.map((font) => (
               <button
                 key={font}
@@ -345,7 +345,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
 
       {/* Modal */}
       <div
-        className="relative z-10 flex rounded-lg overflow-hidden shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+        className="relative z-10 flex rounded-sm overflow-hidden shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)]"
         style={{ width: 820, height: 600, maxWidth: '95vw', maxHeight: '90vh' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -370,7 +370,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                 key={key}
                 onClick={() => setActiveMenu(key)}
                 className={clsx(
-                  'w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                  'w-full text-left px-3 py-2.5 rounded-sm text-sm font-medium transition-all',
                   activeMenu === key
                     ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
                     : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]',
@@ -395,7 +395,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
               </p>
             </div>
             <button onClick={onClose}
-              className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors">
+              className="p-1.5 rounded-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors">
               <X size={16} />
             </button>
           </div>
@@ -433,7 +433,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                     else updateLayout({ type: 'normal' });
                   }}
                   className={clsx(
-                    'w-full flex items-center justify-between px-4 py-3 rounded-md border-2 transition-all text-sm font-medium',
+                    'w-full flex items-center justify-between px-4 py-3 rounded-sm border-2 transition-all text-sm font-medium',
                     showCustomLayout
                       ? 'border-[var(--color-text)] bg-[var(--color-surface-2)] text-[var(--color-text)]'
                       : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)]',
@@ -448,7 +448,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
 
                 {/* Custom padding + live preview via Grid */}
                 {showCustomLayout && (
-                  <div className="grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-4 items-center justify-items-center bg-[var(--color-surface-2)] p-6 rounded-md border border-[var(--color-border)] mt-4 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-4 items-center justify-items-center bg-[var(--color-surface-2)] p-6 rounded-sm border border-[var(--color-border)] mt-4 animate-in fade-in duration-200">
                     
                     {/* Top */}
                     <div className="col-start-2 row-start-1 flex flex-col items-center gap-1">
@@ -457,7 +457,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                         type="number" min={0} max={300}
                         value={settings.pageLayout.padding.top}
                         onChange={(e) => updateLayout({ padding: { ...settings.pageLayout.padding, top: e.target.value } })}
-                        className="w-20 px-2 py-1.5 text-center text-sm rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
+                        className="w-20 px-2 py-1.5 text-center text-sm rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
                       />
                     </div>
 
@@ -468,12 +468,12 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                         type="number" min={0} max={300}
                         value={settings.pageLayout.padding.left}
                         onChange={(e) => updateLayout({ padding: { ...settings.pageLayout.padding, left: e.target.value } })}
-                        className="w-20 px-2 py-1.5 text-center text-sm rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
+                        className="w-20 px-2 py-1.5 text-center text-sm rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
                       />
                     </div>
 
                     {/* Center Preview */}
-                    <div className="col-start-2 row-start-2 w-56 h-36 bg-[var(--color-surface-3)] border-2 border-dashed border-[var(--color-border)] rounded-md relative overflow-hidden">
+                    <div className="col-start-2 row-start-2 w-56 h-36 bg-[var(--color-surface-3)] border-2 border-dashed border-[var(--color-border)] rounded-sm relative overflow-hidden">
                       <div 
                         className="absolute bg-[var(--color-text)]/10 border border-[var(--color-border-strong)]/20 rounded transition-all flex flex-col items-center justify-center gap-2 overflow-hidden"
                         style={{
@@ -496,7 +496,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                         type="number" min={0} max={300}
                         value={settings.pageLayout.padding.right}
                         onChange={(e) => updateLayout({ padding: { ...settings.pageLayout.padding, right: e.target.value } })}
-                        className="w-20 px-2 py-1.5 text-center text-sm rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
+                        className="w-20 px-2 py-1.5 text-center text-sm rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
                       />
                     </div>
 
@@ -506,7 +506,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                         type="number" min={0} max={300}
                         value={settings.pageLayout.padding.bottom}
                         onChange={(e) => updateLayout({ padding: { ...settings.pageLayout.padding, bottom: e.target.value } })}
-                        className="w-20 px-2 py-1.5 text-center text-sm rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
+                        className="w-20 px-2 py-1.5 text-center text-sm rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-border-strong)] focus:outline-none [appearance:textfield]"
                       />
                       <label className="text-xs font-medium text-[var(--color-text-muted)]">{tr.paddingBottom} (px)</label>
                     </div>
@@ -537,7 +537,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                   </h4>
 
                   {/* Light / Dark tabs */}
-                  <div className="flex gap-1 p-1 rounded-md bg-[var(--color-surface-2)] mb-5 w-fit">
+                  <div className="flex gap-1 p-1 rounded-sm bg-[var(--color-surface-2)] mb-5 w-fit">
                     {(['light', 'dark'] as ColorModeTab[]).map((mode) => (
                       <button
                         key={mode}
@@ -576,7 +576,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                             />
                             <label
                               htmlFor={`accent-${colorModeTab}-${idx}`}
-                              className="w-8 h-8 rounded-md border-2 border-[var(--color-border)] cursor-pointer block shadow-sm hover:scale-105 transition-transform"
+                              className="w-8 h-8 rounded-sm border-2 border-[var(--color-border)] cursor-pointer block shadow-sm hover:scale-105 transition-transform"
                               style={{ backgroundColor: accent }}
                               title={accent}
                             />
@@ -592,7 +592,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                       {(currentColorScheme.accents?.length ?? 0) < 5 ? (
                         <button
                           onClick={() => addAccent(colorModeTab)}
-                          className="w-8 h-8 rounded-md border-2 border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-border-strong)] flex items-center justify-center transition-colors"
+                          className="w-8 h-8 rounded-sm border-2 border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-border-strong)] flex items-center justify-center transition-colors"
                           title={tr.addAccent}
                         >
                           <Plus size={13} />
@@ -634,14 +634,14 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
           {/* Footer */}
           <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-surface-2)]">
             <button onClick={onClose}
-              className="px-4 py-2 rounded-md text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-3)] transition-colors">
+              className="px-4 py-2 rounded-sm text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-3)] transition-colors">
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving || !hasChanges}
               className={clsx(
-                'flex items-center gap-2 px-5 py-2 rounded-md text-sm font-semibold transition-all',
+                'flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold transition-all',
                 savedFeedback
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : isSaving

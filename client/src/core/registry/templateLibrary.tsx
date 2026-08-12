@@ -4,25 +4,17 @@
  * ARCHITECTURE RULE:
  *   Every template MUST be a pure block tree — no monolithic components.
  *   Decompose every pattern to its atomic units: Layout blocks + Atomic blocks.
- *
- *   Example — Navbar:
- *     nav-bar-wrapper
- *     └── columns (2-col)
- *         ├── heading    (cell 0)
- *         └── columns (4-col) — link · link · link · button  (cell 1)
- *
- * When added to the canvas, the entire tree is injected (not just a single node).
  */
 
 import React from 'react';
-import { PanelTop, Image as ImageIconLucide, Compass, Puzzle } from 'lucide-react';
+import { PanelTop, Image as ImageIconLucide, Compass, Puzzle, LayoutTemplate, LayoutGrid, Type, Mail } from 'lucide-react';
 import type { LayoutSection } from '../types/layout.types';
 
 export interface TemplateEntry {
   id: string;
   name: string;
   description: string;
-  category: 'navigation' | 'components';
+  category: 'navigation' | 'components' | 'hero' | 'layout';
   /** Lucide icon rendered in the template card */
   icon: React.ReactNode;
   /** Builds and returns the LayoutSection tree to inject into the canvas */
@@ -45,9 +37,9 @@ export const templateLibrary: TemplateEntry[] = [
   // ════════════════════════════════════════════════════════════════════════════
 
   {
-    id: 'navbar-default',
-    name: 'Navbar',
-    description: 'Sticky navigation bar with logo and links',
+    id: 'navbar-modern',
+    name: 'Modern Navbar',
+    description: 'Sticky glassmorphism navigation bar',
     category: 'navigation',
     icon: <PanelTop size={24} />,
     build: (): LayoutSection => ({
@@ -56,7 +48,7 @@ export const templateLibrary: TemplateEntry[] = [
       name: 'navbar',
       props: {
         sticky: true,
-        background: 'dark',
+        background: 'glass',
         padding: 'lg',
         maxWidth: 'xl',
       },
@@ -65,49 +57,42 @@ export const templateLibrary: TemplateEntry[] = [
           id: uid('cols-outer'),
           type: 'columns',
           name: '',
-          props: { columns: '2', gap: 'md', align: 'center' },
+          props: { columns: '2', gap: 'md', align: 'center', colSpans: [1, 2] },
           children: [
-            // ── Cell 0: Logo / Heading ─────────────────────────────
+            // Cell 0: Logo / Heading
             {
               id: uid('heading'),
               type: 'heading',
               name: '',
-              props: { text: 'My Portfolio', level: 'h2', size: 'xl', align: 'left', gradient: false },
+              props: { text: 'STUDIO.', level: 'h2', size: '2xl', align: 'left', gradient: false, letterSpacing: 'tighter' },
               children: [],
             },
-            // ── Cell 1: Nav links + CTA (4-col inner columns) ──────
+            // Cell 1: Nav links + CTA (Flex block for better spacing)
             {
-              id: uid('cols-inner'),
-              type: 'columns',
+              id: uid('flex-nav'),
+              type: 'flex',
               name: '',
-              props: { columns: '4', gap: 'sm', align: 'center' },
+              props: { direction: 'row', gap: 'lg', justify: 'end', align: 'center' },
               children: [
                 {
                   id: uid('lnk-about'),
                   type: 'link',
                   name: '',
-                  props: { label: 'About', href: '#about' },
+                  props: { label: 'Projects', href: '#projects', variant: 'nav' },
                   children: [],
                 },
                 {
                   id: uid('lnk-work'),
                   type: 'link',
                   name: '',
-                  props: { label: 'Work', href: '#work' },
-                  children: [],
-                },
-                {
-                  id: uid('lnk-contact'),
-                  type: 'link',
-                  name: '',
-                  props: { label: 'Contact', href: '#contact' },
+                  props: { label: 'Services', href: '#services', variant: 'nav' },
                   children: [],
                 },
                 {
                   id: uid('btn-cta'),
                   type: 'button',
                   name: '',
-                  props: { label: 'Hire Me', href: '#contact', variant: 'solid', size: 'sm' },
+                  props: { label: 'Let\'s Talk', href: '#contact', variant: 'solid', size: 'sm', shape: 'pill' },
                   children: [],
                 },
               ],
@@ -116,6 +101,218 @@ export const templateLibrary: TemplateEntry[] = [
         },
       ],
     }),
+  },
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // HERO
+  // ════════════════════════════════════════════════════════════════════════════
+
+  {
+    id: 'hero-minimal',
+    name: 'Minimal Hero',
+    description: 'Clean, typography-focused hero section',
+    category: 'hero',
+    icon: <Type size={24} />,
+    build: (): LayoutSection => ({
+      id: uid('hero-container'),
+      type: 'container',
+      name: 'Hero Section',
+      props: {
+        style: 'none',
+        padding: '120px 24px',
+        maxWidth: 'lg',
+        alignX: 'center',
+        alignY: 'middle',
+      },
+      children: [
+        {
+          id: uid('hero-rows'),
+          type: 'rows',
+          name: '',
+          props: { rows: 4, gap: 'lg', alignX: 'center' },
+          children: [
+            {
+              id: uid('hero-badge'),
+              type: 'badge',
+              name: '',
+              props: { text: 'Available for freelance', variant: 'outline', size: 'md', shape: 'pill' },
+              children: [],
+            },
+            {
+              id: uid('hero-title'),
+              type: 'heading',
+              name: '',
+              props: { 
+                text: 'Crafting Digital Experiences That Matter.', 
+                level: 'h1', 
+                size: '5xl', 
+                textAlign: 'center', 
+                letterSpacing: 'tighter' 
+              },
+              children: [],
+            },
+            {
+              id: uid('hero-desc'),
+              type: 'description',
+              name: '',
+              props: { 
+                text: 'I transform complex problems into intuitive, beautiful, and accessible user interfaces. Partnering with visionary brands worldwide.', 
+                size: 'lg', 
+                textAlign: 'center' 
+              },
+              children: [],
+            },
+            {
+              id: uid('hero-flex-btn'),
+              type: 'flex',
+              name: '',
+              props: { direction: 'row', gap: 'md', justify: 'center' },
+              children: [
+                {
+                  id: uid('btn-primary'),
+                  type: 'button',
+                  name: '',
+                  props: { label: 'View My Work', variant: 'solid', size: 'lg', shape: 'default' },
+                  children: [],
+                },
+                {
+                  id: uid('btn-secondary'),
+                  type: 'button',
+                  name: '',
+                  props: { label: 'About Me', variant: 'ghost', size: 'lg', shape: 'default' },
+                  children: [],
+                },
+              ]
+            }
+          ]
+        }
+      ]
+    })
+  },
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // BENTO GRID / LAYOUT
+  // ════════════════════════════════════════════════════════════════════════════
+
+  {
+    id: 'bento-grid',
+    name: 'Bento Grid',
+    description: 'Modern asymmetric grid layout for features or gallery',
+    category: 'layout',
+    icon: <LayoutGrid size={24} />,
+    build: (): LayoutSection => ({
+      id: uid('bento-wrapper'),
+      type: 'container',
+      name: 'Bento Wrapper',
+      props: {
+        style: 'none',
+        padding: '64px 24px',
+        maxWidth: 'xl',
+      },
+      children: [
+        {
+          id: uid('bento-cols'),
+          type: 'columns',
+          name: '',
+          props: { columns: '2', gap: 'lg', alignY: 'stretch', colSpans: [1, 2] },
+          children: [
+            // Left smaller column
+            {
+              id: uid('bento-col-1'),
+              type: 'container',
+              name: '',
+              props: { style: 'card', borderRadius: 'lg', padding: '32px' },
+              children: [
+                {
+                  id: uid('c1-rows'),
+                  type: 'rows',
+                  name: '',
+                  props: { rows: 2, gap: 'md' },
+                  children: [
+                    {
+                      id: uid('c1-title'),
+                      type: 'heading',
+                      name: '',
+                      props: { text: 'Design Systems', level: 'h3', size: '2xl', letterSpacing: 'tight' },
+                      children: [],
+                    },
+                    {
+                      id: uid('c1-desc'),
+                      type: 'description',
+                      name: '',
+                      props: { text: 'Building robust, scalable design systems that power enterprise applications seamlessly.', size: 'sm' },
+                      children: [],
+                    }
+                  ]
+                }
+              ]
+            },
+            // Right larger column (split into rows)
+            {
+              id: uid('bento-col-2-rows'),
+              type: 'rows',
+              name: '',
+              props: { rows: 2, gap: 'lg' },
+              children: [
+                {
+                  id: uid('bento-c2-top'),
+                  type: 'container',
+                  name: '',
+                  props: { style: 'glass-subtle', borderRadius: 'lg', padding: '0' },
+                  children: [
+                    {
+                      id: uid('c2-img'),
+                      type: 'image',
+                      name: '',
+                      props: { url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop', aspectRatio: '16/9', borderRadius: 'lg', objectFit: 'cover' },
+                      children: []
+                    }
+                  ]
+                },
+                {
+                  id: uid('bento-c2-bot-cols'),
+                  type: 'columns',
+                  name: '',
+                  props: { columns: 2, gap: 'lg' },
+                  children: [
+                    {
+                      id: uid('bento-c2-bot-left'),
+                      type: 'container',
+                      name: '',
+                      props: { style: 'card', borderRadius: 'lg', padding: '24px' },
+                      children: [
+                         {
+                           id: uid('c2-bl-heading'),
+                           type: 'heading',
+                           name: '',
+                           props: { text: 'Prototyping', level: 'h4', size: 'xl' },
+                           children: []
+                         }
+                      ]
+                    },
+                    {
+                      id: uid('bento-c2-bot-right'),
+                      type: 'container',
+                      name: '',
+                      props: { style: 'filled', borderRadius: 'lg', padding: '24px' },
+                      children: [
+                        {
+                           id: uid('c2-br-heading'),
+                           type: 'heading',
+                           name: '',
+                           props: { text: 'Development', level: 'h4', size: 'xl' },
+                           children: []
+                         }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    })
   },
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -123,98 +320,83 @@ export const templateLibrary: TemplateEntry[] = [
   // ════════════════════════════════════════════════════════════════════════════
 
   {
-    id: 'image-card',
-    name: 'Image Card',
-    description: 'A feature card with an image and descriptive content',
+    id: 'cta-section',
+    name: 'Call to Action',
+    description: 'A sharp, high-contrast CTA block to encourage contact',
     category: 'components',
-    icon: <ImageIconLucide size={24} />,
+    icon: <Mail size={24} />,
     build: (): LayoutSection => ({
-      id: uid('img-card'),
+      id: uid('cta-wrap'),
       type: 'container',
-      name: 'Image Card',
+      name: 'CTA Section',
       props: {
-        style: 'card',
-        padding: 'md',
-        borderRadius: 'md',
+        style: 'none',
+        padding: '96px 24px',
+        maxWidth: 'lg',
       },
       children: [
         {
-          id: uid('cols'),
-          type: 'columns',
+          id: uid('cta-box'),
+          type: 'container',
           name: '',
-          props: { columns: '2', gap: 'lg', align: 'center', colSpans: [1, 2] },
+          props: { style: 'outlined-subtle', padding: '64px 32px', borderRadius: 'sm', alignX: 'center', alignY: 'middle', backgroundColor: 'var(--color-surface-2)' },
           children: [
-            // Cell 0: Image (Left)
             {
-              id: uid('img'),
-              type: 'image',
-              name: '',
-              props: {
-                url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
-                alt: 'Card Image',
-                aspectRatio: '4/3',
-                objectFit: 'cover',
-                borderRadius: 'md',
-              },
-              children: [],
-            },
-            // Cell 1: Content Rows (Right)
-            {
-              id: uid('rows'),
+              id: uid('cta-rows'),
               type: 'rows',
               name: '',
-              props: { rows: '4', gap: 'sm', align: 'stretch' },
+              props: { rows: 3, gap: 'md', alignX: 'center' },
               children: [
                 {
-                  id: uid('badge'),
-                  type: 'badge',
-                  name: '',
-                  props: { text: 'New', variant: 'subtle', size: 'sm', shape: 'rounded' },
-                  children: [],
-                },
-                {
-                  id: uid('heading'),
+                  id: uid('cta-heading'),
                   type: 'heading',
                   name: '',
-                  props: { text: 'Feature Title', level: 'h3', size: '2xl', align: 'left' },
+                  props: { text: 'Let\'s Collaborate', size: '4xl', letterSpacing: 'tighter', textAlign: 'center' },
                   children: [],
                 },
                 {
-                  id: uid('desc'),
+                  id: uid('cta-desc'),
                   type: 'description',
                   name: '',
-                  props: { text: 'This is a description of the feature. It highlights the key benefits and provides more context to the user.', size: 'base', align: 'left' },
+                  props: { text: 'Have a project in mind? Reach out and let\'s build something incredible together.', textAlign: 'center' },
                   children: [],
                 },
                 {
-                  id: uid('btn-cols'),
-                  type: 'columns',
+                  id: uid('cta-flex'),
+                  type: 'flex',
                   name: '',
-                  props: { columns: '2', gap: 'md', align: 'center', colSpans: [1, 1] },
+                  props: { direction: 'row', gap: 'md', justify: 'center', margin: '24px 0 0 0' },
                   children: [
                     {
-                      id: uid('btn1'),
+                      id: uid('cta-btn-1'),
                       type: 'button',
                       name: '',
-                      props: { label: 'Get Started', variant: 'solid', size: 'md', alignX: 'left' },
+                      props: { label: 'Dribbble', variant: 'outline', size: 'md' },
                       children: [],
                     },
                     {
-                      id: uid('btn2'),
+                      id: uid('cta-btn-2'),
                       type: 'button',
                       name: '',
-                      props: { label: 'Learn More', variant: 'outline', size: 'md', alignX: 'left' },
+                      props: { label: 'LinkedIn', variant: 'outline', size: 'md' },
                       children: [],
                     },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    }),
-  },
+                    {
+                      id: uid('cta-btn-3'),
+                      type: 'button',
+                      name: '',
+                      props: { label: 'Email', variant: 'solid', size: 'md' },
+                      children: [],
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    })
+  }
 
 ];
 
@@ -222,5 +404,7 @@ export const templateLibrary: TemplateEntry[] = [
 
 export const TEMPLATE_CATEGORIES = [
   { id: 'navigation', label: 'Navigation', icon: <Compass size={14} /> },
+  { id: 'hero', label: 'Hero Sections', icon: <LayoutTemplate size={14} /> },
+  { id: 'layout', label: 'Layouts & Grids', icon: <LayoutGrid size={14} /> },
   { id: 'components', label: 'Components', icon: <Puzzle size={14} /> },
 ];

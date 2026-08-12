@@ -1504,7 +1504,7 @@ export const PageEditorPage: React.FC = () => {
                   onClick={handleUndo}
                   disabled={history.length === 0}
                   title="Undo (Ctrl+Z)"
-                  className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  className="p-1.5 rounded-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
                 >
                   <Undo2 size={15} />
                 </button>
@@ -1512,7 +1512,7 @@ export const PageEditorPage: React.FC = () => {
                   onClick={handleRedo}
                   disabled={future.length === 0}
                   title="Redo (Ctrl+Y)"
-                  className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  className="p-1.5 rounded-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
                 >
                   <Redo2 size={15} />
                 </button>
@@ -1523,7 +1523,7 @@ export const PageEditorPage: React.FC = () => {
                 onClick={() => setShowAiPanel((p) => !p)}
                 title="AI Assistant"
                 className={clsx(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all',
                   showAiPanel
                     ? 'bg-[var(--color-surface-3)] text-[var(--color-text)] ring-1 ring-[var(--color-border-strong)]'
                     : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]/80',
@@ -1542,7 +1542,7 @@ export const PageEditorPage: React.FC = () => {
                     ? tr.topbar.switchToVietnamese
                     : tr.topbar.switchToEnglish
                 }
-                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]/90 text-xs font-medium transition-all"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-sm bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]/90 text-xs font-medium transition-all"
               >
                 <Globe size={13} />
                 <span className="hidden sm:inline">{language.toUpperCase()}</span>
@@ -1554,7 +1554,7 @@ export const PageEditorPage: React.FC = () => {
                   setAddChildParentId(null);
                   setShowAddPanel(true);
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-sm bg-[var(--color-text)]/10 text-[var(--color-text)] hover:bg-[var(--color-text)]/20 text-xs font-medium transition-all"
               >
                 <Plus size={11} /> {tr.topbar.add}
               </button>
@@ -1564,7 +1564,7 @@ export const PageEditorPage: React.FC = () => {
                 onClick={handleSave}
                 disabled={!isDirty || isSaving}
                 className={clsx(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition-all',
                   isSaving
                     ? 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] cursor-wait'
                     : savedFeedback
@@ -1597,7 +1597,7 @@ export const PageEditorPage: React.FC = () => {
                 id="editor-page-settings-btn"
                 onClick={() => setShowSettingsModal(true)}
                 title={tr.topbar.pageSettings}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0"
               >
                 <Settings size={16} />
               </button>
@@ -1697,7 +1697,7 @@ export const PageEditorPage: React.FC = () => {
                   className="shrink-0 relative z-50 flex items-center gap-2 px-4 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]"
                   style={{ height: HEADER_H }}
                 >
-                  <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
+                  <div className="flex items-center rounded-sm border border-[var(--color-border)] overflow-hidden bg-white/3">
                     <button
                       onClick={() => setPreviewMode(false)}
                       title={tr.topbar.editModeTitle}
@@ -1731,7 +1731,7 @@ export const PageEditorPage: React.FC = () => {
                   
                   <div className="flex-1" />
                   
-                  <div className="flex items-center rounded-md border border-[var(--color-border)] overflow-hidden bg-white/3">
+                  <div className="flex items-center rounded-sm border border-[var(--color-border)] overflow-hidden bg-white/3">
                     <button
                       onClick={() => setPointerMode('normal')}
                       title="Chế độ thường (Kéo thả)"
@@ -1865,7 +1865,7 @@ export const PageEditorPage: React.FC = () => {
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                        <div className="w-12 h-12 rounded-md bg-[var(--color-surface-2)] flex items-center justify-center mb-3">
+                        <div className="w-12 h-12 rounded-sm bg-[var(--color-surface-2)] flex items-center justify-center mb-3">
                           <Settings size={20} className="text-[var(--color-text-faint)]" />
                         </div>
                         <p className="text-sm text-[var(--color-text-faint)] font-medium">
@@ -1993,7 +1993,7 @@ export const PageEditorPage: React.FC = () => {
               className="shrink-0 flex items-center gap-3 px-4 border-b border-[var(--color-border)]"
               style={{ height: HEADER_H, background: 'var(--color-surface)' }}
             >
-              <div className="w-6 h-6 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
                 <Sparkles size={13} className="text-[var(--color-text-muted)]" />
               </div>
               <span className="text-sm font-semibold text-[var(--color-text)] flex-1 truncate">
@@ -2002,7 +2002,7 @@ export const PageEditorPage: React.FC = () => {
               <button
                 onClick={() => setShowAiPanel(false)}
                 title="Đóng AI panel"
-                className="p-1.5 rounded-md text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all shrink-0"
+                className="p-1.5 rounded-sm text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-all shrink-0"
               >
                 <X size={14} />
               </button>

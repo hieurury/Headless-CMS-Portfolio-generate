@@ -193,7 +193,7 @@ export default function MyEditor({ value, onChange, editable = true }: MyEditorP
     });
 
     return (
-        <div className="border border-[var(--color-border)] rounded-lg flex flex-col min-h-[350px] max-h-[600px] overflow-y-auto relative bg-[var(--color-bg)]">
+        <div className="border border-[var(--color-border)] rounded-sm flex flex-col min-h-[350px] max-h-[600px] overflow-y-auto relative bg-[var(--color-bg)]">
             <BlockNoteView
                 editor={editor}
                 formattingToolbar={false}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMediaStore } from '../../store/mediaStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { useAlertStore } from '../../store/alertStore';
 import type { MediaItem } from '../../core/types/media.types';
 import {
   Upload,
@@ -150,6 +151,7 @@ export const MediaGalleryPage: React.FC = () => {
   } = useMediaStore();
 
   const { theme, toggleTheme } = useUIStore();
+  const { showAlert } = useAlertStore();
 
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -161,6 +163,14 @@ export const MediaGalleryPage: React.FC = () => {
     fetchFolders();
     fetchMedia();
   }, []);
+
+  // Auto-dismiss error toast
+  useEffect(() => {
+    if (!error) return;
+    showAlert(error, 'error');
+    const t = setTimeout(clearError, 4000);
+    return () => clearTimeout(t);
+  }, [error, clearError, showAlert]);
 
   // Filter by search term
   const filtered = items.filter((i) =>
@@ -222,13 +232,6 @@ export const MediaGalleryPage: React.FC = () => {
         </button>
       </header>
 
-      {/* ── Error toast ── */}
-      {error && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl bg-red-500/10 text-red-400 text-sm flex items-center gap-3 backdrop-blur-md shadow-lg animate-fade-in">
-          <span>{error}</span>
-          <button onClick={clearError}><X size={14} /></button>
-        </div>
-      )}
 
       {/* ── Body ── */}
       <div className="flex h-[calc(100vh-53px)]">

@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { LayoutSection } from '../../../core/types/layout.types';
 import { componentRegistry } from '../../../core/registry/ComponentRegistry';
 import { useUIStore } from '../../../store/uiStore';
+import { useAlertStore } from '../../../store/alertStore';
 import { t } from '../../../i18n';
 import clsx from 'clsx';
 
@@ -40,6 +41,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   onDelete,
 }) => {
   const { language } = useUIStore();
+  const { showConfirm } = useAlertStore();
   const tr = t(language).editor.sectionList;
   const entry = componentRegistry.getAll().find((e) => e.type === section.type);
   const colorClass =
@@ -66,7 +68,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       ref={setNodeRef}
       style={style}
       className={clsx(
-        'group flex items-center gap-2 p-2.5 rounded-md border cursor-pointer transition-all duration-200',
+        'group flex items-center gap-2 p-2.5 rounded-sm border cursor-pointer transition-all duration-200',
         isSelected
           ? 'border-[var(--color-border)] bg-[var(--color-accent)] text-[var(--color-bg)]'
           : 'border-[var(--color-border)] bg-white/2 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-2)]',
@@ -97,7 +99,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         )}
         <span
           className={clsx(
-            'px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold border',
+            'px-1.5 py-0.5 rounded-sm text-[10px] font-mono font-semibold border',
             colorClass,
           )}
         >
@@ -139,8 +141,8 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           <ArrowDown size={12} />
         </button>
         <button
-          onClick={() => {
-            if (confirm(tr.deleteConfirm.replace('{type}', section.type)))
+          onClick={async () => {
+            if (await showConfirm(tr.deleteConfirm.replace('{type}', entry?.displayName ?? section.type)))
               onDelete();
           }}
           className="p-1 rounded text-[var(--color-text-faint)] hover:text-red-400 hover:bg-red-500/10 transition-all"

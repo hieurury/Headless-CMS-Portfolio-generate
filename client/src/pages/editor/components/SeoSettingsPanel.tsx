@@ -62,7 +62,7 @@ export const SeoSettingsPanel: React.FC = () => {
               type="text"
               value={seo.title || ''}
               onChange={(e) => setSeo({ ...seo, title: e.target.value })}
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
               placeholder={portfolio.title}
             />
           </div>
@@ -74,7 +74,7 @@ export const SeoSettingsPanel: React.FC = () => {
             <textarea
               value={seo.description || ''}
               onChange={(e) => setSeo({ ...seo, description: e.target.value })}
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] min-h-[80px]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] min-h-[80px]"
               placeholder={tr.placeholderDescription}
             />
           </div>
@@ -87,7 +87,7 @@ export const SeoSettingsPanel: React.FC = () => {
               type="text"
               value={seo.ogImage || ''}
               onChange={(e) => setSeo({ ...seo, ogImage: e.target.value })}
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
               placeholder={tr.placeholderOgImage}
             />
           </div>
@@ -108,7 +108,7 @@ export const SeoSettingsPanel: React.FC = () => {
                     .filter(Boolean),
                 })
               }
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
               placeholder={tr.placeholderKeywords}
             />
           </div>
@@ -134,7 +134,7 @@ export const SeoSettingsPanel: React.FC = () => {
               type="text"
               value={aio.authorName || ''}
               onChange={(e) => setAio({ ...aio, authorName: e.target.value })}
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
               placeholder={tr.placeholderAuthorName}
             />
           </div>
@@ -147,7 +147,7 @@ export const SeoSettingsPanel: React.FC = () => {
               type="text"
               value={aio.jobTitle || ''}
               onChange={(e) => setAio({ ...aio, jobTitle: e.target.value })}
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)]"
               placeholder={tr.placeholderJobTitle}
             />
           </div>
@@ -159,7 +159,7 @@ export const SeoSettingsPanel: React.FC = () => {
             <textarea
               value={aio.bio || ''}
               onChange={(e) => setAio({ ...aio, bio: e.target.value })}
-              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] min-h-[80px]"
+              className="w-full text-sm bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] min-h-[80px]"
               placeholder={tr.placeholderShortBio}
             />
           </div>
@@ -169,7 +169,7 @@ export const SeoSettingsPanel: React.FC = () => {
           onClick={handleSave}
           disabled={isSaving}
           className={clsx(
-            'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all mt-4',
+            'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-sm text-sm font-semibold transition-all mt-4',
             'bg-[var(--color-text)] text-[var(--color-bg)] hover:bg-[var(--color-text-muted)]',
           )}
         >

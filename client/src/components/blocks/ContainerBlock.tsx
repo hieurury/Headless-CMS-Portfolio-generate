@@ -5,8 +5,8 @@ import React from 'react';
 type AlignX = 'left' | 'center' | 'right';
 type AlignY = 'top' | 'middle' | 'bottom';
 
-type StyleValue    = 'none' | 'card' | 'glass' | 'outlined' | 'filled';
-type RadiusValue   = 'none' | 'sm' | 'md';
+type StyleValue    = 'none' | 'card' | 'glass' | 'glass-subtle' | 'glass-strong' | 'outlined' | 'outlined-subtle' | 'filled';
+type RadiusValue   = 'none' | 'sm' | 'md' | 'lg' | 'full';
 type MaxWidthValue = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
 
 export interface ContainerBlockProps {
@@ -29,9 +29,12 @@ export interface ContainerBlockProps {
 
 const STYLE_MAP: Record<StyleValue, string> = {
   none:     '',
-  card:     'bg-[var(--color-surface)] border border-[var(--color-border)]',
-  glass:    'bg-[var(--color-surface)]/90 backdrop-blur-md border border-[var(--color-border)]',
+  card:     'bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm',
+  glass:    'bg-[var(--color-surface)]/80 backdrop-blur-md border border-[var(--color-border)]',
+  'glass-subtle': 'bg-[var(--color-surface)]/40 backdrop-blur-sm border border-[var(--color-border)]/50',
+  'glass-strong': 'bg-[var(--color-surface)]/95 backdrop-blur-xl border border-[var(--color-border)] shadow-xl',
   outlined: 'border border-[var(--color-border-strong)]',
+  'outlined-subtle': 'border border-[var(--color-border)]/50',
   filled:   'bg-[var(--color-surface-2)]',
 };
 
@@ -39,6 +42,8 @@ const RADIUS_MAP: Record<RadiusValue, string> = {
   none: '',
   sm:   'rounded-sm',
   md:   'rounded-md',
+  lg:   'rounded-lg',
+  full: 'rounded-full',
 };
 
 const MAX_WIDTH_MAP: Record<MaxWidthValue, string> = {
