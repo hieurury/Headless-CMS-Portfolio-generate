@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { PanelTop, Image as ImageIconLucide, Compass, Puzzle, LayoutTemplate, LayoutGrid, Type, Mail } from 'lucide-react';
+import { PanelTop, Compass, Puzzle, LayoutTemplate, LayoutGrid, Type, Mail } from 'lucide-react';
 import type { LayoutSection } from '../types/layout.types';
 
 export interface TemplateEntry {

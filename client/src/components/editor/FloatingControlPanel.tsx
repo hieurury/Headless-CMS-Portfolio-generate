@@ -137,11 +137,11 @@ const FloatingControlPanel: React.FC = () => {
               icon={<Plus size={14} />}
               label="Add slot"
               color="indigo"
-              onClick={() =>
+              onClick={() => {
                 window.dispatchEvent(
                   new CustomEvent('cms:addEmptySlot', { detail: { parentId: selectedSection.id } }),
-                )
-              }
+                );
+              }}
             />
           )}
 
@@ -152,22 +152,22 @@ const FloatingControlPanel: React.FC = () => {
                 icon={<Plus size={14} />}
                 label="Add column"
                 color="indigo"
-                onClick={() =>
+                onClick={() => {
                   window.dispatchEvent(
                     new CustomEvent('cms:addColCell', { detail: { columnsId: selectedSection.id } }),
-                  )
-                }
+                  );
+                }}
               />
               {colCount > 1 && (
                 <ActionBtn
                   icon={<Minus size={14} />}
                   label="Remove last column"
                   color="rose"
-                  onClick={() =>
+                  onClick={() => {
                     window.dispatchEvent(
                       new CustomEvent('cms:removeLastCol', { detail: { columnsId: selectedSection.id } }),
-                    )
-                  }
+                    );
+                  }}
                 />
               )}
             </>
@@ -180,22 +180,22 @@ const FloatingControlPanel: React.FC = () => {
                 icon={<Plus size={14} />}
                 label="Add row"
                 color="indigo"
-                onClick={() =>
+                onClick={() => {
                   window.dispatchEvent(
                     new CustomEvent('cms:addRowCell', { detail: { rowsId: selectedSection.id } }),
-                  )
-                }
+                  );
+                }}
               />
               {rowCount > 1 && (
                 <ActionBtn
                   icon={<Minus size={14} />}
                   label="Remove last row"
                   color="rose"
-                  onClick={() =>
+                  onClick={() => {
                     window.dispatchEvent(
                       new CustomEvent('cms:removeLastRow', { detail: { rowsId: selectedSection.id } }),
-                    )
-                  }
+                    );
+                  }}
                 />
               )}
             </>
