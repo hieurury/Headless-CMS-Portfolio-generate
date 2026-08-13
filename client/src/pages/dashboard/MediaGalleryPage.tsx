@@ -4,6 +4,7 @@ import { useMediaStore } from '../../store/mediaStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAlertStore } from '../../store/alertStore';
+import { t as tStore } from '../../i18n';
 import type { MediaItem } from '../../core/types/media.types';
 import {
   Upload,
@@ -17,6 +18,8 @@ import {
   ChevronLeft,
   ImageOff,
   Plus,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -39,7 +42,7 @@ interface MediaCardProps {
 const MediaCard: React.FC<MediaCardProps> = ({ item, selected, onSelect, onDelete }) => (
   <div
     onClick={onSelect}
-    className={`group relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${
+    className={`group relative aspect-square rounded-md overflow-hidden cursor-pointer transition-all duration-200 ${
       selected ? 'ring-2 ring-[var(--color-text)] scale-[0.97]' : 'hover:scale-[0.98]'
     }`}
     style={{ background: 'var(--color-surface-2)' }}
@@ -55,7 +58,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, selected, onSelect, onDelet
       <button
         id={`delete-media-${item._id}`}
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="self-end p-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+        className="self-end p-1.5 rounded-md bg-red-500/80 hover:bg-red-500 text-white transition-colors"
       >
         <Trash2 size={14} />
       </button>
@@ -78,6 +81,8 @@ interface DropZoneProps {
 }
 
 const DropZone: React.FC<DropZoneProps> = ({ onFiles, isUploading }) => {
+  const { language } = useUIStore();
+  const t = { mediaGallery: tStore(language).mediaGallery };
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +101,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFiles, isUploading }) => {
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
-      className={`flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${
+      className={`flex flex-col items-center justify-center gap-3 p-8 rounded-md border-2 border-dashed cursor-pointer transition-all duration-200 ${
         dragging
           ? 'border-[var(--color-text)] bg-[var(--color-text)]/5'
           : 'border-[var(--color-surface-2)] hover:border-[var(--color-text-muted)]'
@@ -121,10 +126,10 @@ const DropZone: React.FC<DropZoneProps> = ({ onFiles, isUploading }) => {
       )}
       <div className="text-center">
         <p className="text-sm font-medium text-[var(--color-text)]">
-          {isUploading ? 'Uploading…' : 'Drop images here or click to browse'}
+          {isUploading ? t.mediaGallery.uploading : t.mediaGallery.dropImages}
         </p>
         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          PNG, JPG, WEBP — max 10 MB each
+          {t.mediaGallery.formatLimit}
         </p>
       </div>
     </div>
@@ -135,6 +140,8 @@ const DropZone: React.FC<DropZoneProps> = ({ onFiles, isUploading }) => {
 
 export const MediaGalleryPage: React.FC = () => {
   const { user } = useAuthStore();
+  const { language, theme, toggleTheme } = useUIStore();
+  const t = { mediaGallery: tStore(language).mediaGallery };
   const {
     items,
     folders,
@@ -150,7 +157,6 @@ export const MediaGalleryPage: React.FC = () => {
     clearError,
   } = useMediaStore();
 
-  const { theme, toggleTheme } = useUIStore();
   const { showAlert } = useAlertStore();
 
   const [search, setSearch] = useState('');
@@ -220,15 +226,15 @@ export const MediaGalleryPage: React.FC = () => {
           <span className="text-[var(--color-surface-2)]">/</span>
           <span className="text-sm font-semibold flex items-center gap-1.5">
             <ImageIcon size={16} />
-            Media Gallery
+            {t.mediaGallery.title}
           </span>
         </div>
 
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-[var(--color-surface-2)] transition-colors text-[var(--color-text-muted)]"
+          className="p-2 rounded hover:bg-[var(--color-surface-2)] transition-colors text-[var(--color-text-muted)]"
         >
-          {theme === 'dark' ? '☀️' : '🌙'}
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </header>
 
@@ -241,20 +247,20 @@ export const MediaGalleryPage: React.FC = () => {
           style={{ background: 'var(--color-surface)', borderColor: 'var(--color-surface-2)' }}
         >
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] px-2 mb-1">
-            Folders
+            {t.mediaGallery.folders}
           </p>
 
           {/* All */}
           <button
             onClick={() => setActiveFolder(null)}
-            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+            className={`flex items-center gap-2 w-full px-3 py-2 rounded text-sm transition-colors ${
               activeFolder === null
                 ? 'bg-[var(--color-text)] text-[var(--color-bg)] font-semibold'
                 : 'hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)]'
             }`}
           >
             <ImageIcon size={15} />
-            All files
+            {t.mediaGallery.allFiles}
           </button>
 
           {folders
@@ -263,7 +269,7 @@ export const MediaGalleryPage: React.FC = () => {
             <button
               key={f}
               onClick={() => setActiveFolder(f)}
-              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded text-sm transition-colors ${
                 activeFolder === f
                   ? 'bg-[var(--color-text)] text-[var(--color-bg)] font-semibold'
                   : 'hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)]'
@@ -282,31 +288,31 @@ export const MediaGalleryPage: React.FC = () => {
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFolderCreate()}
-                placeholder="Folder name…"
-                className="w-full px-2 py-1.5 rounded-lg text-sm bg-[var(--color-surface-2)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)]"
+                placeholder={t.mediaGallery.folderName}
+                className="w-full px-2 py-1.5 rounded text-sm bg-[var(--color-surface-2)] focus:outline-none focus:ring-1 focus:ring-[var(--color-text)]"
               />
               <div className="flex gap-1">
                 <button
                   onClick={handleFolderCreate}
-                  className="flex-1 py-1 rounded-lg bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-semibold"
+                  className="flex-1 py-1 rounded bg-[var(--color-text)] text-[var(--color-bg)] text-xs font-semibold"
                 >
-                  Create
+                  {t.mediaGallery.create}
                 </button>
                 <button
                   onClick={() => setShowNewFolder(false)}
-                  className="flex-1 py-1 rounded-lg bg-[var(--color-surface-2)] text-[var(--color-text-muted)] text-xs"
+                  className="flex-1 py-1 rounded bg-[var(--color-surface-2)] text-[var(--color-text-muted)] text-xs"
                 >
-                  Cancel
+                  {t.mediaGallery.cancel}
                 </button>
               </div>
             </div>
           ) : (
             <button
               onClick={() => setShowNewFolder(true)}
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] transition-colors mt-1"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] transition-colors mt-1"
             >
               <Plus size={14} />
-              New folder
+              {t.mediaGallery.newFolder}
             </button>
           )}
         </aside>
@@ -328,8 +334,8 @@ export const MediaGalleryPage: React.FC = () => {
                 id="media-search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search files…"
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[var(--color-surface-2)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] placeholder-[var(--color-text-muted)]"
+                placeholder={t.mediaGallery.searchFiles}
+                className="w-full pl-9 pr-3 py-2 rounded bg-[var(--color-surface-2)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-text)] placeholder-[var(--color-text-muted)]"
               />
               {search && (
                 <button
@@ -342,8 +348,8 @@ export const MediaGalleryPage: React.FC = () => {
             </div>
 
             <span className="text-xs text-[var(--color-text-muted)] ml-auto">
-              {filtered.length} file{filtered.length !== 1 ? 's' : ''}
-              {activeFolder ? ` in "${activeFolder}"` : ''}
+              {filtered.length} {filtered.length !== 1 ? t.mediaGallery.files : t.mediaGallery.file}
+              {activeFolder ? ` ${t.mediaGallery.in} "${activeFolder}"` : ''}
             </span>
           </div>
 
@@ -359,7 +365,7 @@ export const MediaGalleryPage: React.FC = () => {
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-[var(--color-text-muted)]">
                 <ImageOff size={36} />
-                <p className="text-sm">No images yet. Upload your first one above.</p>
+                <p className="text-sm">{t.mediaGallery.noImages}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
@@ -391,26 +397,26 @@ export const MediaGalleryPage: React.FC = () => {
               <img
                 src={item.url}
                 alt={item.filename}
-                className="w-full aspect-square object-cover rounded-xl"
+                className="w-full aspect-square object-cover rounded-md"
               />
               <div className="space-y-2 text-sm">
-                <DetailRow label="Name" value={item.filename} />
-                <DetailRow label="Folder" value={item.folder} />
-                <DetailRow label="Size" value={formatBytes(item.size)} />
-                <DetailRow label="Type" value={item.mimeType} />
-                <DetailRow label="Uploaded" value={new Date(item.createdAt).toLocaleDateString()} />
+                <DetailRow label={t.mediaGallery.name} value={item.filename} />
+                <DetailRow label={t.mediaGallery.folder} value={item.folder} />
+                <DetailRow label={t.mediaGallery.size} value={formatBytes(item.size)} />
+                <DetailRow label={t.mediaGallery.type} value={item.mimeType} />
+                <DetailRow label={t.mediaGallery.uploaded} value={new Date(item.createdAt).toLocaleDateString()} />
               </div>
               <button
                 onClick={() => { navigator.clipboard.writeText(item.url); }}
-                className="w-full py-2 rounded-lg text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] transition-all"
+                className="w-full py-2 rounded text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] transition-all"
               >
-                Copy URL
+                {t.mediaGallery.copyUrl}
               </button>
               <button
                 onClick={() => setConfirmDelete(item)}
-                className="w-full py-2 rounded-lg text-sm font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all"
+                className="w-full py-2 rounded text-sm font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all"
               >
-                Delete
+                {t.mediaGallery.delete}
               </button>
             </aside>
           );
@@ -421,29 +427,29 @@ export const MediaGalleryPage: React.FC = () => {
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div
-            className="w-full max-w-sm mx-4 p-6 rounded-2xl shadow-2xl space-y-4"
+            className="w-full max-w-sm mx-4 p-6 rounded-md shadow-2xl space-y-4"
             style={{ background: 'var(--color-surface)' }}
           >
-            <h2 className="text-lg font-bold">Delete image?</h2>
+            <h2 className="text-lg font-bold">{t.mediaGallery.deleteImage}</h2>
             <p className="text-sm text-[var(--color-text-muted)]">
               <span className="font-medium text-[var(--color-text)]">
                 {confirmDelete.filename}
               </span>{' '}
-              will be permanently removed from Cloudinary. This cannot be undone.
+              {t.mediaGallery.deleteConfirm1}
             </p>
             <div className="flex gap-3">
               <button
                 id="confirm-delete-media"
                 onClick={handleDelete}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
+                className="flex-1 py-2.5 rounded bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
               >
-                Delete
+                {t.mediaGallery.delete}
               </button>
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 py-2.5 rounded-xl bg-[var(--color-surface-2)] text-sm font-semibold hover:opacity-80 transition-opacity"
+                className="flex-1 py-2.5 rounded bg-[var(--color-surface-2)] text-sm font-semibold hover:opacity-80 transition-opacity"
               >
-                Cancel
+                {t.mediaGallery.cancel}
               </button>
             </div>
           </div>

@@ -15,19 +15,19 @@ interface FeatureSlideConfig {
 // 4 Core Feature slides image configurations (ready for user-provided images)
 const FEATURE_SLIDES: FeatureSlideConfig[] = [
   {
-    imageSrc: '/features/visual-builder.png',
+    imageSrc: '/landing/editor.png',
     alt: 'Visual Block Builder',
   },
   {
-    imageSrc: '/features/ai-generator.png',
+    imageSrc: '/landing/ai_generate.png',
     alt: 'AI Generator',
   },
   {
-    imageSrc: '/features/headless-api.png',
+    imageSrc: '/landing/post.png',
     alt: 'Dynamic Post Types & REST API',
   },
   {
-    imageSrc: '/features/showcase-categories.png',
+    imageSrc: '/landing/category.png',
     alt: 'Showcase & Categories',
   },
 ];

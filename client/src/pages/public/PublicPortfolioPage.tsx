@@ -3,7 +3,7 @@ import { useParams, Link, NavLink } from 'react-router-dom';
 import { PageRenderer } from '../../core/renderer/PageRenderer';
 import { publicService, type PublicPageResponse } from '../../services/public.service';
 import type { PageLayout } from '../../core/types/layout.types';
-import { Loader2, Lock, LayoutGrid, ChevronRight } from 'lucide-react';
+import { Loader2, Lock, LayoutGrid, ChevronRight, X, Users, Compass } from 'lucide-react';
 import { SeoHelmet } from '../../core/renderer/SeoHelmet';
 import { useI18n } from '../../hooks/useI18n';
 
@@ -23,6 +23,7 @@ export const PublicPortfolioPage: React.FC = () => {
   const [data, setData] = useState<PublicPageResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -96,43 +97,102 @@ export const PublicPortfolioPage: React.FC = () => {
         meta={enrichedMeta}
       />
 
-      {/* ── Top navigation bar — always shown when portfolio has pages ── */}
-      <nav className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 h-12 flex items-center gap-1 overflow-x-auto scrollbar-hide">
-          {/* Back to portfolio hub */}
-          <Link
-            to={`/${username}/${portfolioSlug}`}
-            className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-1.5 rounded-sm hover:bg-[var(--color-surface-2)] transition-all shrink-0 font-medium"
-          >
-            <LayoutGrid size={12} />
-            <span className="truncate max-w-[120px]">{data.portfolio.title}</span>
-          </Link>
+      {/* ── Floating Sidebar Toggle ── */}
+      <button
+        onClick={() => setIsSidebarOpen(true)}
+        className="fixed top-1/2 right-0 -translate-y-1/2 bg-[var(--color-surface)] border border-r-0 border-[var(--color-border)] p-2.5 rounded-l-md shadow-lg z-[9999] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
+        title="Portfolio Details"
+      >
+        <LayoutGrid size={20} className="group-hover:scale-110 transition-transform" />
+      </button>
 
-          {data.allPages.length > 1 && (
-            <>
-              <ChevronRight size={12} className="text-[var(--color-border)] shrink-0 mx-1" />
-              {/* Page tabs — use urlSlug (no leading slash) for correct URL matching */}
-              <div className="flex items-center gap-1 ml-1 overflow-x-auto">
-                {data.allPages.map((p) => (
+      {/* ── Sidebar Overlay ── */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar Panel ── */}
+      <div
+        className={`fixed top-0 right-0 h-full w-80 bg-[var(--color-bg)] border-l border-[var(--color-border)] shadow-2xl z-[9999] transform transition-transform duration-300 flex flex-col ${
+          isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)] shrink-0">
+          <div className="flex items-center gap-2">
+            <LayoutGrid size={18} className="text-[var(--color-text-muted)]" />
+            <span className="font-bold text-[var(--color-text)] truncate">{data.portfolio.title}</span>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-1.5 rounded-sm hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+          {/* Info */}
+          <div>
+            <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider font-semibold mb-3">{t('publicHub.by')}</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center border border-[var(--color-border)]">
+                <Users size={16} className="text-[var(--color-text-muted)]" />
+              </div>
+              <span className="text-sm font-bold text-[var(--color-text)]">{data.portfolio.ownerName || username}</span>
+            </div>
+            {data.portfolio.description && (
+              <p className="text-sm text-[var(--color-text-muted)] mt-4 leading-relaxed">
+                {data.portfolio.description}
+              </p>
+            )}
+          </div>
+
+          {/* Navigation */}
+          <div>
+            <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider font-semibold mb-2">
+              {t('publicHub.pagesTab')}
+            </p>
+            <div className="flex flex-col gap-1">
+              {data.allPages.map((p) => {
+                const displaySlug = p.urlSlug === '/' || p.urlSlug === '' ? 'home' : p.urlSlug;
+                return (
                   <NavLink
                     key={p.urlSlug}
-                    to={`/${username}/${portfolioSlug}/${p.urlSlug}`}
+                    to={`/${username}/${portfolioSlug}/${displaySlug}`}
+                    onClick={() => setIsSidebarOpen(false)}
                     className={({ isActive }) =>
-                      `shrink-0 px-3 py-1.5 rounded-sm text-xs font-medium transition-all ${
+                      `px-3 py-2.5 rounded-sm text-sm font-medium transition-all flex items-center justify-between group ${
                         isActive
                           ? 'bg-[var(--color-text)] text-[var(--color-bg)] shadow-sm'
-                          : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
+                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]'
                       }`
                     }
                   >
                     {p.title}
+                    <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                   </NavLink>
-                ))}
-              </div>
-            </>
-          )}
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-[var(--color-border)] shrink-0">
+          <Link
+            to="/explore"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-sm bg-[var(--color-surface-2)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] text-[var(--color-text)] text-sm font-bold transition-colors"
+          >
+            <Compass size={16} />
+            {t('explore.explore')}
+          </Link>
+        </div>
+      </div>
 
       {/* ── Runtime renderer ───────────────────────────────────────── */}
       <PageRenderer layout={data.page.layout as PageLayout} />

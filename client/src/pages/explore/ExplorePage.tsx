@@ -26,7 +26,7 @@ const CATEGORIES = [
 
 export const ExplorePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const { t } = useI18n();
 
@@ -115,7 +115,7 @@ export const ExplorePage: React.FC = () => {
       <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
           {/* Back Button */}
-          <Link to="/" className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors mr-2">
+          <Link to={isAuthenticated && user ? `/${user.username}/dashboard` : "/"} className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors mr-2">
             <ChevronLeft size={20} />
             <span className="font-bold hidden sm:block">{t('explore.back')}</span>
           </Link>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { publicService, type PublicPortfolioHub } from '../../services/public.service';
 import { useUIStore } from '../../store/uiStore';
 import { useI18n } from '../../hooks/useI18n';
@@ -27,6 +27,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pages' | 'posts'>('pages');
+  const navigate = useNavigate();
   const { theme, language, toggleTheme, toggleLanguage } = useUIStore();
   const { isAuthenticated } = useAuthStore();
   const { t } = useI18n();
@@ -37,6 +38,13 @@ export const PublicPortfolioHubPage: React.FC = () => {
       setIsLoading(true);
       try {
         const result = await publicService.getPortfolio(username, portfolioSlug);
+        
+        const homePage = result.pages.find(p => p.urlSlug === 'home' || p.urlSlug === '/' || p.urlSlug === '');
+        if (homePage) {
+          navigate(`/${username}/${portfolioSlug}/home`, { replace: true });
+          return;
+        }
+
         setData(result);
       } catch {
         setError('This portfolio is not available or has not been published.');
@@ -232,10 +240,11 @@ export const PublicPortfolioHubPage: React.FC = () => {
               <div className="grid gap-3">
                 {data.pages.map((page) => {
                   const PageIcon = ICONS.find(ic => ic.name === page.meta?.icon)?.component || FileText;
+                  const displaySlug = page.urlSlug === '/' || page.urlSlug === '' ? 'home' : page.urlSlug;
                   return (
                   <Link
                     key={page.urlSlug}
-                    to={`/${username}/${portfolioSlug}/${page.urlSlug}`}
+                    to={`/${username}/${portfolioSlug}/${displaySlug}`}
                     id={`hub-page-link-${page.urlSlug}`}
                     className="group flex items-center justify-between p-4 sm:p-5 rounded-sm border-0 bg-[var(--color-surface)] shadow-sm hover:shadow-md transition-all duration-300"
                   >
@@ -249,7 +258,7 @@ export const PublicPortfolioHubPage: React.FC = () => {
                         <p className="text-[var(--color-text)] font-bold text-lg group-hover:opacity-80 transition-opacity">
                           {page.title}
                         </p>
-                        <p className="text-sm text-[var(--color-text-faint)] font-mono mt-0.5">/{page.urlSlug}</p>
+                        <p className="text-sm text-[var(--color-text-faint)] font-mono mt-0.5">/{displaySlug}</p>
                       </div>
                     </div>
                     <div className="w-10 h-10 rounded-sm bg-[var(--color-surface-2)] flex items-center justify-center group-hover:bg-[var(--color-text)] group-hover:text-[var(--color-bg)] text-[var(--color-text-muted)] transition-all duration-300 transform group-hover:translate-x-1 shadow-sm">
