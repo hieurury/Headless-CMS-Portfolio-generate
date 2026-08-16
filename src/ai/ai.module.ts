@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
+import { AiHistoryService } from './ai-history.service';
 import { GenerateLayoutTool } from './tools/generate-layout.tool';
 import { TOOL_LIST, ToolRegistry } from './tool-registry.service';
 
@@ -8,6 +9,7 @@ import { TOOL_LIST, ToolRegistry } from './tool-registry.service';
   controllers: [AiController],
   providers: [
     AiService,
+    AiHistoryService,
     GenerateLayoutTool,
     {
       provide: TOOL_LIST,
@@ -18,6 +20,6 @@ import { TOOL_LIST, ToolRegistry } from './tool-registry.service';
     },
     ToolRegistry,
   ],
-  exports: [AiService],
+  exports: [AiService, AiHistoryService],
 })
 export class AiModule {}

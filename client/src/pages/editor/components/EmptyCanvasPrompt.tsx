@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   Loader2,
   AlertCircle,
   Zap,
+  Brain,
   Code2,
   Palette,
   BarChart2,
@@ -12,8 +12,29 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '../../../store/uiStore';
 import { t } from '../../../i18n';
-import { aiService } from '../../../services/ai.service';
+import { aiService, type AiMode } from '../../../services/ai.service';
 import type { PageLayout } from '../../../core/types/layout.types';
+
+// ─── Styled Foly Text Helper ──────────────────────────────────────────────────
+
+const renderWithFoly = (text: string) => {
+  const parts = text.split('Foly');
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((part, i) => (
+        <React.Fragment key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <span className="font-serif italic font-bold tracking-wide text-[var(--color-text)]">
+              Foly
+            </span>
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+};
 
 // ─── Example portfolio prompts ────────────────────────────────────────────────
 
@@ -73,6 +94,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
   const { language } = useUIStore();
   const tr = t(language).editor.emptyCanvasPrompt;
   const [prompt, setPrompt] = useState('');
+  const [mode, setMode] = useState<AiMode>('fast');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generated, setGenerated] = useState<number | null>(null);
@@ -92,6 +114,8 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
         portfolioId,
         pageId,
         undefined,
+        undefined,
+        mode,
       );
       onLayoutGenerated(result.layout);
       setGenerated(result.sectionsGenerated);
@@ -115,23 +139,14 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
       <div className="flex flex-col items-center mb-7">
         {/* Icon row: small inline badge style */}
         <div className="flex items-center gap-2.5 mb-4">
-          <div
-            className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            }}
-          >
-            <Sparkles size={16} className="text-[var(--color-text)]" />
-          </div>
+          <img src="/foly.png" alt="Foly" className="w-8 h-8 rounded-sm object-cover shrink-0 opacity-80" />
           <h2 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
-            {tr.heading}
+            {renderWithFoly(tr.heading)}
           </h2>
         </div>
 
         <p className="text-[var(--color-text-faint)] text-sm text-center max-w-sm leading-relaxed">
-          {tr.description}{' '}
+          {renderWithFoly(tr.description)}{' '}
           <button
             onClick={_onAddBlocks}
             className="text-[var(--color-text-muted)] font-semibold hover:text-[var(--color-text)] transition-colors underline-offset-2 hover:underline"
@@ -189,17 +204,33 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
 
           {/* Bottom bar */}
           <div className="flex items-center justify-between px-5 pb-3">
-            <span
-              className={`text-xs transition-colors ${
-                isReady
-                  ? 'text-[var(--color-text-muted)]'
-                  : 'text-[var(--color-text-faint)]'
-              }`}
-            >
-              {isReady
-                ? `✓ Ready · ${charCount} chars`
-                : `${Math.max(0, 10 - charCount)} more chars needed`}
-            </span>
+            {/* Mode toggle */}
+            <div className="flex items-center gap-1 p-0.5 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)]">
+              <button
+                onClick={() => setMode('fast')}
+                disabled={isLoading}
+                title="Fast mode — keyword routing, best for most requests."
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-[3px] text-[10px] font-semibold transition-all ${
+                  mode === 'fast'
+                    ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
+                    : 'text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)]'
+                } disabled:opacity-40`}
+              >
+                <Zap size={8} /> Fast
+              </button>
+              <button
+                onClick={() => setMode('think')}
+                disabled={isLoading}
+                title="Think mode — AI Administrator decides routing. Smarter for complex requests."
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-[3px] text-[10px] font-semibold transition-all ${
+                  mode === 'think'
+                    ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
+                    : 'text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)]'
+                } disabled:opacity-40`}
+              >
+                <Brain size={8} /> Think
+              </button>
+            </div>
             <button
               onClick={() => handleGenerate()}
               disabled={isLoading || !isReady}
@@ -213,7 +244,7 @@ export const EmptyCanvasPrompt: React.FC<EmptyCanvasPromptProps> = ({
                 </>
               ) : (
                 <>
-                  <Sparkles size={13} /> {tr.generate}
+                  {mode === 'think' ? <Brain size={13} /> : <Zap size={13} />} {tr.generate}
                 </>
               )}
             </button>

@@ -1,4 +1,4 @@
-import { IsString, MinLength, MaxLength, IsOptional } from 'class-validator';
+import { IsString, MinLength, MaxLength, IsOptional, IsIn } from 'class-validator';
 
 export interface PageDesignMeta {
   /** Page layout type: full-width or constrained-with-margin */
@@ -39,4 +39,15 @@ export class GenerateLayoutDto {
    */
   @IsOptional()
   pageMeta?: PageDesignMeta;
+
+  /**
+   * Routing mode:
+   *  - 'fast'  (default): Deterministic keyword routing, 0 Admin LLM hops, 1-2 sub-agent hops.
+   *                       Best for most requests — low latency.
+   *  - 'think':           Administrator LLM decides which agent(s) to call. Slower but handles
+   *                       ambiguous or multi-step requests more intelligently.
+   */
+  @IsOptional()
+  @IsIn(['fast', 'think'])
+  mode?: 'fast' | 'think';
 }

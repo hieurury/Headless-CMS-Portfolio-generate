@@ -1,5 +1,4 @@
 import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import type OpenAI from 'openai';
 import { ITool } from './interfaces/types';
 export const TOOL_LIST = Symbol('TOOL_LIST');
 @Injectable()
@@ -23,16 +22,5 @@ export class ToolRegistry implements OnModuleInit {
 
   get(name: string): ITool | undefined {
     return this.toolMap.get(name);
-  }
-
-  toOpenAiTools(): OpenAI.Chat.Completions.ChatCompletionTool[] {
-    return [...this.toolMap.values()].map((tool) => ({
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.inputSchema,
-      },
-    }));
   }
 }

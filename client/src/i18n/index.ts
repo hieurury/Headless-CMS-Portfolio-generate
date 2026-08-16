@@ -999,9 +999,9 @@ export const translations = {
         tryDifferentKeyword: 'Thử từ khóa khác',
       },
       emptyCanvasPrompt: {
-        heading: 'Bắt đầu với AI',
+        heading: 'Bắt đầu với Foly',
         description:
-          'Mô tả portfolio của bạn và AI sẽ tạo bố cục đầy đủ trong vài giây.',
+          'Mô tả portfolio của bạn và Foly sẽ tạo bố cục đầy đủ trong vài giây.',
         addBlocksManually: 'Thêm block thủ công',
         promptPlaceholder:
           'ví dụ: Portfolio cho một developer React tên John với giao diện tối. Bao gồm about, kỹ năng (React, Node, Docker), 3 dự án có liên kết GitHub, và một form liên hệ.',
