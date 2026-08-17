@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Router } from './router';
 import { useUIStore } from './store/uiStore';
-import { CustomCursor } from './components/common/CustomCursor';
+// import { CustomCursor } from './components/common/CustomCursor';
 import { CustomAlert } from './components/common/CustomAlert';
 
 const App: React.FC = () => {

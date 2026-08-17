@@ -23,6 +23,10 @@ import { CopywriterOutputSchema, CopywriterOutput } from './agents/copywriter/co
 // History service
 import { AiHistoryService } from './ai-history.service';
 
+// Intent resolution + Blueprint system
+import { intentResolver, IntentResult } from './intent/intent-resolver';
+import { blueprintLoader } from './intent/blueprint-loader';
+
 // ─── Internal types ───────────────────────────────────────────────────────────
 
 interface RawNode {
@@ -38,6 +42,7 @@ type RouteKind = 'layout' | 'copy+layout' | 'modify';
 
 /** Language tag detected from user prompt */
 type Lang = 'vi' | 'en';
+
 
 /** Structural diff between old and new top-level sections */
 export interface LayoutDiff {
@@ -339,7 +344,7 @@ export class AiService {
   /** Think mode: AdministratorAgent LLM routes to sub-agents */
   private async runThinkMode(dto: GenerateLayoutDto): Promise<unknown[]> {
     this.logger.log('[THINK] Calling AdministratorAgent');
-    const prompt = this.buildLayoutPrompt(dto);
+    const prompt = await this.buildLayoutPrompt(dto);
     return this.extractSectionsFromAdminResult(
       await administratorAgent.run(prompt, []),
       dto,
@@ -359,7 +364,7 @@ export class AiService {
 
   /** Call LayoutArchitectAgent with the appropriate prompt */
   private async callLayoutAgent(dto: GenerateLayoutDto, isModification: boolean): Promise<unknown[]> {
-    const prompt = this.buildLayoutPrompt(dto);
+    const prompt = await this.buildLayoutPrompt(dto);
     try {
       const result = await layoutArchitectAgent.run(prompt, []);
       return await this.normalizeSections(result, dto);
@@ -390,12 +395,34 @@ export class AiService {
 
   /**
    * Builds the full prompt for LayoutArchitectAgent.
-   * Injects design system (if any) + modification context (if any) + user request.
+   * Resolves user intent → loads relevant blueprints → builds context-aware prompt.
+   * Now async due to IntentResolver LLM call.
    */
-  private buildLayoutPrompt(dto: GenerateLayoutDto): string {
+  private async buildLayoutPrompt(dto: GenerateLayoutDto): Promise<string> {
     const parts: string[] = [];
 
-    // Inject session history context so AI knows what already exists
+    // ── 1. Resolve intent (with cache — negligible overhead on cache hit) ──────
+    let intent: IntentResult;
+    try {
+      intent = await intentResolver.resolve(dto.prompt, dto.currentLayout);
+      this.logger.log(
+        `[INTENT] type=${intent.requestType} profession=${intent.userProfession} ` +
+        `sections=[${intent.targetSectionIds.join(',')}] tone=${intent.toneStyle} changeType=${intent.changeType}`,
+      );
+    } catch (err: any) {
+      this.logger.warn(`IntentResolver failed, using defaults: ${err?.message}`);
+      intent = {
+        requestType: dto.currentLayout ? 'modify' : 'create',
+        userProfession: 'unknown',
+        targetSectionIds: ['nav', 'intro', 'portfolio', 'contact'],
+        changeType: dto.currentLayout ? 'single-section' : 'multi-section',
+        modificationTarget: '',
+        toneStyle: 'auto',
+        language: this.detectLang(dto.prompt) === 'vi' ? 'vi' : 'en',
+      };
+    }
+
+    // ── 2. Session history ──────────────────────────────────────────────────────
     const sessionCtx = this.historyService.getSessionContext(dto.portfolioId, dto.pageId);
     if (sessionCtx) {
       parts.push(
@@ -404,70 +431,113 @@ export class AiService {
       );
     }
 
-    // Inject design system if present
+    // ── 3. Design system ────────────────────────────────────────────────────────
     const designSection = this.buildDesignSystemSection(dto);
     if (designSection) parts.push(designSection);
 
-    // Inject modification context if present
-    if (dto.currentLayout) {
-      parts.push(this.buildModificationContext(dto));
+    // ── 4. Section Blueprints (dynamic, based on intent) ─────────────────────
+    const blueprints = blueprintLoader.load(intent.targetSectionIds);
+    if (blueprints) parts.push(blueprints);
+
+    // ── 5. User context (profession + tone) ────────────────────────────────────
+    if (intent.userProfession !== 'unknown' || intent.toneStyle !== 'auto') {
+      const ctxLines: string[] = ['[USER CONTEXT]'];
+      if (intent.userProfession !== 'unknown') {
+        ctxLines.push(`Domain/Profession: ${intent.userProfession}`);
+        ctxLines.push(`→ Tailor ALL content, imagery (Unsplash photos), and section structure to match this profession.`);
+      }
+      if (intent.toneStyle !== 'auto') {
+        ctxLines.push(`Visual tone: ${intent.toneStyle}`);
+        const toneHint: Record<string, string> = {
+          professional: 'Clean, structured, serious — muted colors, strong typography hierarchy.',
+          creative: 'Bold, expressive, unexpected — rich colors, asymmetric layouts, visual variety.',
+          minimal: 'White space, simplicity — few elements, generous spacing, restrained palette.',
+          bold: 'High contrast, large type, strong visual statements — commanding presence.',
+          warm: 'Inviting, human, friendly — earthy or soft tones, rounded elements, approachable.',
+        };
+        if (toneHint[intent.toneStyle]) ctxLines.push(`→ ${toneHint[intent.toneStyle]}`);
+      }
+      ctxLines.push(`Output language for content: ${intent.language === 'vi' ? 'Vietnamese (Tiếng Việt)' : 'English'}`);
+      parts.push(ctxLines.join('\n'));
     }
 
-    // User request
+    // ── 6. Modification context OR creation instruction ──────────────────────
+    if (dto.currentLayout) {
+      parts.push(this.buildModificationContext(dto, intent));
+    }
+
+    // ── 7. Final user request ─────────────────────────────────────────────────
     const isModification = !!dto.currentLayout;
     parts.push(
       `[USER REQUEST]\n${dto.prompt}\n\n` +
         (isModification
-          ? 'Apply the SURGICAL modification described above. Copy all unchanged sections exactly as they appear in CURRENT LAYOUT.'
-          : 'Be highly creative and avoid generic templates unless specifically requested. Generate a complete, unique, and content-rich portfolio page layout.') +
+          ? 'Apply the modification described above. Target only the specific section(s) indicated. Copy all other sections exactly as they appear in CURRENT LAYOUT.'
+          : 'Generate a complete, unique, and content-rich portfolio page layout. Be creative with structure — choose different variations for different sections. Avoid repeating the same block pattern across sections.') +
         ' Output ONLY valid JSON: { "sections": [ ... ] }',
     );
 
-    if (dto.currentLayout) {
+    if (dto.currentLayout && intent.changeType !== 'full-redesign') {
       parts.push(
-        'Before finalizing your JSON, do a mental diff check:\n' +
-          '- How many top-level sections does CURRENT LAYOUT have? → Your output must have the SAME count (unless user asked to add/remove).\n' +
-          '- Which section did the user ask to modify? → Only that section\'s subtree should differ.\n' +
-          '- Are all nav links from the original still present with the same href and label? → They must be.\n' +
-          '- Does every columns/rows block still have a children count that exactly matches its columns/rows prop?',
+        'Mental diff check before finalizing:\n' +
+          `- Target section: "${intent.modificationTarget || 'as described by user'}" — ONLY this should change.\n` +
+          '- Section count in output MUST equal CURRENT LAYOUT section count (unless adding/removing was requested).\n' +
+          '- All nav links must remain identical.\n' +
+          '- columns/rows children count must match their prop exactly.',
       );
     }
 
     return parts.join('\n\n');
   }
 
-  /** Builds the modification mode context block */
-  private buildModificationContext(dto: GenerateLayoutDto): string {
-    const map = this.buildCompactLayoutMap(
-      (dto.currentLayout as { sections?: unknown[] })?.sections ?? [],
-    );
-    return (
-      `═══════════════════════════════════════════════════\n` +
-      `MODIFICATION MODE — READ ALL RULES BEFORE ACTING\n` +
-      `═══════════════════════════════════════════════════\n\n` +
-      `CURRENT LAYOUT NODE MAP (id + type only — use the "id" value to target nodes):\n` +
-      `${map}\n\n` +
-      `NOTE: The server holds the full layout data. You only need the node "id" when using the tool.\n\n` +
-      `YOUR TASK:\n` +
-      `The user wants a SURGICAL modification. You have TWO options to respond:\n\n` +
-      `OPTION A — Use the "generate-layout" TOOL (preferred for precise, targeted changes):\n` +
-      `  Call the tool with a "modifications" array. Each modification targets one node by its "id" field.\n` +
-      `  Available modification types:\n` +
-      `  - "ADD_CHILD"  → append newNode inside the target node's children list\n` +
-      `  - "ADD_BEFORE" → insert newNode immediately before the target node (same level)\n` +
-      `  - "ADD_AFTER"  → insert newNode immediately after the target node (same level)\n` +
-      `  - "UPDATE"     → replace the entire target node with newNode\n` +
-      `  - "DELETE"     → remove the target node from the tree\n` +
-      `  You do NOT need to reproduce the full layout — the server injects currentlayout automatically.\n\n` +
-      `OPTION B — Return the full updated layout as raw JSON { "sections": [...] }:\n` +
-      `  Copy the CURRENT LAYOUT exactly, then apply your changes inline.\n` +
-      `  Use this option when the change is so widespread that targeted patching requires more than 5 modifications.\n\n` +
-      `REGARDLESS OF WHICH OPTION YOU CHOOSE:\n` +
-      `- Change ONLY what the user asked — keep everything else IDENTICAL\n` +
-      `- Do NOT add new sections unless the user explicitly says "add a new section for..."\n` +
-      `- Do NOT remove sections unless the user explicitly says "remove..."\n` +
-      `- Still obey every rule in BLOCK SYSTEM (valid types, exact child counts, no children on atoms)`
-    );
+  /**
+   * Builds the modification context block.
+   * Path A (surgical): enforced for text-only, style-adjust, single-section changes.
+   * Path B (full rebuild): allowed only for full-redesign or multi-section overhauls.
+   */
+  private buildModificationContext(dto: GenerateLayoutDto, intent: IntentResult): string {
+    const sections = (dto.currentLayout as { sections?: unknown[] })?.sections ?? [];
+    const map = this.buildSemanticLayoutMap(sections);
+    const isSurgical = intent.changeType !== 'full-redesign';
+
+    if (isSurgical) {
+      // ── OPTION A ONLY: Surgical tool-based modification ────────────────────
+      return (
+        `═══════════════════════════════════════════════════\n` +
+        `MODIFICATION MODE — SURGICAL (targeted change only)\n` +
+        `═══════════════════════════════════════════════════\n\n` +
+        `Target of change: "${intent.modificationTarget || 'as described by user'}"\n` +
+        `Change scope: ${intent.changeType}\n\n` +
+        `CURRENT LAYOUT SEMANTIC MAP:\n` +
+        `${map}\n\n` +
+        `YOUR TASK: Use the "generate-layout" TOOL with a "modifications" array.\n` +
+        `DO NOT return a full {sections:[...]} JSON — apply surgical patches only.\n\n` +
+        `Available modification types:\n` +
+        `  - "UPDATE"     → replace the entire target node with newNode\n` +
+        `  - "ADD_CHILD"  → append newNode inside the target node's children\n` +
+        `  - "ADD_BEFORE" → insert newNode immediately before the target node\n` +
+        `  - "ADD_AFTER"  → insert newNode immediately after the target node\n` +
+        `  - "DELETE"     → remove the target node from the tree\n\n` +
+        `RULES:\n` +
+        `- Change ONLY the target node(s) — keep everything else IDENTICAL\n` +
+        `- Do NOT add new sections unless user explicitly requested it\n` +
+        `- Do NOT remove sections unless user explicitly requested it\n` +
+        `- Obey all BLOCK SYSTEM rules (valid types, exact child counts, no children on atoms)`
+      );
+    } else {
+      // ── OPTION B: Full rebuild (only for full-redesign scope) ──────────────
+      return (
+        `═══════════════════════════════════════════════════\n` +
+        `MODIFICATION MODE — FULL REDESIGN\n` +
+        `═══════════════════════════════════════════════════\n\n` +
+        `User requested a full redesign. You may return a complete new {sections:[...]} JSON.\n\n` +
+        `CURRENT LAYOUT SEMANTIC MAP (for reference — preserve nav link labels):\n` +
+        `${map}\n\n` +
+        `RULES:\n` +
+        `- Keep all nav link labels and hrefs from the current layout\n` +
+        `- Apply the Section Blueprints above for the new design\n` +
+        `- Be creative — this is a full redesign, not an incremental patch`
+      );
+    }
   }
 
   /** Enriches the layout prompt with structured copywriter content */
@@ -725,9 +795,33 @@ export class AiService {
   // ── Layout map builder ──────────────────────────────────────────────────────
 
   /**
-   * Builds a compact token-efficient representation of the layout tree
-   * containing ONLY id, type, and name (no props, no rendered content).
-   * Gives AI just enough to identify target nodes by id.
+   * Builds a semantic layout map with section labels for modification context.
+   * Top-level sections are labeled with their name/section type.
+   * Deeper nodes show type + id + label preview for targeting.
+   */
+  private buildSemanticLayoutMap(nodes: unknown[]): string {
+    return nodes
+      .map((raw, idx) => {
+        const n = raw as {
+          id?: string;
+          type?: string;
+          name?: string;
+          props?: Record<string, unknown>;
+          children?: unknown[];
+        };
+        const sectionLabel = n.name ? ` | "${n.name}"` : '';
+        const sectionHeader = `[SECTION ${idx + 1}: ${n.type ?? '?'}${sectionLabel}] id="${n.id ?? '?'}"\n`;
+        const children = n.children && n.children.length > 0
+          ? this.buildCompactLayoutMap(n.children, 1)
+          : '';
+        return sectionHeader + children;
+      })
+      .join('\n');
+  }
+
+  /**
+   * Recursively builds a compact tree representation for child nodes.
+   * Used by buildSemanticLayoutMap for non-root levels.
    */
   private buildCompactLayoutMap(nodes: unknown[], indent = 0): string {
     const pad = '  '.repeat(indent);
@@ -742,7 +836,7 @@ export class AiService {
         };
         const label = n.props?.text ?? n.props?.label ?? n.name ?? '';
         const preview = label ? ` "${String(label).slice(0, 40)}"` : '';
-        const line = `${pad}- [${n.type ?? '?'}] id="${n.id ?? '?'}"${preview}`;
+        const line = `${pad}└─ [${n.type ?? '?'}] id="${n.id ?? '?'}"${preview}`;
         if (n.children && n.children.length > 0) {
           return line + '\n' + this.buildCompactLayoutMap(n.children, indent + 1);
         }
