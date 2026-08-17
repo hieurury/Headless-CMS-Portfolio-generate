@@ -64,4 +64,5 @@ export const experienceBlueprint: SectionBlueprint = {
     badgeVariant: '"subtle" cho tech tags, "solid" cho achievement highlights',
     timelineDot: 'Dùng icon(name:Circle hoặc Dot, size:xs) làm marker nếu muốn timeline feel',
   },
+  typicalPosition: 'middle',
 };

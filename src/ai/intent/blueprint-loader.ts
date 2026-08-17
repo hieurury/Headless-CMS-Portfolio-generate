@@ -26,20 +26,71 @@ export class BlueprintLoader {
       .map((bp) => this.formatForPrompt(bp))
       .join('\n\n───────────────────────────────────────\n\n');
 
+    const orderingBlock = this.buildOrderingBlock(blueprints);
+
     return (
       `═══════════════════════════════════════════════════\n` +
       `SECTION BLUEPRINTS — Design guidance for each section\n` +
       `Read these principles and choose the variation that best fits the user's context.\n` +
       `DO NOT copy structures literally — use them as inspiration and adapt creatively.\n` +
       `═══════════════════════════════════════════════════\n\n` +
-      formatted
+      formatted +
+      (orderingBlock ? `\n\n───────────────────────────────────────\n\n${orderingBlock}` : '')
     );
+  }
+
+  /**
+   * Build a Section Ordering guidance block from the loaded blueprints.
+   * Tells the agent the canonical order: first → second → middle → pre-last → last.
+   * Only shown when creating a layout (>1 section being requested).
+   */
+  private buildOrderingBlock(blueprints: SectionBlueprint[]): string {
+    const hasPositions = blueprints.some((bp) => bp.typicalPosition);
+    if (!hasPositions || blueprints.length <= 1) return '';
+
+    const positionOrder: Array<NonNullable<SectionBlueprint['typicalPosition']>> = [
+      'first', 'second', 'middle', 'pre-last', 'last',
+    ];
+
+    const grouped: Partial<Record<NonNullable<SectionBlueprint['typicalPosition']>, string[]>> = {};
+    for (const bp of blueprints) {
+      if (bp.typicalPosition) {
+        const pos = bp.typicalPosition;
+        if (!grouped[pos]) grouped[pos] = [];
+        grouped[pos]!.push(bp.id);
+      }
+    }
+
+    const lines: string[] = ['[SECTION ORDERING GUIDE]'];
+    lines.push('Arrange sections in this canonical order when building the layout:');
+
+    const positionLabels: Record<string, string> = {
+      first:      '① FIRST    — Always top of page (navigation)',
+      second:     '② SECOND   — Immediately after nav (intro/hero)',
+      middle:     '③ MIDDLE   — Body sections (portfolio, skills, services, gallery, experience)',
+      'pre-last': '④ PRE-LAST — Before contact (testimonials, faq)',
+      last:       '⑤ LAST     — Always final section (contact)',
+    };
+
+    for (const pos of positionOrder) {
+      const ids = grouped[pos];
+      if (ids && ids.length > 0) {
+        lines.push(`  ${positionLabels[pos]}: ${ids.join(', ')}`);
+      }
+    }
+    lines.push('');
+    lines.push('IMPORTANT: contact must ALWAYS be the last section. nav must ALWAYS be first.');
+
+    return lines.join('\n');
   }
 
   private formatForPrompt(bp: SectionBlueprint): string {
     const lines: string[] = [];
 
     lines.push(`[BLUEPRINT: ${bp.id.toUpperCase()}]`);
+    if (bp.typicalPosition) {
+      lines.push(`Position: ${bp.typicalPosition} (${this.describePosition(bp.typicalPosition)})`);
+    }
     lines.push(`Purpose: ${bp.purpose.replace(/\n\s+/g, ' ').trim()}`);
     lines.push('');
 
@@ -69,6 +120,17 @@ export class BlueprintLoader {
     }
 
     return lines.join('\n');
+  }
+
+  private describePosition(pos: NonNullable<SectionBlueprint['typicalPosition']>): string {
+    const descriptions: Record<typeof pos, string> = {
+      first:      'always first in layout',
+      second:     'immediately after nav',
+      middle:     'body section, order flexible',
+      'pre-last': 'near end, before contact',
+      last:       'always last in layout',
+    };
+    return descriptions[pos];
   }
 }
 

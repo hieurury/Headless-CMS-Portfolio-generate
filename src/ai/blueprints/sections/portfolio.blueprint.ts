@@ -76,4 +76,5 @@ export const portfolioBlueprint: SectionBlueprint = {
     cardBorderRadius: '"xl" hoặc "2xl" — modern và clean',
     imageAspectRatio: '"16/9" cho ảnh ngang, "1/1" cho ảnh vuông portfolio',
   },
+  typicalPosition: 'middle',
 };

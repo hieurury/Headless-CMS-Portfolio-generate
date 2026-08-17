@@ -7,6 +7,8 @@ import { experienceBlueprint } from './sections/experience.blueprint';
 import { servicesBlueprint } from './sections/services.blueprint';
 import { contactBlueprint } from './sections/contact.blueprint';
 import { testimonialsBlueprint } from './sections/testimonials.blueprint';
+import { faqBlueprint } from './sections/faq.blueprint';
+import { galleryBlueprint } from './sections/gallery.blueprint';
 
 /**
  * ════════════════════════════════════════════════════════════════
@@ -37,6 +39,8 @@ class BlueprintRegistry {
       servicesBlueprint,
       contactBlueprint,
       testimonialsBlueprint,
+      faqBlueprint,
+      galleryBlueprint,
     ];
 
     for (const bp of blueprints) {

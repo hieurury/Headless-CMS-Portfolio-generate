@@ -77,4 +77,5 @@ export const servicesBlueprint: SectionBlueprint = {
     ctaButtonVariant: '"primary" hoặc "success" — action mạnh',
     ctaButtonShape: '"pill" — modern và inviting',
   },
+  typicalPosition: 'middle',
 };

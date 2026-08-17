@@ -81,4 +81,5 @@ export const introBlueprint: SectionBlueprint = {
     imageAspectRatio: '"1/1" hoặc "4/3" cho chân dung — tự nhiên hơn "16/9"',
     imageBorderRadius: '"2xl" hoặc "full" cho ảnh chân dung tròn',
   },
+  typicalPosition: 'second',
 };

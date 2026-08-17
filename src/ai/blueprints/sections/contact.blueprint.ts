@@ -64,4 +64,5 @@ export const contactBlueprint: SectionBlueprint = {
     buttonVariant: '"primary" cho email/main CTA, "ghost" hoặc "outline" cho social',
     ctaButtonShape: '"pill" — friendly và approachable',
   },
+  typicalPosition: 'last',
 };

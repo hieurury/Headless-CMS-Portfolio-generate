@@ -31,6 +31,7 @@ export interface SectionVariation {
  * - variations: các hướng triển khai + khi nào nên dùng
  * - antiPatterns: lỗi phổ biến cần tránh
  * - recommendedProps: gợi ý props (giải thích context, không phải ép buộc)
+ * - typicalPosition: vị trí thông thường của section trong page layout
  */
 export interface SectionBlueprint {
   /** ID duy nhất, dùng làm key trong BlueprintRegistry */
@@ -47,4 +48,11 @@ export interface SectionBlueprint {
   antiPatterns: string[];
   /** Gợi ý props với giải thích ngữ cảnh */
   recommendedProps: Record<string, string>;
+  /**
+   * Vị trí thông thường trong page layout.
+   * 'first': luôn đầu trang (nav), 'second': ngay sau nav (intro/hero),
+   * 'middle': phần thân trang, 'pre-last': ngay trước contact, 'last': cuối trang.
+   * Dùng để gợi ý agent sắp xếp sections đúng thứ tự.
+   */
+  typicalPosition?: 'first' | 'second' | 'middle' | 'pre-last' | 'last';
 }

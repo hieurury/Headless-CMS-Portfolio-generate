@@ -63,4 +63,5 @@ export const testimonialsBlueprint: SectionBlueprint = {
     quoteTextSize: '"base" hoặc "lg" — to hơn description thường nhưng không quá to',
     attributionSize: '"sm" — nhỏ hơn để tạo hierarchy rõ ràng',
   },
+  typicalPosition: 'pre-last',
 };

@@ -48,21 +48,26 @@ ${validSectionIds.join(', ')}
 SECTION ALIASES REFERENCE (for mapping user words to section IDs):
 - nav: menu, navigation, navbar, thanh điều hướng, header
 - intro: giới thiệu, bản thân, hero, about me, landing, chân dung, về tôi, tôi là ai
-- portfolio: dự án, công việc, work, projects, showcase, tác phẩm, thành phẩm, món ăn (for chef), ảnh (for photographer)
-- skills: kỹ năng, thế mạnh, tech stack, tools, chuyên môn, tôi giỏi gì
+- portfolio: dự án, công việc, work, projects, showcase, tác phẩm, thành phẩm, món ăn (for chef), case study
+- skills: kỹ năng, thế mạnh, tech stack, tools, chuyên môn, tôi giỏi gì, expertise
 - experience: kinh nghiệm, lịch sử làm việc, timeline, sự nghiệp, đã làm ở đâu
-- services: dịch vụ, tôi làm được gì, what i offer, tôi nhận làm, hire me
-- contact: liên hệ, kết nối, email, nhắn tin, thuê tôi
-- testimonials: đánh giá, nhận xét, review, feedback, khách hàng nói gì
+- services: dịch vụ, tôi làm được gì, what i offer, tôi nhận làm, hire me, bảng giá, pricing
+- contact: liên hệ, kết nối, email, nhắn tin, thuê tôi, reach me
+- testimonials: đánh giá, nhận xét, review, feedback, khách hàng nói gì, social proof
+- faq: câu hỏi thường gặp, hỏi đáp, q&a, thắc mắc, frequently asked questions, mọi người hay hỏi
+- gallery: bộ ảnh, album ảnh, triển lãm ảnh, ảnh chụp, photo gallery, lookbook, ảnh tác phẩm, visual showcase
 
 RULES:
 1. Always include "nav" in targetSectionIds when requestType is "create"
 2. Always include "contact" in targetSectionIds when requestType is "create" (unless user explicitly doesn't want it)
-3. If user says "đầu bếp/chef" → include services and portfolio
-4. If user says a profession → infer typical sections for that profession
-5. If requestType is "modify" and user mentions a specific part → only include that section in targetSectionIds
-6. Detect language from user's prompt for the language field
-7. toneStyle "warm" for service professions (chef, therapist, teacher), "creative" for artists, "professional" for corporate, "auto" when unclear
+3. If user says "đầu bếp/chef" → include services and portfolio (or gallery if they want to show food photos)
+4. If user says "photographer/nhiếp ảnh" → include gallery (primary) and portfolio, NOT both
+5. If user says a profession → infer typical sections for that profession
+6. If requestType is "modify" and user mentions a specific part → only include that section in targetSectionIds
+7. Detect language from user's prompt for the language field
+8. toneStyle "warm" for service professions (chef, therapist, teacher), "creative" for artists/photographers, "professional" for corporate, "auto" when unclear
+9. Use "gallery" (visual-only) when user wants to showcase photos/images as art; use "portfolio" when they want project context + descriptions
+10. Add "faq" when user mentions they get many questions OR profession commonly needs FAQ (freelancer, consultant, service provider)
 
 OUTPUT: Structured JSON matching the schema exactly.`;
 }
@@ -156,6 +161,9 @@ export class IntentResolver {
     if (/skill|tech|stack|kỹ năng/.test(lower)) sectionIds.push('skills');
     if (/experience|kinh nghiệm|timeline/.test(lower)) sectionIds.push('experience');
     if (/service|dịch vụ/.test(lower)) sectionIds.push('services');
+    if (/testimonial|review|đánh giá|nhận xét/.test(lower)) sectionIds.push('testimonials');
+    if (/faq|câu hỏi|hỏi đáp|q&a|thắc mắc/.test(lower)) sectionIds.push('faq');
+    if (/gallery|bộ ảnh|album ảnh|photo gallery|ảnh chụp/.test(lower)) sectionIds.push('gallery');
     if (!sectionIds.includes('contact')) sectionIds.push('contact');
 
     return {

@@ -58,4 +58,5 @@ export const navBlueprint: SectionBlueprint = {
     padding: '"lg" — đủ breathing space',
     maxWidth: '"xl" hoặc "2xl" — tùy layout tổng thể trang',
   },
+  typicalPosition: 'first',
 };

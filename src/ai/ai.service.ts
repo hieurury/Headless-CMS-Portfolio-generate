@@ -26,6 +26,7 @@ import { AiHistoryService } from './ai-history.service';
 // Intent resolution + Blueprint system
 import { intentResolver, IntentResult } from './intent/intent-resolver';
 import { blueprintLoader } from './intent/blueprint-loader';
+import { blueprintRegistry } from './blueprints';
 
 // ─── Internal types ───────────────────────────────────────────────────────────
 
@@ -180,13 +181,9 @@ function normalizeNode(raw: unknown, logger: Logger): RawNode | null {
   };
 }
 
-// ─── Keywords for fast-mode classification ────────────────────────────────────
-
-const COPY_KEYWORDS = [
-  'viết lại', 'rewrite', 'bio', 'slogan', 'tagline', 'nội dung', 'content',
-  'giới thiệu', 'mô tả', 'describe', 'description', 'introduction', 'headline',
-  'copywriting', 'text only', 'chỉ nội dung', 'chỉ text',
-];
+// ─── Fast-mode routing ────────────────────────────────────────────────────────
+// NOTE: classifyRequest() now delegates to IntentResult from IntentResolver.
+// COPY_KEYWORDS removed — intent classification is handled by LLM (IntentResolver).
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -313,10 +310,25 @@ export class AiService {
     return this.runFastMode(dto);
   }
 
-  /** Fast mode: classify by keywords/context and call agent directly */
+  /**
+   * Fast mode: resolve intent first (already done inside buildLayoutPrompt),
+   * but here we do a lightweight pre-classification to decide the route.
+   *
+   * Intent is resolved ONCE inside buildLayoutPrompt and cached.
+   * classifyRequest() now accepts the pre-resolved IntentResult to avoid
+   * a second LLM call.
+   */
   private async runFastMode(dto: GenerateLayoutDto): Promise<unknown[]> {
-    const kind = this.classifyRequest(dto);
-    this.logger.log(`[FAST] Route: ${kind}`);
+    // Pre-resolve intent so classifyRequest can use it (result will be cached)
+    let preIntent: IntentResult | undefined;
+    try {
+      preIntent = await intentResolver.resolve(dto.prompt, dto.currentLayout);
+    } catch {
+      // Ignore — classifyRequest will fall back to heuristics
+    }
+
+    const kind = this.classifyRequest(dto, preIntent);
+    this.logger.log(`[FAST] Route: ${kind} (intent: ${preIntent?.requestType ?? 'unknown'})`);
 
     if (kind === 'modify') {
       return this.callLayoutAgent(dto, true);
@@ -351,13 +363,21 @@ export class AiService {
     );
   }
 
-  /** Classify request type for fast-mode routing */
-  private classifyRequest(dto: GenerateLayoutDto): RouteKind {
+  /**
+   * Classify request type for fast-mode routing.
+   *
+   * Delegates to IntentResult when available (resolved during buildLayoutPrompt).
+   * Falls back to context-based heuristics:
+   *   - currentLayout present → always 'modify'
+   *   - 'copy-only' intent → 'copy+layout' (generate content + layout)
+   *   - otherwise → 'layout'
+   *
+   * Previously used COPY_KEYWORDS keyword matching — now intent-aware.
+   */
+  private classifyRequest(dto: GenerateLayoutDto, intent?: IntentResult): RouteKind {
     if (dto.currentLayout) return 'modify';
-
-    const lowerPrompt = dto.prompt.toLowerCase();
-    const isCopyRequest = COPY_KEYWORDS.some((kw) => lowerPrompt.includes(kw));
-    return isCopyRequest ? 'copy+layout' : 'layout';
+    if (intent?.requestType === 'copy-only') return 'copy+layout';
+    return 'layout';
   }
 
   // ── Agent calls ─────────────────────────────────────────────────────────────
@@ -795,11 +815,85 @@ export class AiService {
   // ── Layout map builder ──────────────────────────────────────────────────────
 
   /**
-   * Builds a semantic layout map with section labels for modification context.
-   * Top-level sections are labeled with their name/section type.
-   * Deeper nodes show type + id + label preview for targeting.
+   * Builds a semantic layout map for modification context.
+   *
+   * Output format (Sprint 2 improved):
+   *   [SECTION 1: nav | "Navigation"] blueprint=nav  id="block-ai-..."
+   *   └─ [container] id="..."  "main nav container"
+   *      └─ [flex] id="..."  ← LINKS GROUP
+   *         ├─ [button] id="..."  "About"
+   *         └─ [button] id="..."  "Contact"
+   *
+   *   [SECTION 2: container | "intro"] blueprint=intro  id="block-ai-..."
+   *   └─ [columns(2)] id="..."
+   *      ├─ [LEFT — text] [rows(3)] id="..."
+   *      │  ├─ [badge] id="..."  "Available"
+   *      │  ├─ [heading] id="..."  ← MAIN TITLE
+   *      │  └─ [description] id="..."
+   *      └─ [RIGHT — visual] [image] id="..."
+   *
+   * Section blueprint hint is resolved from section name/type using BlueprintRegistry.
+   * Role hints (LEFT/RIGHT, MAIN TITLE, etc.) are inferred from position + block type.
    */
   private buildSemanticLayoutMap(nodes: unknown[]): string {
+    const result = nodes
+      .map((raw, idx) => {
+        const n = raw as {
+          id?: string;
+          type?: string;
+          name?: string;
+          props?: Record<string, unknown>;
+          children?: unknown[];
+        };
+
+        // Resolve blueprint hint from section name
+        const bpHint = this.resolveSectionBlueprintHint(n.name, n.type);
+        const sectionLabel = n.name ? ` | "${n.name}"` : '';
+        const sectionHeader =
+          `[SECTION ${idx + 1}: ${n.type ?? '?'}${sectionLabel}]` +
+          (bpHint ? `  blueprint=${bpHint}` : '') +
+          `  id="${n.id ?? '?'}"\n`;
+
+        const children = n.children && n.children.length > 0
+          ? this.buildCompactLayoutMap(n.children, 1)
+          : '';
+        return sectionHeader + children;
+      })
+      .join('\n\n');
+    return result;
+  }
+
+  /**
+   * Resolves which blueprint a section belongs to, based on its name or type.
+   * Used to annotate the layout map with blueprint hints for the agent.
+   */
+  private resolveSectionBlueprintHint(name?: string, type?: string): string {
+    const validIds = blueprintRegistry.getValidIds();
+    const combined = `${(name ?? '').toLowerCase()} ${(type ?? '').toLowerCase()}`;
+    for (const id of validIds) {
+      if (combined.includes(id)) return id;
+    }
+    // Alias matching: check naturalAliases from all blueprints
+    const aliasMap = blueprintRegistry.getAliasMap();
+    const words = combined.split(/\s+/);
+    for (const word of words) {
+      if (aliasMap[word]) return aliasMap[word];
+    }
+    return '';
+  }
+
+  /**
+   * Recursively builds a compact tree representation with proper
+   * box-drawing characters (├─ / └─ / │) and role hints.
+   *
+   * Role hints injected:
+   *   - columns: children labeled [LEFT — text] / [RIGHT — visual] by position
+   *   - rows: children labeled by position index (1st, 2nd, ...)
+   *   - heading: annotated with ← MAIN TITLE
+   *   - flex with buttons: annotated with ← BUTTON GROUP
+   */
+  private buildCompactLayoutMap(nodes: unknown[], indent = 0): string {
+    const pad = '   '.repeat(indent);
     return nodes
       .map((raw, idx) => {
         const n = raw as {
@@ -809,24 +903,60 @@ export class AiService {
           props?: Record<string, unknown>;
           children?: unknown[];
         };
-        const sectionLabel = n.name ? ` | "${n.name}"` : '';
-        const sectionHeader = `[SECTION ${idx + 1}: ${n.type ?? '?'}${sectionLabel}] id="${n.id ?? '?'}"\n`;
-        const children = n.children && n.children.length > 0
-          ? this.buildCompactLayoutMap(n.children, 1)
-          : '';
-        return sectionHeader + children;
+        const isLast = idx === nodes.length - 1;
+        const branch = isLast ? '└─' : '├─';
+        const continuation = isLast ? '   ' : '│  ';
+
+        // Label preview from props or name
+        const rawLabel = n.props?.text ?? n.props?.label ?? n.name ?? '';
+        const preview = rawLabel ? ` "${String(rawLabel).slice(0, 40)}"` : '';
+
+        // Role hint based on parent context and type
+        const roleHint = this.resolveRoleHint(n, nodes, idx);
+
+        // Display name: include meaningful props
+        const typeDisplay = this.formatNodeTypeDisplay(n);
+
+        const line = `${pad}${branch} ${typeDisplay}  id="${n.id ?? '?'}"${preview}${roleHint}`;
+
+        if (n.children && n.children.length > 0) {
+          const childPad = pad + continuation;
+          const childLines = n.children
+            .map((child, cIdx) => {
+              const childNode = child as typeof n;
+              const childIsLast = cIdx === (n.children?.length ?? 0) - 1;
+              const childBranch = childIsLast ? '└─' : '├─';
+              const childContinuation = childIsLast ? '   ' : '│  ';
+              const childLabel = childNode.props?.text ?? childNode.props?.label ?? childNode.name ?? '';
+              const childPreview = childLabel ? ` "${String(childLabel).slice(0, 40)}"` : '';
+              const childRoleHint = this.resolveRoleHint(childNode, n.children as unknown[], cIdx);
+              const childTypeDisplay = this.formatNodeTypeDisplay(childNode);
+              const childLine = `${childPad}${childBranch} ${childTypeDisplay}  id="${childNode.id ?? '?'}"${childPreview}${childRoleHint}`;
+
+              // One more level of recursion for deeper nodes
+              if (childNode.children && childNode.children.length > 0) {
+                const grandPad = childPad + childContinuation;
+                const grandLines = this.buildCompactLayoutMapDeep(childNode.children, grandPad, indent + 2);
+                return childLine + '\n' + grandLines;
+              }
+              return childLine;
+            })
+            .join('\n');
+          return line + '\n' + childLines;
+        }
+        return line;
       })
       .join('\n');
   }
 
   /**
-   * Recursively builds a compact tree representation for child nodes.
-   * Used by buildSemanticLayoutMap for non-root levels.
+   * Deep recursive helper for nodes beyond depth 2.
+   * Uses simpler format to avoid excessive verbosity.
    */
-  private buildCompactLayoutMap(nodes: unknown[], indent = 0): string {
-    const pad = '  '.repeat(indent);
+  private buildCompactLayoutMapDeep(nodes: unknown[], pad: string, depth: number): string {
+    if (depth > 5) return `${pad}... (truncated at depth ${depth})`;
     return nodes
-      .map((raw) => {
+      .map((raw, idx) => {
         const n = raw as {
           id?: string;
           type?: string;
@@ -834,15 +964,83 @@ export class AiService {
           props?: Record<string, unknown>;
           children?: unknown[];
         };
-        const label = n.props?.text ?? n.props?.label ?? n.name ?? '';
-        const preview = label ? ` "${String(label).slice(0, 40)}"` : '';
-        const line = `${pad}└─ [${n.type ?? '?'}] id="${n.id ?? '?'}"${preview}`;
+        const isLast = idx === nodes.length - 1;
+        const branch = isLast ? '└─' : '├─';
+        const continuation = isLast ? '   ' : '│  ';
+        const rawLabel = n.props?.text ?? n.props?.label ?? n.name ?? '';
+        const preview = rawLabel ? ` "${String(rawLabel).slice(0, 35)}"` : '';
+        const typeDisplay = this.formatNodeTypeDisplay(n);
+        const line = `${pad}${branch} ${typeDisplay}  id="${n.id ?? '?'}"${preview}`;
         if (n.children && n.children.length > 0) {
-          return line + '\n' + this.buildCompactLayoutMap(n.children, indent + 1);
+          return line + '\n' + this.buildCompactLayoutMapDeep(n.children, pad + continuation, depth + 1);
         }
         return line;
       })
       .join('\n');
+  }
+
+  /** Format node type with relevant props for display in the layout map */
+  private formatNodeTypeDisplay(n: {
+    type?: string;
+    props?: Record<string, unknown>;
+  }): string {
+    const t = n.type ?? '?';
+    if (t === 'columns') {
+      return `[columns(${n.props?.columns ?? '?'})]`;
+    }
+    if (t === 'rows') {
+      return `[rows(${n.props?.rows ?? '?'})]`;
+    }
+    if (t === 'flex') {
+      const justify = n.props?.justify ? ` justify=${n.props.justify}` : '';
+      return `[flex${justify}]`;
+    }
+    return `[${t}]`;
+  }
+
+  /**
+   * Infers a role hint for a node based on its position within siblings and type.
+   *
+   * Examples:
+   *   - First child of columns(2) → " ← LEFT — text"
+   *   - Second child of columns(2) → " ← RIGHT — visual"
+   *   - heading → " ← MAIN TITLE"
+   *   - flex with children being buttons → " ← BUTTON GROUP"
+   */
+  private resolveRoleHint(
+    n: { type?: string; props?: Record<string, unknown>; children?: unknown[] },
+    siblings: unknown[],
+    idx: number,
+  ): string {
+    // Column position hints
+    const parentIsColumns = siblings.length >= 2 && siblings.every((s) => {
+      const sib = s as { type?: string };
+      return sib.type !== undefined;
+    });
+
+    if (parentIsColumns && siblings.length === 2) {
+      if (idx === 0) return '  ← LEFT — text';
+      if (idx === 1) return '  ← RIGHT — visual';
+    }
+    if (parentIsColumns && siblings.length === 3) {
+      if (idx === 0) return '  ← LEFT';
+      if (idx === 1) return '  ← CENTER';
+      if (idx === 2) return '  ← RIGHT';
+    }
+
+    // Type-based hints
+    if (n.type === 'heading') return '  ← MAIN TITLE';
+    if (n.type === 'flex') {
+      const hasButtons = (n.children ?? []).some(
+        (c) => (c as { type?: string }).type === 'button',
+      );
+      if (hasButtons) return '  ← BUTTON GROUP';
+    }
+    if (n.type === 'image') return '  ← VISUAL';
+    if (n.type === 'badge') return '  ← BADGE/TAG';
+    if (n.type === 'description') return '  ← SUBTITLE/DESC';
+
+    return '';
   }
 
   // ── Language & diff helpers ──────────────────────────────────────────────────

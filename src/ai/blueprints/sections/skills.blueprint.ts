@@ -77,4 +77,5 @@ export const skillsBlueprint: SectionBlueprint = {
     badgeVariant: '"subtle" hoặc "outline" — không solid vì quá nặng',
     cardStyle: '"glass" trên dark bg, "card" trên light bg',
   },
+  typicalPosition: 'middle',
 };
