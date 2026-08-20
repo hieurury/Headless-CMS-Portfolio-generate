@@ -31,7 +31,9 @@ function detectType(val: string): LinkType {
 function getAnchorsFromSections(sections: LayoutSection[]): InnerAnchor[] {
   const anchors: InnerAnchor[] = [];
   function traverse(list: LayoutSection[]) {
+    if (!list) return;
     for (const sec of list) {
+      if (!sec) continue;
       if (sec.name) {
         anchors.push({ id: sec.name, label: sec.type });
       }
@@ -58,16 +60,16 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
 }) => {
   const { language } = useUIStore();
   const isVi = language === 'vi';
-  
+
   const [typeOpen, setTypeOpen] = useState(false);
   const [listOpen, setListOpen] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState<LinkType>(() => detectType(value));
   const [inputVal, setInputVal] = useState(value ?? '');
-  
+
   const [pages, setPages] = useState<Page[]>(pagesProp ?? []);
   const [pagesLoading, setPagesLoading] = useState(false);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const storePages = usePageStore((s) => s.pages);
   const editorCtx = useEditorContext();
@@ -107,12 +109,12 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
   const handleTypeSelect = async (type: LinkType) => {
     setActiveTab(type);
     setTypeOpen(false);
-    
+
     let loadedPages = pages;
     if (type === 'page') {
       loadedPages = await loadPages();
     }
-    
+
     // Auto open list when switching type if it's page or inner
     if (type === 'page' || type === 'inner') {
       setListOpen(true);
@@ -147,7 +149,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
       }
     }
   };
-  
+
   const commit = useCallback((val: string) => {
     setInputVal(val);
     onChange(val);
@@ -177,7 +179,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
   return (
     <div className="relative w-full" ref={containerRef}>
       <div className="flex items-center rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-hidden focus-within:border-[var(--color-border-hover)] transition-colors h-9">
-        
+
         {/* Link Icon */}
         <div className="pl-3 pr-1.5 flex items-center shrink-0 text-[var(--color-text-faint)]">
           <Globe size={13} className={activeTab === 'url' ? 'block' : 'hidden'} />
@@ -186,7 +188,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
         </div>
 
         {/* Text Input Wrapper */}
-        <div 
+        <div
           className="flex-1 relative flex items-center min-w-0"
           onClick={() => {
             if (activeTab === 'page' || activeTab === 'inner') {
@@ -208,9 +210,9 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
               onChange(v);
             }}
             onKeyDown={(e) => {
-               if (e.key === 'Enter') {
-                 setListOpen(false);
-               }
+              if (e.key === 'Enter') {
+                setListOpen(false);
+              }
             }}
             className={`w-full bg-transparent px-1.5 text-sm text-[var(--color-text)] focus:outline-none min-w-0 ${activeTab !== 'url' ? 'cursor-pointer pointer-events-none' : ''}`}
           />
@@ -244,11 +246,10 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                 key={key}
                 type="button"
                 onClick={() => handleTypeSelect(key as LinkType)}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${
-                  isActive
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${isActive
                     ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
                     : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
-                }`}
+                  }`}
               >
                 <Icon size={13} className={isActive ? '' : 'opacity-70'} />
                 <span className="font-medium">{isVi ? cfg.vi : cfg.en}</span>
@@ -262,7 +263,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
       {listOpen && (activeTab === 'page' || activeTab === 'inner') && (
         <div className="absolute z-[300] bottom-full mb-1 right-0 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-xl overflow-hidden animate-slide-up flex flex-col max-h-[220px]">
           <div className="overflow-y-auto p-1.5 space-y-0.5">
-            
+
             {activeTab === 'page' && (
               <>
                 {pagesLoading ? (
@@ -282,11 +283,10 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                         key={pg._id}
                         type="button"
                         onClick={() => { commit(slug); setListOpen(false); }}
-                        className={`w-full flex items-center justify-between gap-3 px-2 py-2 rounded-md text-sm transition-all ${
-                          isActive
+                        className={`w-full flex items-center justify-between gap-3 px-2 py-2 rounded-md text-sm transition-all ${isActive
                             ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
                             : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <FileText size={13} className="shrink-0 opacity-70" />
@@ -320,11 +320,10 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                         key={anchor.id}
                         type="button"
                         onClick={() => { commit(val); setListOpen(false); }}
-                        className={`w-full flex items-center justify-between gap-3 px-2 py-2 rounded-md text-sm transition-all ${
-                          isActive
+                        className={`w-full flex items-center justify-between gap-3 px-2 py-2 rounded-md text-sm transition-all ${isActive
                             ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
                             : 'text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <Hash size={13} className="shrink-0 opacity-70" />
@@ -342,7 +341,7 @@ export const LinkPickerField: React.FC<LinkPickerFieldProps> = ({
                 )}
               </>
             )}
-            
+
           </div>
         </div>
       )}

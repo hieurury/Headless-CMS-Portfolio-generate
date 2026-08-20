@@ -5,18 +5,18 @@ import type { ComponentType, ReactNode } from 'react';
 /** Describes a single editable field in the props editor UI */
 export interface FieldSchema {
   type:
-    | 'string'
-    | 'number'
-    | 'boolean'
-    | 'select'
-    | 'color'
-    | 'image'
-    | 'link'
-    | 'textarea'
-    | 'array'
-    | 'table'
-    | 'icon'
-    | 'spacing'; // free-form CSS shorthand, e.g. "8px 16px" or "4px 8px 12px 0"
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'select'
+  | 'color'
+  | 'image'
+  | 'link'
+  | 'textarea'
+  | 'array'
+  | 'table'
+  | 'icon'
+  | 'spacing'; // free-form CSS shorthand, e.g. "8px 16px" or "4px 8px 12px 0"
   label: string;
   description?: string;
   placeholder?: string;

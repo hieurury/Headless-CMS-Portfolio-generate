@@ -138,9 +138,9 @@ export const ExplorePage: React.FC = () => {
                 className="flex items-center justify-between gap-2 py-2 pl-3 pr-2 w-36 rounded-sm bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[var(--color-text)] hover:border-[var(--color-text)] transition-colors"
               >
                 <span className="truncate">
-                  {categories.length === 0 
-                    ? t('explore.categories.all' as any) 
-                    : categories.length === 1 
+                  {categories.length === 0
+                    ? t('explore.categories.all' as any)
+                    : categories.length === 1
                       ? t(`explore.categories.${categories[0]}` as any)
                       : language === 'en' ? `${categories.length} selected` : `${categories.length} danh mục`}
                 </span>
@@ -149,7 +149,7 @@ export const ExplorePage: React.FC = () => {
 
               {isCategoryOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-sm shadow-xl z-50 py-1">
-                  <div 
+                  <div
                     className="px-3 py-2 flex items-center gap-2 cursor-pointer hover:bg-[var(--color-surface-2)] transition-colors"
                     onClick={() => { setCategories([]); setPage(1); setIsCategoryOpen(false); }}
                   >
@@ -162,7 +162,7 @@ export const ExplorePage: React.FC = () => {
                   {CATEGORIES.filter(c => c.id !== 'all').map(c => {
                     const isSelected = categories.includes(c.id);
                     return (
-                      <div 
+                      <div
                         key={c.id}
                         className="px-3 py-2 flex items-center gap-2 cursor-pointer hover:bg-[var(--color-surface-2)] transition-colors"
                         onClick={() => {
@@ -366,11 +366,10 @@ export const ExplorePage: React.FC = () => {
                   <button
                     key={n}
                     onClick={() => handlePageChange(n as number)}
-                    className={`w-9 h-9 rounded-sm text-sm font-medium transition-all ${
-                      page === n
+                    className={`w-9 h-9 rounded-sm text-sm font-medium transition-all ${page === n
                         ? 'bg-[var(--color-text)] text-[var(--color-bg)]'
                         : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]'
-                    }`}
+                      }`}
                   >
                     {n}
                   </button>
