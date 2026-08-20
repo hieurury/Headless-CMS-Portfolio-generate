@@ -220,7 +220,7 @@ export const PageEditorPage: React.FC = () => {
         const now = Date.now();
         // If within 1000ms, group with last edit
         const isBatched = now - prevState.lastUpdated < 1000 && prevState.past.length > 0;
-        
+
         return {
           past: isBatched ? prevState.past : [...prevState.past, prevState.present],
           present: nextPresent,
@@ -1079,7 +1079,7 @@ export const PageEditorPage: React.FC = () => {
             return { ...layout, sections: newSections };
           }
         }
-        
+
         // Default: insert after the target
         const newSections = insertSectionAfter(layout.sections, targetId, newSection);
         return { ...layout, sections: newSections };
@@ -1198,47 +1198,47 @@ export const PageEditorPage: React.FC = () => {
 
         if (section) {
           if (section.type === 'columns' && newProps.columns !== undefined) {
-             const newCount = Number(newProps.columns);
-             const oldCount = Number(section.props.columns ?? 2);
-             if (newCount !== oldCount && newCount > 0) {
-                let newChildren = [...(section.children ?? [])];
-                let newSpans = (section.props.colSpans as number[]) ?? Array(oldCount).fill(1);
-                
-                if (newCount > oldCount) {
-                  for (let i = oldCount; i < newCount; i++) {
-                     newChildren.push(makeEmptySlot());
-                     newSpans.push(1);
-                  }
-                } else {
-                  newChildren = newChildren.slice(0, newCount);
-                  newSpans = newSpans.slice(0, newCount);
+            const newCount = Number(newProps.columns);
+            const oldCount = Number(section.props.columns ?? 2);
+            if (newCount !== oldCount && newCount > 0) {
+              let newChildren = [...(section.children ?? [])];
+              let newSpans = (section.props.colSpans as number[]) ?? Array(oldCount).fill(1);
+
+              if (newCount > oldCount) {
+                for (let i = oldCount; i < newCount; i++) {
+                  newChildren.push(makeEmptySlot());
+                  newSpans.push(1);
                 }
-                newProps.colSpans = newSpans;
-                const newSection = { ...section, props: { ...section.props, ...newProps }, children: newChildren };
-                return { ...layout, sections: replaceSection(layout.sections, sectionId, newSection) };
-             }
+              } else {
+                newChildren = newChildren.slice(0, newCount);
+                newSpans = newSpans.slice(0, newCount);
+              }
+              newProps.colSpans = newSpans;
+              const newSection = { ...section, props: { ...section.props, ...newProps }, children: newChildren };
+              return { ...layout, sections: replaceSection(layout.sections, sectionId, newSection) };
+            }
           }
-          
+
           if (section.type === 'rows' && newProps.rows !== undefined) {
-             const newCount = Number(newProps.rows);
-             const oldCount = Number(section.props.rows ?? 2);
-             if (newCount !== oldCount && newCount > 0) {
-                let newChildren = [...(section.children ?? [])];
-                let newSpans = (section.props.rowSpans as number[]) ?? Array(oldCount).fill(1);
-                
-                if (newCount > oldCount) {
-                  for (let i = oldCount; i < newCount; i++) {
-                     newChildren.push(makeEmptySlot());
-                     newSpans.push(1);
-                  }
-                } else {
-                  newChildren = newChildren.slice(0, newCount);
-                  newSpans = newSpans.slice(0, newCount);
+            const newCount = Number(newProps.rows);
+            const oldCount = Number(section.props.rows ?? 2);
+            if (newCount !== oldCount && newCount > 0) {
+              let newChildren = [...(section.children ?? [])];
+              let newSpans = (section.props.rowSpans as number[]) ?? Array(oldCount).fill(1);
+
+              if (newCount > oldCount) {
+                for (let i = oldCount; i < newCount; i++) {
+                  newChildren.push(makeEmptySlot());
+                  newSpans.push(1);
                 }
-                newProps.rowSpans = newSpans;
-                const newSection = { ...section, props: { ...section.props, ...newProps }, children: newChildren };
-                return { ...layout, sections: replaceSection(layout.sections, sectionId, newSection) };
-             }
+              } else {
+                newChildren = newChildren.slice(0, newCount);
+                newSpans = newSpans.slice(0, newCount);
+              }
+              newProps.rowSpans = newSpans;
+              const newSection = { ...section, props: { ...section.props, ...newProps }, children: newChildren };
+              return { ...layout, sections: replaceSection(layout.sections, sectionId, newSection) };
+            }
           }
         }
 
@@ -1306,7 +1306,7 @@ export const PageEditorPage: React.FC = () => {
       if (target.closest('[data-editor-chrome]')) return;
       if (target.closest('aside')) return;
       if (target.closest('header')) return;
-      
+
       // If a block is selected, check if we clicked inside it
       if (selectedId) {
         const activeBlock = document.querySelector('.cms-block.z-10');
@@ -1314,13 +1314,13 @@ export const PageEditorPage: React.FC = () => {
           return; // Clicked inside the active block, do nothing
         }
       }
-      
+
       // If we clicked on the canvas area (including other blocks or empty space)
       if (target.closest('.editor-preview-container')) {
         handleSectionSelect(null);
       }
     };
-    
+
     // Use mousedown to trigger before focus/blur events
     window.addEventListener('mousedown', handleGlobalClick);
     return () => window.removeEventListener('mousedown', handleGlobalClick);
@@ -1728,9 +1728,9 @@ export const PageEditorPage: React.FC = () => {
                   <span className="text-xs text-slate-700 font-mono">
                     {page?.slug}
                   </span>
-                  
+
                   <div className="flex-1" />
-                  
+
                   <div className="flex items-center rounded-sm border border-[var(--color-border)] overflow-hidden bg-white/3">
                     <button
                       onClick={() => setPointerMode('normal')}
@@ -1769,13 +1769,13 @@ export const PageEditorPage: React.FC = () => {
                     '--color-secondary': page?.meta?.colors?.light?.secondary,
                   } as React.CSSProperties}
                 >
-                  <MarqueeSelection 
-                    disabled={pointerMode !== 'select' || previewMode} 
+                  <MarqueeSelection
+                    disabled={pointerMode !== 'select' || previewMode}
                     onSelectionComplete={(ids) => {
                       if (ids.length > 0) {
                         setSelectedIds(ids);
                       }
-                    }} 
+                    }}
                   />
                   {draftLayout.sections.length === 0 ? (
                     <EmptyCanvasPrompt
@@ -1787,7 +1787,7 @@ export const PageEditorPage: React.FC = () => {
                       pageId={pageId!}
                     />
                   ) : (
-                    <div 
+                    <div
                       className={clsx(
                         'w-full min-h-full transition-all duration-300',
                         page?.meta?.pageLayout?.type === 'fluid' && 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
