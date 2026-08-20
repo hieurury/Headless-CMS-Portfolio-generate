@@ -5,6 +5,7 @@ import { Loader2, Lock, LayoutGrid, Calendar, Tag } from 'lucide-react';
 import { SeoHelmet } from '../../core/renderer/SeoHelmet';
 import { useI18n } from '../../hooks/useI18n';
 import MDEditor from '@uiw/react-md-editor';
+import MyEditor from '../editor/components/BlockNote';
 
 /**
  * PublicPostPage
@@ -145,9 +146,16 @@ export const PublicPostPage: React.FC = () => {
             if (!value) return null;
 
             if (field.type === 'markdown') {
+              if (Array.isArray(value) || (typeof value === 'string' && value.trim().startsWith('['))) {
+                return (
+                  <div key={field.name} className="my-6 rounded-lg overflow-hidden border border-[var(--color-border)]">
+                    <MyEditor value={value} editable={false} />
+                  </div>
+                );
+              }
               return (
                 <div key={field.name} data-color-mode="dark" className="prose prose-invert max-w-none">
-                  <MDEditor.Markdown source={value} style={{ backgroundColor: 'transparent' }} />
+                  <MDEditor.Markdown source={value as string} style={{ backgroundColor: 'transparent' }} />
                 </div>
               );
             }

@@ -323,6 +323,7 @@ export class PublicService {
         meta: portfolio.meta,
       },
       post: post.toObject(),
+      postType: post.postTypeId,
       allPages: allPages.map((p) => ({
         title: p.title,
         slug: p.slug,
